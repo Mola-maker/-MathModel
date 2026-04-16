@@ -1,0 +1,22 @@
+{
+  "query": "standing long jump biomechanics fuzzy evaluation",
+  "source_status": {
+    "cnki": {
+      "status": "unavailable_direct_api",
+      "reason": "CNKI高级搜索无公开API且通常需要机构登录"
+    },
+    "web_of_science": {
+      "status": "unavailable_direct_api",
+      "reason": "Web of Science高级检索通常需要机构账号/API授权"
+    },
+    "github": {
+      "status": "available",
+      "reason": "可通过GitHub REST API检索公开仓库"
+    },
+    "openalex": {
+      "status": "available",
+      "reason": "可作为开放文献检索替代源"
+    }
+  },
+  "openalex_results": []
+}

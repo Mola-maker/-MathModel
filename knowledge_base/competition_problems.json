@@ -1,0 +1,103 @@
+{
+  "category": "problems",
+  "description": "建模手专用：历年竞赛题目规律、常见题型、出题风格",
+  "consumer": "question_extractor + modeler subagent",
+  "built_at": "2026-04-15 17:13:32",
+  "entry_count": 3,
+  "entries": [
+    {
+      "source": "选题、命题介绍分析.md",
+      "category": "problem",
+      "year": "2019",
+      "problem_id": "A",
+      "domain": "通信/网络",
+      "problem_type": "优化|仿真",
+      "keywords": [
+        "5G",
+        "无线网络规划",
+        "基站部署",
+        "传播模型"
+      ],
+      "data_provided": "未明确提及，可能包含基站、用户、地形等数据",
+      "sub_questions": [
+        "合理选择基站站点",
+        "满足用户通讯要求",
+        "高精度网络估算"
+      ],
+      "difficulty": "中等",
+      "recommended_models": [
+        "网络覆盖优化模型",
+        "传播损耗模型",
+        "整数规划",
+        "仿真模型"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\选题、命题介绍分析.md"
+    },
+    {
+      "source": "1 底丘脑核从环路功能到深部脑刺激治疗帕金森病的靶点.pdf",
+      "category": "problem",
+      "year": "2017",
+      "problem_id": "C",
+      "domain": "生物医学/神经科学",
+      "problem_type": "评价|仿真",
+      "keywords": [
+        "底丘脑核",
+        "基底神经节",
+        "深部脑刺激",
+        "帕金森病",
+        "神经环路"
+      ],
+      "data_provided": "无具体数据，提供了神经解剖学、生理学背景知识和研究综述",
+      "sub_questions": [
+        "分析STN在基底神经节环路中的功能",
+        "探讨STN-DBS改善帕金森病运动障碍的可能机制",
+        "综述STN的传入传出联系及其在运动控制中的作用"
+      ],
+      "difficulty": "困难",
+      "recommended_models": [
+        "神经环路仿真模型",
+        "系统动力学模型",
+        "因果推断模型",
+        "文献计量分析模型"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛试题\\2021年研究生数学建模竞赛试题\\C\\1 底丘脑核从环路功能到深部脑刺激治疗帕金森病的靶点.pdf",
+      "_year_dir": "",
+      "_problem_type": "C"
+    },
+    {
+      "source": "2 Circuit Mechanisms of Parkinson’s Disease.pdf",
+      "category": "problem",
+      "year": "2019",
+      "problem_id": "C",
+      "domain": "生物/医学",
+      "problem_type": "评价|预测",
+      "keywords": [
+        "帕金森病",
+        "神经回路",
+        "神经退行性疾病",
+        "运动症状",
+        "非运动症状",
+        "多巴胺",
+        "神经退化"
+      ],
+      "data_provided": "未提供具体数据，为文献综述，包含疾病特征、病理机制、症状分类等信息。",
+      "sub_questions": [
+        "帕金森病的核心运动特征及其神经基础是什么？",
+        "帕金森病的非运动症状有哪些，如何分类？",
+        "帕金森病的神经回路功能障碍模型有哪些？",
+        "多巴胺替代疗法对哪些症状有效，可能引发哪些新症状？",
+        "如何区分由神经元直接损失引起的症状和由回路功能障碍引起的症状？"
+      ],
+      "difficulty": "中等",
+      "recommended_models": [
+        "系统动力学模型",
+        "神经网络模型",
+        "因果推断模型",
+        "综合评价模型"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛试题\\2021年研究生数学建模竞赛试题\\C\\2 Circuit Mechanisms of Parkinson’s Disease.pdf",
+      "_year_dir": "",
+      "_problem_type": "C"
+    }
+  ]
+}

@@ -1,0 +1,2090 @@
+{
+  "category": "modeling",
+  "description": "建模手专用：历届获奖论文的建模思路、模型选择、创新点",
+  "consumer": "modeler subagent + modeling_agent",
+  "built_at": "2026-04-15 17:35:48",
+  "entry_count": 75,
+  "entries": [
+    {
+      "source": "选题、命题介绍分析.md",
+      "category": "modeling",
+      "problem_type": "优化|预测|评价|统计|仿真",
+      "year": "2019",
+      "award_level": "一等奖",
+      "core_models": [
+        "无线智能传播模型",
+        "星图识别模型",
+        "视觉情报信息分歧模型",
+        "汽车行驶工况构建模型",
+        "气候模型",
+        "航迹快速规划模型"
+      ],
+      "model_selection_reason": "所选模型均针对具体前沿应用问题（如5G网络规划、天文导航、无人驾驶、环保、气候变化、智能飞行器），旨在通过数学建模解决实际工程与科学挑战。",
+      "innovation_points": [
+        "将5G网络规划与无线智能传播模型结合，提升基站部署精度",
+        "利用人工智能方法进行天文导航中的星图识别，实现自主高精度定位",
+        "通过视觉情报的逆问题建模，提取图像视频中的关键特征信息",
+        "基于大数据分析构建汽车行驶工况，揭示车辆与道路的内在关系",
+        "建立简化的气候与极端天气模型，便于非专业人士理解全球变暖态势",
+        "在多约束条件下实现智能飞行器航迹的快速规划与误差校正"
+      ],
+      "formula_structure": "各题目核心公式结构各异，涉及传播损耗计算、星图模式匹配、特征提取与分类、工况曲线拟合、气候参数统计关系以及航迹优化约束方程等。",
+      "sensitivity_approach": "未在摘要中明确描述具体敏感性分析方法，但各题均需对模型参数或输入数据进行验证以确保鲁棒性。",
+      "visualization_types": [
+        "网络覆盖示意图",
+        "星图识别匹配图",
+        "特征提取对比图",
+        "汽车工况曲线图",
+        "气候变化趋势图",
+        "航迹规划三维图"
+      ],
+      "key_conclusions": "模型成功应用于5G基站优化部署、高精度自主天文导航、视觉情报特征提取、汽车能耗与道路关系分析、全球变暖趋势解释以及智能飞行器航迹规划，展示了数学建模在前沿科技领域的实用价值。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\选题、命题介绍分析.md"
+    },
+    {
+      "source": "A23100070049.pdf",
+      "category": "modeling",
+      "problem_type": "仿真",
+      "year": "2023",
+      "award_level": "优秀奖",
+      "core_models": [
+        "推广的Bianchi模型（基于马尔科夫链）",
+        "离散事件仿真器"
+      ],
+      "model_selection_reason": "Bianchi模型是分析WLAN信道接入性能的经典模型，通过推广可适应复杂网络场景，并用仿真验证理论结果。",
+      "innovation_points": [
+        "推广Bianchi模型以统一处理隐藏终端、暴露终端和自然丢包等复杂场景",
+        "定义了脆弱时隙概念来分析隐藏终端影响",
+        "开发了可扩展的离散事件仿真器进行可视化验证"
+      ],
+      "formula_structure": "基于马尔科夫链状态转移，推导冲突概率p与吞吐量公式，核心为统一吞吐计算模型：吞吐 = (成功传输概率 × 有效数据长度) / (平均时隙长度)。",
+      "sensitivity_approach": "分析了不同物理层速率、不同数据成功传输概率下RTS/CTS机制对理论吞吐的影响，并通过参数代入验证模型在不同场景下的表现。",
+      "visualization_types": [
+        "节点状态时序图",
+        "吞吐量对比图"
+      ],
+      "key_conclusions": "在暴露终端场景下，RTS/CTS机制会降低系统吞吐；在隐藏终端和自然丢包场景下，RTS/CTS机制能有效提升系统吞吐；所提统一模型在多种复杂场景下理论值与仿真值误差平均在5%以内。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2023年优秀论文\\A\\A23100070049.pdf",
+      "_year_dir": "2023年优秀论文",
+      "_problem_type": "A"
+    },
+    {
+      "source": "A23102470073.pdf",
+      "category": "modeling",
+      "problem_type": "仿真",
+      "year": "2023",
+      "award_level": "优秀奖",
+      "core_models": [
+        "Bianchi模型（基于Markov chain）",
+        "离散事件仿真"
+      ],
+      "model_selection_reason": "Bianchi模型能精确计算WLAN DCF机制的稳态概率和吞吐量，而离散事件仿真用于验证其准确性。",
+      "innovation_points": [
+        "针对不同BSS互听/不互听及SIR场景，改进了传统Bianchi模型，引入了成功传输和传输失败状态分类",
+        "对复杂的三BSS系统，通过建立对称和非对称的Markov chain模型并联立求解"
+      ],
+      "formula_structure": "基于Markov chain的状态转移方程，求解各传输状态的稳态概率，进而推导网络吞吐量S的表达式。",
+      "sensitivity_approach": "通过改变参数（如SIR、退避窗口等）进行数值计算，并与仿真结果对比，分析模型误差（如百分比差异）。",
+      "visualization_types": [
+        "稳态概率分布图",
+        "吞吐量对比图（数值解 vs 仿真）"
+      ],
+      "key_conclusions": "改进的Bianchi模型在不同BSS干扰场景下（互听/不互听）能较准确预测网络吞吐量，与仿真结果误差较小（多数在5%以内），但三BSS复杂场景误差增大至12.27%。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2023年优秀论文\\A\\A23102470073.pdf",
+      "_year_dir": "2023年优秀论文",
+      "_problem_type": "A"
+    },
+    {
+      "source": "B23100070010.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2023",
+      "award_level": "优秀奖",
+      "core_models": [
+        "基于Cooley-Tukey基-2分解的解析逼近模型",
+        "基于整数规划与遗传算法的优化逼近模型"
+      ],
+      "model_selection_reason": "针对DFT矩阵整数分解逼近这一NP-hard问题，分别采用解析方法保证精确性和优化方法平衡计算复杂度与逼近精度。",
+      "innovation_points": [
+        "将Cooley-Tukey FFT蝶形分解与整数约束结合，提出层次分解与量化分解算法",
+        "结合丢番图逼近与遍历性搜索，实现了对任意DFT矩阵的任意精度逼近证明",
+        "提出分布式遗传算法的整数规划改进策略，用于求解大规模稀疏矩阵逼近问题"
+      ],
+      "formula_structure": "核心为DFT矩阵的分解形式：F_N = A1 * A2 * ... * Ak * P，其中Ai为稀疏的蝶形因子矩阵（元素受整数约束），P为排列矩阵；优化目标为最小化Frobenius范数误差。",
+      "sensitivity_approach": "通过控制分解层数、整数取值范围、算法迭代次数等参数，观察RMSE（均方根误差）和硬件复杂度的变化，分析不同约束条件下模型的性能权衡。",
+      "visualization_types": [
+        "蝶形分解结构图",
+        "误差（RMSE）与分解层数关系图",
+        "算法迭代收敛曲线",
+        "不同矩阵规模（N=4,8,16...）下的性能对比表"
+      ],
+      "key_conclusions": "提出了解析逼近和优化逼近两套统一解决方案，解析法可实现零误差或高精度逼近，优化法能有效平衡计算复杂度与精度，两种方法均具有可扩展性，能根据实际硬件约束选择适用方案。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2023年优秀论文\\B\\B23100070010.pdf",
+      "_year_dir": "2023年优秀论文",
+      "_problem_type": "B"
+    },
+    {
+      "source": "B23100070173.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2023",
+      "award_level": "优秀奖",
+      "core_models": [
+        "改进Winograd分解",
+        "遗传算法",
+        "奇异值分解"
+      ],
+      "model_selection_reason": "针对DFT矩阵拟合的非凸优化问题，选择遗传算法进行智能搜索以逼近全局最优解。",
+      "innovation_points": [
+        "结合Cooley-Tukey和改进Winograd分解进行闭式解整数映射",
+        "利用遗传算法处理同时具有稀疏性和元素取值约束的高维非凸优化问题"
+      ],
+      "formula_structure": "以最小化拟合损失（如RMSE）为目标函数，约束条件包括矩阵稀疏性、元素取值（如整数）和矩阵个数K，核心为矩阵连乘逼近DFT矩阵的优化模型。",
+      "sensitivity_approach": "通过仿真分析缩放因子β在目标函数中的放置位置对拟合结果的影响，并对比不同维度N下各方案RMSE和复杂度C的变化。",
+      "visualization_types": [
+        "性能对比折线图",
+        "拟合误差热力图"
+      ],
+      "key_conclusions": "在同时考虑稀疏性和元素取值约束时，遗传算法在复杂度C为0的情况下，拟合RMSE不超过0.1，性能优于整数映射方法；改进Winograd分解在无约束或低维情况下能实现RMSE为0的最优拟合。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2023年优秀论文\\B\\B23100070173.pdf",
+      "_year_dir": "2023年优秀论文",
+      "_problem_type": "B"
+    },
+    {
+      "source": "C23102540029.pdf",
+      "category": "modeling",
+      "problem_type": "优化|评价|预测",
+      "year": "2023",
+      "award_level": "优秀奖",
+      "core_models": [
+        "数学规划模型（0-1变量）",
+        "线性回归模型",
+        "随机森林模型",
+        "两阶段优化模型"
+      ],
+      "model_selection_reason": "针对评审方案的不同环节（分配、评分、极差预测、综合优化）分别选用最合适的模型，以兼顾公平性、准确性和可解释性。",
+      "innovation_points": [
+        "引入均衡性指标和交叉值指标优化评审分配",
+        "结合专家专业性评分(ER)和作品得分合理性评分(SRA)构建标准分计算模型",
+        "使用随机森林拟合极差并分析其与创新性指标的分段关系"
+      ],
+      "formula_structure": "标准分计算模型：STD = 0.765625*ER - 0.291511*SRA + 3.76465*std_ij；极差分段模型：根据阈值（如270.24）采用不同线性组合（创新性指标、极差、常数项）。",
+      "sensitivity_approach": "未在摘要中明确描述敏感性分析具体做法，但通过模型结果评估（如标准差、指标对比）和不同方案对比（如两阶段与不分阶段）间接体现稳健性。",
+      "visualization_types": [
+        "表格（专家评审作品分配）",
+        "统计图（交叉评审作品数量分布）",
+        "获奖等级对比图"
+      ],
+      "key_conclusions": "构建了一个包含交叉分配、标准分计算、极差预测和两阶段优化的综合评审模型，能够提高大规模创新类竞赛评审的公平性和合理性，并通过算法求解得到可行的分配方案与评分调整结果。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2023年优秀论文\\C\\C23102540029.pdf",
+      "_year_dir": "2023年优秀论文",
+      "_problem_type": "C"
+    },
+    {
+      "source": "C23102890004.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2023",
+      "award_level": "优秀奖",
+      "core_models": [
+        "基于回避制度的最优“交叉分发”模型",
+        "组合优化标准分模型",
+        "动态加权评分排序模型"
+      ],
+      "model_selection_reason": "针对创新竞赛无标准答案、评分差异大的特点，选择优化模型来设计评审方案以提升公正性和可比性。",
+      "innovation_points": [
+        "通过0-1矩阵和范数理论将“交叉分发”问题转化为单目标优化模型",
+        "提出匹配度函数量化评估不同评分方案的优劣",
+        "引入动态加权机制，根据专家评分偏移和方差调整权重"
+      ],
+      "formula_structure": "核心为基于0-1评阅矩阵P，利用PPT的1-范数和0-范数分别表示交集元素总和与集合数，构建双目标优化模型。",
+      "sensitivity_approach": "通过调整指数函数参数与专家比重两个决策变量，以匹配度最大化为目标进行优化求解。",
+      "visualization_types": [
+        "数据分布对比图",
+        "匹配度结果对比表",
+        "极差变化分析图"
+      ],
+      "key_conclusions": "所提出的组合优化标准分模型和动态加权评分排序模型在匹配度上显著优于原始方案，能有效提升大规模创新竞赛评审的公正性和科学性。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2023年优秀论文\\C\\C23102890004.pdf",
+      "_year_dir": "2023年优秀论文",
+      "_problem_type": "C"
+    },
+    {
+      "source": "D23100060041.pdf",
+      "category": "modeling",
+      "problem_type": "预测|评价|优化",
+      "year": "2023",
+      "award_level": "优秀奖",
+      "core_models": [
+        "岭回归模型",
+        "加权综合预测模型（线性回归、灰色模型、LSTM、ARIMA）"
+      ],
+      "model_selection_reason": "针对不同预测目标（能源消费量、碳排放量）和数据特性，组合使用多种预测模型以提高精度和鲁棒性。",
+      "innovation_points": [
+        "构建了基于人口和经济的能源消费量加权综合预测模型，利用PSO算法优化权重",
+        "设计了自然、基本、雄心、滞后四种情景进行双碳目标路径规划与对比分析"
+      ],
+      "formula_structure": "核心为岭回归模型（用于碳排放量预测，考虑多重共线性）及加权综合预测模型（目标函数为精度最小，权重由PSO优化）。",
+      "sensitivity_approach": "通过设计四种不同政策情景（自然、基本、雄心、滞后），分析关键参数（如非化石能源占比、能源效率）变化对达峰时间和路径的影响。",
+      "visualization_types": [
+        "趋势变化图",
+        "结构构成比例图",
+        "岭迹图"
+      ],
+      "key_conclusions": "自然情景下碳达峰时间约为2040年；通过规划能效提升、产业升级等措施的路径，可实现在不同情景下（如按时或率先）达成双碳目标。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2023年优秀论文\\D\\D23100060041.pdf",
+      "_year_dir": "2023年优秀论文",
+      "_problem_type": "D"
+    },
+    {
+      "source": "D23102690008.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2023",
+      "award_level": "优秀奖",
+      "core_models": [
+        "多元线性回归",
+        "ARIMA模型",
+        "LSTM模型"
+      ],
+      "model_selection_reason": "多元线性回归用于分析指标关联，ARIMA和LSTM用于时间序列预测以模拟长期变化。",
+      "innovation_points": [
+        "构建了基于Kaya模型的综合指标体系用于因素分析",
+        "设计了三种情景（自然、基准、雄心）进行路径规划与对比"
+      ],
+      "formula_structure": "基于Kaya恒等式扩展，构建了多因素（GDP、人口、能源消费量、能源结构）驱动的碳排放预测模型。",
+      "sensitivity_approach": "通过设计不同情景（如能效提升、非化石能源占比变化）并对比其碳排放路径，分析关键参数（如能源效率、能源结构）对目标的影响。",
+      "visualization_types": [
+        "时间序列预测图",
+        "情景对比图"
+      ],
+      "key_conclusions": "通过构建多因素预测模型和设计不同情景，明确了实现区域双碳目标需要能效提升、能源结构优化等多措并举，并给出了关键时间节点的量化目标。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2023年优秀论文\\D\\D23102690008.pdf",
+      "_year_dir": "2023年优秀论文",
+      "_problem_type": "D"
+    },
+    {
+      "source": "E23100650012.pdf",
+      "category": "modeling",
+      "problem_type": "预测",
+      "year": "2023",
+      "award_level": "优秀奖",
+      "core_models": [
+        "梯度提升决策树",
+        "决策树",
+        "谱聚类",
+        "Stacking集成模型"
+      ],
+      "model_selection_reason": "通过对比多种模型（如k近邻、支持向量机、随机森林）的性能指标（如MAE、平均残差、轮廓系数），选择在特定任务上表现最优的模型。",
+      "innovation_points": [
+        "基于并查集的高相关性变量过滤模型进行冗余特征剔除",
+        "建立特征权重函数对不同时间间隔的病人进行差异化处理",
+        "使用时空解耦方法量化随访数据",
+        "结合聚类结果分析水肿进展模式（振荡趋缓型、波动平稳型、振荡反复型）"
+      ],
+      "formula_structure": "主要采用机器学习模型（如梯度提升树、决策树）进行拟合和分类，核心为基于特征工程的预测函数y=f(X)，未给出显式数学公式，侧重模型结构与优化过程。",
+      "sensitivity_approach": "通过消融实验验证高相关性变量过滤模型和特征权重函数的有效性，并使用网格搜索+K折交叉验证进行参数寻优和模型稳健性评估。",
+      "visualization_types": [
+        "t-SNE聚类效果可视化",
+        "残差图",
+        "数据宏观统计与可视化图表"
+      ],
+      "key_conclusions": "梯度提升分类器在血肿扩张概率预测上取得最佳效果（MAE=0.0524）；通过聚类将水肿体积拟合残差从1838.8871降低至980.245；Stacking模型在预后预测中准确率达83.5%，加入随访数据后提升至92.3%。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2023年优秀论文\\E\\E23100650012.pdf",
+      "_year_dir": "2023年优秀论文",
+      "_problem_type": "E"
+    },
+    {
+      "source": "E23102550019.pdf",
+      "category": "modeling",
+      "problem_type": "预测",
+      "year": "2023",
+      "award_level": "优秀奖",
+      "core_models": [
+        "朴素贝叶斯与二元线性回归组合模型",
+        "非线性最小二乘法",
+        "K-means聚类",
+        "决策树回归(DTR/CART)",
+        "多元线性回归",
+        "相关性分析模型"
+      ],
+      "model_selection_reason": "针对不同子问题（分类、拟合、聚类、预测）的数据特性和目标，选择了相应最适合的机器学习与统计模型。",
+      "innovation_points": [
+        "将朴素贝叶斯分类与二元线性回归有机结合，预测血肿扩张概率",
+        "结合K-means聚类与非线性最小二乘法，对患者水肿进展模式进行亚组分析与拟合",
+        "基于首次影像建立决策树回归模型，对患者90天预后评分进行预测"
+      ],
+      "formula_structure": "核心为多种模型组合：分类模型（朴素贝叶斯）输出概率与回归模型（线性/非线性）结合进行预测；使用非线性函数拟合时间序列数据；通过多元线性回归确定治疗方法权重。",
+      "sensitivity_approach": "通过比较不同回归模型（如局部加权回归 vs 非线性最小二乘）的残差来选择最佳模型；通过手肘法确定K-means聚类的最优簇数。",
+      "visualization_types": [
+        "散点图",
+        "残差图",
+        "拟合曲线图"
+      ],
+      "key_conclusions": "成功构建了预测出血性脑卒中患者血肿扩张和水肿进展的智能模型，并识别出不同患者亚组及相应最有效的治疗方法排序，为临床个性化诊疗提供了决策依据。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2023年优秀论文\\E\\E23102550019.pdf",
+      "_year_dir": "2023年优秀论文",
+      "_problem_type": "E"
+    },
+    {
+      "source": "F23102520378.pdf",
+      "category": "modeling",
+      "problem_type": "预测",
+      "year": "2023",
+      "award_level": "优秀奖",
+      "core_models": [
+        "U-Net",
+        "ConvLSTM",
+        "GAN-AR-U-Net"
+      ],
+      "model_selection_reason": "U-Net和ConvLSTM分别擅长空间特征提取和时间序列预测，结合二者优势以处理雷达数据的时空特性。",
+      "innovation_points": [
+        "融合传统物理方法（雨滴谱反推、模糊逻辑）与深度学习模型进行临近预报",
+        "构建了改进的GAN-AR-U-Net模型，引入注意力机制和残差结构缓解模糊效应",
+        "建立了基于模糊层次分析法-熵权法-逼近理想解排序法的双偏振雷达资料贡献度评估体系"
+      ],
+      "formula_structure": "核心为深度学习网络结构（如U-Net的编码器-解码器结构）和物理反演公式（如利用Z_H, Z_DR, K_DP反演粒子大小、相态、含水量的关系式）的结合。",
+      "sensitivity_approach": "在问题4中，通过构建综合贡献度指标体系，并分析双偏振雷达变量对降水微物理结构指标的贡献度及其灵敏度，进行灵敏度检验。",
+      "visualization_types": [
+        "雷达观测变量时序图",
+        "模型预测结果对比图",
+        "贡献度评估结果图"
+      ],
+      "key_conclusions": "融合传统物理方法和深度学习模型能有效提高强对流降水临近预报精度；通过数据增强（GAN）和模型优化（注意力机制、残差结构）可以缓解预报中的模糊效应；构建的综合贡献度指标体系能为数据融合策略优化提供参考。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2023年优秀论文\\F\\F23102520378.pdf",
+      "_year_dir": "2023年优秀论文",
+      "_problem_type": "F"
+    },
+    {
+      "source": "F23102690048.pdf",
+      "category": "modeling",
+      "problem_type": "预测",
+      "year": "2023",
+      "award_level": "优秀奖",
+      "core_models": [
+        "DRPP-Net (ConvLSTM框架)",
+        "SA-DRPP-DNet (融合CBAM和DOM)",
+        "PP-Net (U-Net框架融合swin transformer和ASPP)"
+      ],
+      "model_selection_reason": "针对短临强降水预测的高复杂度和强非线性特点，选择深度学习模型（ConvLSTM、U-Net）能有效捕捉时空序列特征和进行像素级预测。",
+      "innovation_points": [
+        "融合注意力机制CBAM和差值优化模块DOM以缓解预测结果的模糊效应",
+        "引入swin transformer和ASPP模块增强降水量定量估计模型的表征能力",
+        "验证双偏振雷达多模态数据融合对预测精度的提升贡献"
+      ],
+      "formula_structure": "基于ConvLSTM的序列预测框架结合U-Net的编码-解码结构，核心为深度学习网络的前向传播计算，未给出显式数学公式，但依赖损失函数（如RMSE）进行优化。",
+      "sensitivity_approach": "通过设计六种不同数据输入组合方案（如仅用Zh、融合ZDR/KDP等），对比模型精度指标（CSI、ETS、RMSE等），分析双偏振雷达数据对预测的贡献度。",
+      "visualization_types": [
+        "预测结果对比图（如雷达反射率因子分布）",
+        "模型精度指标对比表/图"
+      ],
+      "key_conclusions": "SA-DRPP-DNet和PP-Net模型对短临强降水预测具有良好的精度和泛用性；双偏振雷达数据（尤其是多模态融合）能显著提高预测精度，对降水预测具有高贡献度。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2023年优秀论文\\F\\F23102690048.pdf",
+      "_year_dir": "2023年优秀论文",
+      "_problem_type": "F"
+    },
+    {
+      "source": "A22100070190.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2022",
+      "award_level": "优秀奖",
+      "core_models": [
+        "基于FFT的距离估计算法",
+        "MTOEP算法（多重Toeplitz矩阵重构）"
+      ],
+      "model_selection_reason": "通过比较多种DOA估计算法在不同场景和SNR下的均方根误差，最终选取性能更好的MTOEP算法作为DOA估计算法。",
+      "innovation_points": [
+        "提出基于测向交叉定位的超分辨率定位算法，舍弃传统距离估计，通过移动平台运动和DOA估计实现精确定位",
+        "将基础算法与子阵分解和滑窗方法相结合，通过类平均方法减弱天线老化对定位的影响，提升算法鲁棒性"
+      ],
+      "formula_structure": "基于MIMO阵列信号模型，通过FFT进行频谱分析实现距离估计，利用MTOEP算法重构协方差矩阵进行相干信源的DOA估计",
+      "sensitivity_approach": "比较多种DOA估计算法在不同场景和SNR情况下的均方根误差，评估算法性能",
+      "visualization_types": [
+        "均方根误差对比图",
+        "定位结果分布图"
+      ],
+      "key_conclusions": "针对移动场景相干信源超分辨定位问题，采用FFT距离估计与MTOEP DOA估计的组合方法能有效实现定位；提出的测向交叉定位算法和抗老化改进方法具有较好的应用前景和鲁棒性。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2022年优秀论文\\A\\A22100070190.pdf",
+      "_year_dir": "2022年优秀论文",
+      "_problem_type": "A"
+    },
+    {
+      "source": "A22100130054.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2022",
+      "award_level": "优秀奖",
+      "core_models": [
+        "时空分块压缩感知算法",
+        "局部压缩感知算法"
+      ],
+      "model_selection_reason": "压缩感知利用物体在空间分布的稀疏性，能以远少于传统方法的数据量实现信号重建，适合超分辨率定位问题。",
+      "innovation_points": [
+        "时空分块压缩感知结合Dropout思想降低计算复杂度",
+        "局部压缩感知结合数据同化实现动态追踪"
+      ],
+      "formula_structure": "基于压缩感知的信号重建模型，通过稀疏表示和优化算法（如LASSO）求解，并引入连续优化提升分辨率。",
+      "sensitivity_approach": "在不同噪声强度（低、中、高噪声）的测试算例上运行算法，验证有效性与鲁棒性。",
+      "visualization_types": [
+        "极坐标定位结果图",
+        "算法运行时间对比图"
+      ],
+      "key_conclusions": "算法能有效实现静止与运动物体的超分辨率定位与追踪，解决了压缩感知在运算复杂度和信号重叠恢复方面的局限性。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2022年优秀论文\\A\\A22100130054.pdf",
+      "_year_dir": "2022年优秀论文",
+      "_problem_type": "A"
+    },
+    {
+      "source": "B22100070171.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2022",
+      "award_level": "优秀奖",
+      "core_models": [
+        "混合整数规划模型",
+        "均匀三阶段排样方式的生成算法（TUSP法）",
+        "顺序价值修正启发式算法（SVC法）",
+        "层次聚类算法"
+      ],
+      "model_selection_reason": "针对高复杂度的组合优化问题，采用混合整数规划模型进行精确描述，并设计启发式算法（TUSP法和SVC法）来高效求解近似最优解。",
+      "innovation_points": [
+        "采用“均匀栈的生成→条带生成→原片条带放置”的三阶段排样生成算法（TUSP法）",
+        "使用杰拉德距离定义订单材质相似性，并基于此进行层次聚类以实现订单组批",
+        "将排样优化与订单组批两个环节进行集成优化建模"
+      ],
+      "formula_structure": "基于三阶段匀质排样（栈宽度相同）的混合整数规划模型，优化目标为最小化板材原片使用数量，约束包括产品项数量不超过需求量、排样不重叠且符合三阶段齐头切工艺等。",
+      "sensitivity_approach": "对所用算法的复杂度进行了评估，并对模型的优缺点进行了分析。",
+      "visualization_types": [
+        "排样方案效果图",
+        "结果分析图表"
+      ],
+      "key_conclusions": "针对问题一（排样优化），在A1~A4数据集上实现了高板材利用率（94.08%至96.02%）；针对问题二（订单组批与排样），在B1~B5数据集上实现了板材利用率在82.11%至84.42%之间，验证了所提模型与算法的有效性。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2022年优秀论文\\B\\B22100070171.pdf",
+      "_year_dir": "2022年优秀论文",
+      "_problem_type": "B"
+    },
+    {
+      "source": "B22102860210.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2022",
+      "award_level": "一等奖",
+      "core_models": [
+        "混合整数线性规划（MILP）",
+        "混合整数非线性规划（MINLP）"
+      ],
+      "model_selection_reason": "MILP适用于结构清晰的二维切割优化问题，MINLP可刻画订单相似性与批次产能耦合的非线性关系。",
+      "innovation_points": [
+        "提出基于类平均距离的凝聚层次聚类算法实现订单相似度驱动的组批优化",
+        "设计融合贪心策略与深度优先搜索的列生成式启发式算法求解大规模三阶段‘一刀切’排样问题"
+      ],
+      "formula_structure": "目标函数为最小化总板材数（∑y_k）；约束含：需求满足约束（∑x_{ijk} ≥ d_j）、切割阶段兼容性约束、板材尺寸边界约束、0-1整数变量定义；相似度矩阵S_ij基于尺寸、数量、工艺属性加权余弦距离构造。",
+      "sensitivity_approach": "对订单需求波动（±5%、±10%）和板材规格（±10mm）进行双因素扰动实验，统计板材数变化率与利用率方差。",
+      "visualization_types": [
+        "热力图（订单相似度矩阵）",
+        "排样布局示意图（SVG格式嵌入）"
+      ],
+      "key_conclusions": "三阶段‘一刀切’约束下，贪心DFS算法可实现93%以上板材利用率；订单聚类组批可使总板材数降低12.4%~15.8%（相比随机组批），且相似度指标显著提升批次内排样协同性。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2022年优秀论文\\B\\B22102860210.pdf",
+      "_year_dir": "2022年优秀论文",
+      "_problem_type": "B"
+    },
+    {
+      "source": "C22103190082.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2022",
+      "award_level": "优秀奖",
+      "core_models": [
+        "单目标0-1整数规划模型",
+        "改进的遗传算法"
+      ],
+      "model_selection_reason": "该调度问题是NP-hard问题，无法直接求解最优解，因此采用启发式算法与改进遗传算法相结合的方法进行优化求解。",
+      "innovation_points": [
+        "利用启发式算法（多种调度策略）生成较优初始种群，提升遗传算法效率",
+        "创新性地开发PBS动态仿真程序，精准模拟车身调度状态",
+        "在遗传算法中灵活使用混沌序列构造交叉点和变异点，并利用矩阵运算描述车身状态"
+      ],
+      "formula_structure": "目标函数为四个优化目标的加权和：总得分 = 0.4*(100-不满足混动间隔的计数) + 0.3*(100-驱动类型不均衡块数) + 0.2*(100-返回道使用次数) + 0.1*(时间惩罚得分)，其中时间惩罚得分基于总调度时间计算。",
+      "sensitivity_approach": "通过改变输入数据（附件1和附件2）测试模型和算法的适应性与鲁棒性，比较不同调度策略（如全走4车道）下的得分差异。",
+      "visualization_types": [
+        "仿真状态时序图",
+        "优化目标得分对比表"
+      ],
+      "key_conclusions": "所建立的PBS优化调度模型结合改进遗传算法与仿真程序，能有效提高调度得分，减少生产时间，且在不同数据下表现稳定，具有较高的有效性和鲁棒性。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2022年优秀论文\\C\\C22103190082.pdf",
+      "_year_dir": "2022年优秀论文",
+      "_problem_type": "C"
+    },
+    {
+      "source": "C22103360057.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2022",
+      "award_level": "优秀论文",
+      "core_models": [
+        "混合整数规划模型",
+        "贪婪-模拟退火算法"
+      ],
+      "model_selection_reason": "针对PBS调度多目标优化问题，混合整数规划能精确描述约束，贪婪算法结合模拟退火能有效在可行解空间中寻找局部最优解。",
+      "innovation_points": [
+        "将多目标通过线性加权转化为总得分最大单目标",
+        "设计贪婪-模拟退火混合算法，利用贪婪快速构造初始解，模拟退火进行邻域搜索优化"
+      ],
+      "formula_structure": "以总得分最大为目标函数，包含车身动力属性间隔、驱动属性等比例、返回道次数、调度时间四个子目标的线性加权和，并嵌入移动顺序、优先处理等PBS约束条件。",
+      "sensitivity_approach": "通过对比附件1和附件2不同进车序列的优化结果，分析算法在不同数据分布下的性能表现，验证算法的普适性。",
+      "visualization_types": [
+        "结果对比表格",
+        "优化比例分析"
+      ],
+      "key_conclusions": "设计的贪婪-模拟退火算法能有效提升PBS调度总得分，证明了返回道在优化序列中的重要性，且算法对不同进车序列具有普适性，优化比例最高达104.7%。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2022年优秀论文\\C\\C22103360057.pdf",
+      "_year_dir": "2022年优秀论文",
+      "_problem_type": "C"
+    },
+    {
+      "source": "D22102920026.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2022",
+      "award_level": "优秀奖",
+      "core_models": [
+        "单目标优化模型",
+        "启发式算法与优先级队列结合的优化算法"
+      ],
+      "model_selection_reason": "因为问题是在多种约束下最小化流水线级数，属于典型的组合优化问题，适合建立优化模型并设计启发式算法求解。",
+      "innovation_points": [
+        "结合启发式算法与优先级队列设计优化算法，优先排布启发函数（到结束所需最少级数）最大的基本块以提高并行效率",
+        "在问题二中修改资源占用计算方式以处理共享资源条件，缓解资源瓶颈"
+      ],
+      "formula_structure": "目标函数为 min n（流水线总级数），约束条件包括数据依赖矩阵、控制依赖矩阵以及各级资源限制（TCAM≤1, HASH≤2, ALU≤56, QUALIFY≤64等）。",
+      "sensitivity_approach": "通过分析增加特定资源（如HASH、ALU）对流水线占用级数的影响，评估模型对资源的灵敏度。",
+      "visualization_types": [
+        "结果表格（展示流水线级数与分配的基本块编号）",
+        "资源利用率分析"
+      ],
+      "key_conclusions": "所提算法能有效缩短流水线级数（问题一44级，问题二32级），并充分利用芯片资源；资源共享（问题二）能缓解HASH和ALU的资源瓶颈，降低模型对这两种资源的灵敏度。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2022年优秀论文\\D\\D22102920026.pdf",
+      "_year_dir": "2022年优秀论文",
+      "_problem_type": "D"
+    },
+    {
+      "source": "D22102930009.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2022",
+      "award_level": "优秀奖",
+      "core_models": [
+        "0-1整数规划模型",
+        "贪婪-遗传混合算法"
+      ],
+      "model_selection_reason": "针对多约束组合优化问题，0-1整数规划能精确描述资源排布约束，结合贪婪-遗传算法能有效求解。",
+      "innovation_points": [
+        "结合贪婪算法局部优化与遗传算法全局搜索的混合求解策略",
+        "针对芯片流水线资源约束设计了特定的0-1规划模型"
+      ],
+      "formula_structure": "以最小化总级数Z为目标函数，约束包括数据依赖、控制依赖、各级资源上限（TCAM、HASH、ALU、QUALIFY）及基本块单级排布限制。",
+      "sensitivity_approach": "未明确描述敏感性分析，主要通过算法求解结果对比（如问题一与问题二级数、利用率变化）体现模型效果。",
+      "visualization_types": [
+        "资源占用分布图",
+        "级数递减趋势图"
+      ],
+      "key_conclusions": "问题一求得最优解为40级，总体资源利用率39.5%；问题二在放宽资源约束后得到23级排布，资源利用率提升至65.52%，模型具有实际应用价值。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2022年优秀论文\\D\\D22102930009.pdf",
+      "_year_dir": "2022年优秀论文",
+      "_problem_type": "D"
+    },
+    {
+      "source": "E22100160013.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2022",
+      "award_level": "优秀奖",
+      "core_models": [
+        "微分方程模型",
+        "LSTM时间序列模型",
+        "ARIMA时间序列模型",
+        "主成分分析",
+        "目标规划模型"
+      ],
+      "model_selection_reason": "针对草原放牧策略这一多因素、时序性的复杂系统问题，选用了微分方程描述动态影响、LSTM/ARIMA进行时序预测、主成分分析降维、目标规划进行优化，以综合解决不同子问题。",
+      "innovation_points": [
+        "将土壤湿度、植被生物量、化学性质及沙漠化/板结化等多个生态指标整合进一个统一的放牧策略优化框架",
+        "运用LSTM和ARIMA等多种时序模型对不同深度土壤湿度和土壤化学性质进行分层预测"
+      ],
+      "formula_structure": "核心为微分方程描述放牧强度对土壤湿度和植被生物量的动态影响，并结合主成分分析得到的沙漠化/板结化程度表达式，最终嵌入目标规划模型求解最优放牧策略。",
+      "sensitivity_approach": "通过主成分分析确定与沙漠化、板结化最相关的关键因素，并设定可逆界限（如0.4和0.3）进行阈值敏感性分析。",
+      "visualization_types": [
+        "折线图",
+        "箱线图"
+      ],
+      "key_conclusions": "通过建立综合模型预测了不同放牧强度下土壤湿度、化学性质等指标，并利用目标规划在可持续发展约束下求解出了放牧羊群数量的最大阈值，为制定科学放牧政策提供了依据。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2022年优秀论文\\E\\E22100160013.pdf",
+      "_year_dir": "2022年优秀论文",
+      "_problem_type": "E"
+    },
+    {
+      "source": "E22103040108.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2022",
+      "award_level": "优秀奖",
+      "core_models": [
+        "差分自回归移动平均模型",
+        "ARI预测模型",
+        "LSTM-SA模型"
+      ],
+      "model_selection_reason": "针对时序数据特性，选择差分自回归移动平均模型和ARI模型进行建模，并引入LSTM-SA模型进行验证以提高预测准确性。",
+      "innovation_points": [
+        "融合植被生物影响交互因子构建放牧-植被影响模型",
+        "结合Self-attention机制构建LSTM-SA模型进行二次验证",
+        "从物理、化学机理角度分别建立放牧影响模型"
+      ],
+      "formula_structure": "基于时序分析的差分自回归移动平均模型结构，融入多影响因子",
+      "sensitivity_approach": "通过构建验证模型（LSTM-SA）对比分析，验证主模型的准确性",
+      "visualization_types": [
+        "预测结果可视化图表",
+        "数据对比图表"
+      ],
+      "key_conclusions": "从植被生长和土壤物理化学性质角度建立了放牧影响模型，为草原放牧策略优化提供了量化依据，并通过多模型验证确保了预测可靠性。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2022年优秀论文\\E\\E22103040108.pdf",
+      "_year_dir": "2022年优秀论文",
+      "_problem_type": "E"
+    },
+    {
+      "source": "F22100090053.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2022",
+      "award_level": "优秀奖",
+      "core_models": [
+        "SIR传染病模型",
+        "熵权法评价模型",
+        "K-means聚类模型",
+        "多车型车辆路径规划模型(HVRP)"
+      ],
+      "model_selection_reason": "针对疫情传播预测、城区评价、物资点聚类和运输路径规划等不同子问题，分别选择了在各自领域内成熟且适用的经典模型。",
+      "innovation_points": [
+        "融合贪心算法、遗传算法和模拟退火算法，提出了自适应模拟退火遗传算法(GCTBASAGA)求解NP-hard的车辆路径问题",
+        "将建立的模型和算法封装成带有GUI界面的MATLAB软件，提升了模型的实用性和指导意义"
+      ],
+      "formula_structure": "核心为SIR模型的微分方程组(dS/dt, dI/dt, dR/dt)描述疫情传播，以及基于熵权法的多指标综合评价加权公式和基于距离、工作量（路程*服务人数）的优化目标函数。",
+      "sensitivity_approach": "摘要中未明确提及敏感性分析的具体做法。",
+      "visualization_types": [
+        "数据对比折线图",
+        "聚类结果分布图"
+      ],
+      "key_conclusions": "发放蔬菜包显著减缓了长春市疫情蔓延，使疫情峰值延后5天并减少约2万感染人数；通过优化将物资投放点从1556个减少到1000个，并确定了88个分拣场所；最终提出了一个包含上游（城区中心）、中游（分拣场所）、下游（小区）的配送网络及相应的多车型路径优化方案。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2022年优秀论文\\F\\F22100090053.pdf",
+      "_year_dir": "2022年优秀论文",
+      "_problem_type": "F"
+    },
+    {
+      "source": "F22101470006.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2022",
+      "award_level": "优秀奖",
+      "core_models": [
+        "多目标最大覆盖选址模型",
+        "基于三级拓扑网络的生活物资多周期分配优化模型"
+      ],
+      "model_selection_reason": "针对物资投放点选址和动态分配问题，分别采用多目标优化和网络流优化模型，以在覆盖需求和节约成本之间取得平衡。",
+      "innovation_points": [
+        "结合熵权-模糊综合评价与比例-熵权法优化投放点数量",
+        "构建储备中心-集散点-小区三级拓扑网络进行多周期动态分配"
+      ],
+      "formula_structure": "多目标函数（如覆盖人口最大化、成本最小化）结合距离约束、容量约束的网络流模型。",
+      "sensitivity_approach": "分析了储备中心服务半径、个数、单位运输成本等参数扰动对疫情控制效果的影响，验证模型鲁棒性。",
+      "visualization_types": [
+        "时间序列折线图",
+        "瀑布图",
+        "聚类结果图"
+      ],
+      "key_conclusions": "蔬菜包投放对疫情防控有积极作用；通过优化选址和三级网络分配，能有效提高物资发放效率并控制疫情扩散。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2022年优秀论文\\F\\F22101470006.pdf",
+      "_year_dir": "2022年优秀论文",
+      "_problem_type": "F"
+    },
+    {
+      "source": "A21102170024.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2021",
+      "award_level": "优秀奖",
+      "core_models": [
+        "两步法模型（加权变步长采样+近似SVD+Neumann级数求逆）",
+        "压缩感知模型（自适应Contourlet变换+SDP理论+MH-BCS-SPL算法）"
+      ],
+      "model_selection_reason": "针对大规模相关矩阵组计算与存储复杂度高的核心问题，选择能有效利用矩阵间关联性并显著降低复杂度的近似计算和压缩感知模型。",
+      "innovation_points": [
+        "提出加权变步长采样与最邻近插值结合的两步法模型，将矩阵组计算量从K次降至K/λ次",
+        "采用基于概率划分稀疏域（SDP）理论的压缩感知算法，结合帧间压缩思想实现矩阵间压缩"
+      ],
+      "formula_structure": "模型核心为两步法结构：V̂ = f₁(H), Ŵ = f₂(V̂)，其中f₁包含采样与插值，f₂包含近似SVD分解和基于Neumann级数的矩阵求逆近似。",
+      "sensitivity_approach": "未在摘要中明确描述敏感性分析的具体做法，主要通过对给定6组数据的计算结果（复杂度降低倍数、误差满足情况）来验证模型有效性。",
+      "visualization_types": [
+        "复杂度对比图表",
+        "误差分析图表"
+      ],
+      "key_conclusions": "所建模型在满足精度约束（ρ≥0.99，误差≤-30dB）的前提下，显著降低了相关矩阵组的计算与存储复杂度（问题一计算复杂度降低约500倍，问题二存储复杂度降低约70%）。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\A\\A21102170024.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "A"
+    },
+    {
+      "source": "A21102480004.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2021",
+      "award_level": "优秀奖",
+      "core_models": [
+        "基于近似矩阵分解的概率算法",
+        "Strassen算法",
+        "Coppersmith-Winograd算法"
+      ],
+      "model_selection_reason": "针对大规模相关矩阵计算与存储的优化问题，选择了基于近似矩阵分解的概率算法以在保证一定精度的前提下显著降低计算复杂度。",
+      "innovation_points": [
+        "将近似矩阵分解与概率算法结合，优化大规模相关矩阵的计算与存储",
+        "对比并改进了Strassen和Coppersmith-Winograd等快速矩阵乘法算法在特定问题上的应用"
+      ],
+      "formula_structure": "核心公式结构涉及矩阵分解（如低秩近似）和概率算法中的随机采样，以近似表示原矩阵，从而减少计算量。",
+      "sensitivity_approach": "通过改变算法参数（如采样大小、近似秩）并观察计算精度与效率的变化来进行敏感性分析。",
+      "visualization_types": [
+        "性能对比图（如计算时间对比）",
+        "精度误差分析图"
+      ],
+      "key_conclusions": "所提出的基于近似矩阵分解的概率算法能有效优化大规模相关矩阵的计算与存储，在1024维矩阵上相比传统方法（如Hermite插值）可提升约41.5%的效率；Strassen和Coppersmith-Winograd等快速矩阵乘法算法在特定规模下能进一步优化计算。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\A\\A21102480004.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "A"
+    },
+    {
+      "source": "B21100130067.pdf",
+      "category": "modeling",
+      "problem_type": "预测",
+      "year": "2021",
+      "award_level": "优秀奖",
+      "core_models": [
+        "XGBoost回归预测模型",
+        "基于EM算法的高斯混合模型(GMM)"
+      ],
+      "model_selection_reason": "XGBoost算法在处理复杂非线性关系、特征重要性评估和预测精度方面表现优异，适合用于基于多源数据的空气质量二次预报。",
+      "innovation_points": [
+        "在独立二次预报模型基础上，引入监测点间直线距离和风力影响距离变量，构建了协同预测模型",
+        "使用基于EM的GMM聚类结合t-SNE可视化，对气象条件影响污染物扩散的模式进行识别和分类"
+      ],
+      "formula_structure": "核心为XGBoost回归模型，其目标函数包含损失函数和正则化项，通过加法训练多个决策树来最小化目标函数，用于预测多种污染物浓度。",
+      "sensitivity_approach": "通过参数调优（如网格搜索或贝叶斯优化）来优化XGBoost模型参数，并通过与一次预报模型的对比测试来验证模型性能的优越性和稳定性。",
+      "visualization_types": [
+        "t-SNE降维可视化图",
+        "相关性分析热力图"
+      ],
+      "key_conclusions": "所构建的基于XGBoost的二次预报模型及协同预报模型，相比原有一次预报模型显著提高了对污染物浓度、AQI及首要污染物的预测准确度，尤其在臭氧浓度预测上改善明显。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\B\\B21100130067.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "B"
+    },
+    {
+      "source": "B21100790043.pdf",
+      "category": "modeling",
+      "problem_type": "预测",
+      "year": "2021",
+      "award_level": "优秀奖",
+      "core_models": [
+        "BP神经网络",
+        "随机森林"
+      ],
+      "model_selection_reason": "将二次预报问题分解为气象条件时序预测和污染物浓度误差修正两个阶段，分别选用BP神经网络和随机森林模型以处理非线性时序关系和误差修正问题。",
+      "innovation_points": [
+        "提出两阶段预测框架：先预测气象条件，再修正污染物浓度预报误差。",
+        "构建基于一次预报误差的随机森林修正模型，而非直接预测污染物浓度。",
+        "在问题四中尝试构建多监测点协同预报模型，并评估其有效性。"
+      ],
+      "formula_structure": "核心为两阶段模型：第一阶段，BP神经网络模型基于历史时序数据预测未来气象条件；第二阶段，随机森林模型以气象条件的一次预报误差为输入，预测污染物浓度的一次预报误差，最终二次预报值=一次预报值+修正误差。",
+      "sensitivity_approach": "未在摘要中明确提及敏感性分析的具体做法。",
+      "visualization_types": [
+        "聚类结果图",
+        "神经网络训练过程图"
+      ],
+      "key_conclusions": "针对单个监测点，所提出的两阶段（BP神经网络+随机森林）二次预报模型能有效预测污染物浓度；但通过合并多个邻近监测点数据构建的协同预报模型，并未能提升对目标监测点的预测准确度。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\B\\B21100790043.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "B"
+    },
+    {
+      "source": "C21100560011.pdf",
+      "category": "modeling",
+      "problem_type": "仿真",
+      "year": "2021",
+      "award_level": "优秀奖",
+      "core_models": [
+        "Hodgkin-Huxley神经元模型",
+        "化学突触模型（AMPA/GABA）"
+      ],
+      "model_selection_reason": "Hodgkin-Huxley模型是描述神经元电生理特性的经典模型，能准确模拟膜电位动态，适合研究帕金森病神经回路异常。",
+      "innovation_points": [
+        "基于Matlab/Simulink搭建了从神经元到基底神经节回路的完整仿真模型",
+        "通过对比健康与病态模型，深入分析了帕金森病症状机理（如丘脑过抑制、STN-GPe同步震荡）",
+        "系统评估了不同DBS刺激靶点（STN、GPi/SNr、GPe、Striatum）的效果与鲁棒性，并优化了刺激参数"
+      ],
+      "formula_structure": "核心为Hodgkin-Huxley模型的微分方程组，描述离子通道动力学；结合突触模型的传导方程，构建多核团连接的基底神经节网络。",
+      "sensitivity_approach": "通过改变DBS刺激参数（频率、幅值）和基底神经节激励电流参数，分析模型输出（如电位发放）的响应范围与鲁棒性。",
+      "visualization_types": [
+        "膜电位时序图",
+        "突触电流图",
+        "特征指标对比图"
+      ],
+      "key_conclusions": "确定STN为最佳DBS刺激靶点，优化参数为100Hz、130-150μA；进一步发现GPe靶点对不同激励参数具有最广泛的适应范围，优于其他靶点。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\C\\C21100560011.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "C"
+    },
+    {
+      "source": "C21102470060.pdf",
+      "category": "modeling",
+      "problem_type": "仿真",
+      "year": "2021",
+      "award_level": "优秀奖",
+      "core_models": [
+        "Hodgkin-Huxley (H-H) 神经元模型",
+        "基于化学突触的神经团模型"
+      ],
+      "model_selection_reason": "H-H模型是描述神经元电生理特性的经典模型，能精确模拟膜电位变化，适合研究电刺激下的神经元响应。",
+      "innovation_points": [
+        "将H-H模型从单个神经元扩展到包含化学突触的神经团模型，用于模拟基底神经节通路",
+        "对比分析了健康回路与帕金森病(PD)回路，并系统评估了不同DBS靶点（STN, GPi, GPe）的治疗效果"
+      ],
+      "formula_structure": "核心为H-H模型的微分方程组，描述膜电位V随时间变化：C_m * dV/dt = -sum(g_i * (V - E_i)) + I_stim，其中包含钠、钾离子通道电导的动态门控变量。",
+      "sensitivity_approach": "通过改变刺激电流的参数（如直流/交流的幅值、频率、脉冲宽度）进行数值模拟，观察并比较不同参数下神经元或神经团的放电模式（如电位峰值、发放频率）的变化。",
+      "visualization_types": [
+        "神经元膜电位随时间变化曲线图",
+        "不同通路（直接/间接）及不同状态（健康/PD）下神经团块的电位响应特征曲线图"
+      ],
+      "key_conclusions": "SNc多巴胺神经元的功能正常对基底神经节回路调控至关重要，其功能减弱是PD回路异常的关键；DBS治疗中，刺激靶点STN和GPi均有效，且治疗效果与刺激电流参数密切相关，同时提出刺激GPe可能是一个有潜力的替代靶点。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\C\\C21102470060.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "C"
+    },
+    {
+      "source": "D21101080006.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2021",
+      "award_level": "优秀奖",
+      "core_models": [
+        "随机森林回归模型",
+        "随机森林分类模型",
+        "目标规划模型"
+      ],
+      "model_selection_reason": "随机森林在回归和分类任务中均表现最佳，且能有效处理高维特征数据。",
+      "innovation_points": [
+        "结合回归预测模型与ADMET分类模型构建目标规划优化模型",
+        "使用遗传算法求解目标规划模型并辅以敏感性分析修正变量范围"
+      ],
+      "formula_structure": "目标规划模型：以pIC50为优化目标，以ADMET至少三个性质较好为约束条件，以20个分子描述符为决策变量。",
+      "sensitivity_approach": "采用控制变量法，观察20个自变量在-50%到+50%范围内以1%步长浮动时对因变量pIC50的影响，以修正变量取值范围。",
+      "visualization_types": [
+        "相关性图",
+        "模型拟合对比图",
+        "优化迭代曲线",
+        "优化前后pIC50分布对比图"
+      ],
+      "key_conclusions": "筛选出20个影响生物活性的主要分子描述符及其优化取值范围；建立的化合物活性优化模型能有效提高pIC50平均值并减小其波动，为抗乳腺癌候选药物的选择提供了理论依据。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\D\\D21101080006.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "D"
+    },
+    {
+      "source": "D21102700119.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2021",
+      "award_level": "优秀奖",
+      "core_models": [
+        "HGBRT (基于直方图的梯度增强回归树)",
+        "HGBCT (基于直方图的梯度增强分类树)",
+        "NSGA-III (第三代非支配排序遗传算法)"
+      ],
+      "model_selection_reason": "HGBRT/HGBCT在对比验证中表现出最小的预测误差和较高的分类精度，适合处理高维数据和非线性关系。",
+      "innovation_points": [
+        "采用投票加权法综合多种变量筛选方法（LASSO、相关系数、随机森林、互信息）确定最优变量子集",
+        "构建了结合生物活性（回归）和ADMET性质（分类）的双目标优化模型，并引入权重参数λ平衡两者",
+        "使用NSGA-III算法求解多目标优化问题，并对权重参数λ进行了敏感性分析以确定最优区间"
+      ],
+      "formula_structure": "双目标优化模型：最大化 f = λ * HGBRT(活性预测) + (1-λ) * HGBCT(药性分类)，约束为变量取值范围。",
+      "sensitivity_approach": "对权重参数λ进行取值分析，发现λ在0.5~0.6区间内模型可取得最大值，从而确定参数优化参考区间。",
+      "visualization_types": [
+        "变量重要性排序图",
+        "模型性能对比图（如误差对比）",
+        "参数敏感性分析图"
+      ],
+      "key_conclusions": "通过构建的HGBRT回归模型和HGBCT分类模型能有效预测化合物的生物活性和ADMET性质；采用NSGA-III算法求解双目标优化模型，在λ=0.5时得到一组最优解，且λ在0.5~0.6区间内模型性能最优。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\D\\D21102700119.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "D"
+    },
+    {
+      "source": "E21100030005.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2021",
+      "award_level": "优秀奖",
+      "core_models": [
+        "加权最小二乘法的三维Chan定位模型",
+        "有偏卡尔曼滤波模型",
+        "扩展卡尔曼滤波模型",
+        "Stacking集成分类模型"
+      ],
+      "model_selection_reason": "针对UWB定位中正常与异常（NLOS）数据的不同特性，分别选用Chan算法进行高精度定位，并引入卡尔曼滤波及其变体处理非视距误差和运动轨迹平滑问题。",
+      "innovation_points": [
+        "提出了基于贪心误差搜索的异常数据补偿模型，用于优化受遮挡锚点的测距值。",
+        "将有偏卡尔曼滤波引入非视距误差消除过程，并扩展至运动轨迹的平滑处理。",
+        "结合误差建模与多种机器学习及集成学习算法（如Stacking）进行异常数据分类，提升了分类准确率。"
+      ],
+      "formula_structure": "核心为基于测距方程的非线性优化模型，通过加权最小二乘法（如Chan算法）求解靶点坐标；引入状态空间方程（卡尔曼滤波）进行误差校正和轨迹预测。",
+      "sensitivity_approach": "通过均方根误差、误差分布直方图及误差值波动曲线在不同维度（1维、2维、3维）下对正常和异常数据分别进行模型精度检验与分析。",
+      "visualization_types": [
+        "误差分布直方图",
+        "误差值波动曲线图",
+        "数据联合可视化分析图"
+      ],
+      "key_conclusions": "所建立的模型能有效处理信号干扰下的UWB定位问题，通过数据校正、分类和滤波，显著提升了异常环境下的定位精度，并实现了运动轨迹的平滑与精确拟合。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\E\\E21100030005.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "E"
+    },
+    {
+      "source": "E21103860006.pdf",
+      "category": "modeling",
+      "problem_type": "预测|分类",
+      "year": "2021",
+      "award_level": "优秀奖",
+      "core_models": [
+        "山岭回归",
+        "麻雀搜索算法优化的极限学习机"
+      ],
+      "model_selection_reason": "针对不同数据特性（正常/异常）和任务（定位/分类）分别选用回归和分类模型，并结合寻优算法提升性能。",
+      "innovation_points": [
+        "结合粒子群算法、最小二乘法等寻优算法进行有差别的空间位置特征数据拓展",
+        "使用麻雀搜索算法优化极限学习机进行分类建模"
+      ],
+      "formula_structure": "对于异常数据，建立以锚点坐标为球心、测量距离为半径的球面方程，以靶点到三个球面距离之和为目标函数进行寻优。",
+      "sensitivity_approach": "未在摘要中明确描述敏感性分析做法。",
+      "visualization_types": [
+        "直方图"
+      ],
+      "key_conclusions": "正常数据定位精度较高（二维平均误差52.43mm），异常数据定位误差较大；分类模型整体准确率达94.53%，能有效区分信号是否受干扰。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\E\\E21103860006.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "E"
+    },
+    {
+      "source": "F21102540382.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2021",
+      "award_level": "优秀奖",
+      "core_models": [
+        "线性优化模型",
+        "改进的遗传算法"
+      ],
+      "model_selection_reason": "将复杂的机组优化排班问题简化为线性模型，便于表达飞行时间、执勤时间、休息时间等约束，并通过改进遗传算法高效求解。",
+      "innovation_points": [
+        "结合层次分析法将多目标优化问题转换为单目标优化问题",
+        "设计改进的遗传算法进行求解，并与CPLEX精确解对比验证"
+      ],
+      "formula_structure": "目标函数为多目标加权和（如满足航班配置、减少乘机次数、降低替补资格等），约束条件包括时间约束、身份约束、地点约束等线性约束。",
+      "sensitivity_approach": "通过层次分析法计算各目标权重，分析不同权重对结果的影响；同时对比改进遗传算法与CPLEX精确解，验证算法鲁棒性。",
+      "visualization_types": [
+        "结果对比表格",
+        "算法收敛曲线图"
+      ],
+      "key_conclusions": "对于A组算例，所有航班都满足最低机组配置；对于B组算例，存在部分航班不满足最低机组配置，且随着问题复杂度增加，不满足配置的航班数量增多。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\F\\F21102540382.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "F"
+    },
+    {
+      "source": "F21102870035.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2021",
+      "award_level": "优秀奖",
+      "core_models": [
+        "基于点边的多目标优化模型（网络流模型）",
+        "混合整数线性规划（MILP）"
+      ],
+      "model_selection_reason": "为了在遵守适航条例和航班计划的前提下，科学合理地安排机组以降低成本，并处理多目标、大规模整数规划问题。",
+      "innovation_points": [
+        "基于航班连接网络建立点边优化模型，能显式表达航班衔接和飞行员工作限制等约束",
+        "针对大规模问题，结合模型结构特点设计了加速求解策略（如预处理去掉冗余约束、分段处理、\"暂不考虑、求解、检验\"策略）以降低计算时间",
+        "采用线性化技术（RLT）将非线性整数规划模型转化为等价的混合整数线性规划模型"
+      ],
+      "formula_structure": "多目标优化模型，目标函数涉及最小化成本（如执勤成本）、最大化公平性等，约束包括航班配置数、乘机次数、替补资格使用数、时空衔接、基地约束、累计执勤和飞行用时容量等，通过标量化方法处理多目标求Pareto最优解。",
+      "sensitivity_approach": "针对数据集A，给出了权重比例的灵敏度分析（具体分析内容摘要未详述，但明确指出进行了此项分析）。",
+      "visualization_types": [
+        "数值结果表格（展示如不满足配置航班数、乘机人次、替补资格使用次数等）",
+        "算法流程或策略示意图（如分段处理、\"暂不考虑、求解、检验\"策略）"
+      ],
+      "key_conclusions": "模型能有效处理机组排班问题，对于小规模数据（数据集A）能在较短时间内给出满足所有或大部分航班配置要求的Pareto最优解；对于较大规模数据（数据集B），虽存在部分航班不满足配置，但能在可接受时间内给出可行解。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\F\\F21102870035.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "F"
+    },
+    {
+      "source": "A21102860073.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2021",
+      "award_level": "优秀奖",
+      "core_models": [
+        "基于相关系数的矩阵组计算复杂度优化模型",
+        "基于奇异值分解的矩阵压缩模型",
+        "基于空间正交基的矩阵压缩模型"
+      ],
+      "model_selection_reason": "针对大规模阵列矩阵计算和存储需求爆炸性增长的问题，选择基于矩阵相关性和稀疏性分析的优化模型，以降低计算复杂度和存储开销。",
+      "innovation_points": [
+        "利用矩阵间相关性（设定阈值λ_th）进行中间矩阵V的替代，优化SVD和逆矩阵计算",
+        "引入基于随机正交基的SVD算法（RSVD）和逐次超松弛迭代法（SOR）求解逆矩阵，显著降低运算复杂度",
+        "结合奇异值分解和空间正交基两种压缩方法，分别面向高压缩率和高计算效率场景"
+      ],
+      "formula_structure": "核心为基于相关系数阈值λ_th的矩阵替代策略，以及SVD截断奇异值、SOR迭代求逆的优化公式结构。",
+      "sensitivity_approach": "通过设定相关系数阈值λ_th进行敏感性分析，探讨不同阈值对计算复杂度与精度（ρ(W)>0.99）的影响。",
+      "visualization_types": [
+        "矩阵相关性分析图",
+        "稀疏性分布图",
+        "复杂度对比图",
+        "压缩性能曲线图"
+      ],
+      "key_conclusions": "提出的优化模型能在保持99.99%最小精度达标的条件下，将总运算复杂度降低72.8%；压缩模型可将存储复杂度降至原本的20%左右，或运算复杂度降低一个数量级以上。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\获数模之星提名奖（12篇）\\A21102860073.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "获数模之星提名奖（12篇）"
+    },
+    {
+      "source": "A21102910019.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2021",
+      "award_level": "数模之星提名奖",
+      "core_models": [
+        "乘幂法与降阶法",
+        "奇异值分解(SVD)压缩模型"
+      ],
+      "model_selection_reason": "利用矩阵间的强关联性，通过迭代算法（乘幂法）和分块矩阵奇异向量传递作为初始值，大幅降低计算复杂度。",
+      "innovation_points": [
+        "利用分块矩阵间的强关联性，将当前分块的右奇异向量作为下一分块迭代计算的初始向量，减少迭代次数",
+        "针对高行相关性的数据，采用基于SVD并保留主成分（贡献率>99%）的压缩方法，实现高压缩比"
+      ],
+      "formula_structure": "核心计算转化为矩阵 H*H 的最大特征值对应的特征向量求解，采用乘幂法迭代：v_{k+1} = (H*H) * v_k / ||(H*H) * v_k||，并结合降阶法处理次大特征向量。",
+      "sensitivity_approach": "在乘幂法和降阶法中增加了精度约束进行控制，通过调整迭代精度来平衡计算复杂度与模型精度。",
+      "visualization_types": [
+        "算法框图",
+        "结果数据表（未明确具体图表类型，从目录推断可能有流程框图和结果汇总表）"
+      ],
+      "key_conclusions": "设计的算法对给定相关矩阵组具有低复杂度特性，绝大多数情况下迭代2~3次即可收敛；基于SVD的压缩方法在满足精度(-30dB)要求下，压缩比可达65%。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2021年优秀论文\\获数模之星提名奖（12篇）\\A21102910019.pdf",
+      "_year_dir": "2021年优秀论文",
+      "_problem_type": "获数模之星提名奖（12篇）"
+    },
+    {
+      "source": "A20102460127.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2020",
+      "award_level": "优秀奖",
+      "core_models": [
+        "载波恢复（CR）算法模型",
+        "基于导频插值的相位噪声补偿模型"
+      ],
+      "model_selection_reason": "针对光通信中由色散和相位噪声引起的信号损伤，选择导频辅助的载波恢复算法是补偿相位噪声、实现可靠解调的标准且有效方法。",
+      "innovation_points": [
+        "将色散与相位噪声的耦合效应定量分析并融入模型",
+        "在算法设计中综合考虑性能（误码率）与芯片实现资源（位宽、导频开销）的联合优化"
+      ],
+      "formula_structure": "核心为基于导频相位差的插值模型（如线性插值）来估计并补偿连续信号的相位噪声，辅以色散补偿模块和定点量化噪声分析。",
+      "sensitivity_approach": "通过固定一个因素（如线宽或色散），遍历另一个因素和导频间隔，将系统误码率拟合为三维曲面并分析方程系数，以探究各参数对Pilot开销的影响。",
+      "visualization_types": [
+        "星座图",
+        "误码率（BER）与参数关系曲线",
+        "三维拟合曲面",
+        "位宽与误码率关系曲线",
+        "逻辑框图"
+      ],
+      "key_conclusions": "在RSNR代价小于0.3dB约束下，找到了使Pilot开销最小的最优导频间隔（2900，开销约3.45e-4）；通过联合优化位宽和导频间隔，可以在满足性能要求下最小化芯片资源消耗，其中10位定点数（1符号位，2整数位，7小数位）是一个有效折衷方案。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2020年优秀论文\\A\\A20102460127.pdf",
+      "_year_dir": "2020年优秀论文",
+      "_problem_type": "A"
+    },
+    {
+      "source": "A20102480161.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2020",
+      "award_level": "优秀奖",
+      "core_models": [
+        "数字通信系统模型",
+        "性能-资源统筹优化模型"
+      ],
+      "model_selection_reason": "针对光传输系统中色散和相位噪声的补偿问题，需要建立能够模拟信号传输、算法性能与硬件资源消耗的综合模型。",
+      "innovation_points": [
+        "提出了一套导频长度可变的载波恢复（CR）算法，并基于LS和MAP准则进行相噪估计与补偿",
+        "建立了综合考虑算法性能（RSNR代价）、硬件资源消耗（加法器、乘法器等）和定点量化位宽的统筹优化模型"
+      ],
+      "formula_structure": "核心模型为性能-资源综合代价函数，通过最小化该函数来优化导频开销、并行度和定点量化位宽等参数。",
+      "sensitivity_approach": "通过大量仿真（如1000次），分析线宽（10kHz~10MHz）和色散（0~10000ps/nm）波动对导频开销和RSNR代价的影响，并绘制关系曲线。",
+      "visualization_types": [
+        "BER-SNR曲线",
+        "RSNR代价与导频开销关系曲线",
+        "线宽/色散与导频开销关系曲面或曲线"
+      ],
+      "key_conclusions": "在线宽小于1MHz时，导频开销与线宽成正比，大于1MHz后开销迅速增长；导频开销基本不受色散波动影响；通过建立的优化模型，可以自动优化位宽和实现性，指导算法开发。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2020年优秀论文\\A\\A20102480161.pdf",
+      "_year_dir": "2020年优秀论文",
+      "_problem_type": "A"
+    },
+    {
+      "source": "B20100040057.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2020",
+      "award_level": "优秀奖",
+      "core_models": [
+        "基于慢特征分析的即时学习（SFA-JITL）辛烷值损失预测模型",
+        "GMM聚类与信息增益特征筛选模型"
+      ],
+      "model_selection_reason": "针对工艺流程数据更新和非线性、强耦合特点，SFA-JITL模型能有效提取慢特征并实现动态局部建模。",
+      "innovation_points": [
+        "结合慢特征分析（SFA）与即时学习（JITL）框架，构建了适用于流程工业数据更新的动态预测模型。",
+        "采用GMM聚类结合信息增益和斯皮尔曼相关系数进行高维变量筛选，提高了变量代表性和独立性。"
+      ],
+      "formula_structure": "模型未给出显式全局公式，核心是局部加权慢特征分析（SFA）提取慢变特征，并结合即时学习（JITL）框架进行在线预测与更新。",
+      "sensitivity_approach": "未明确描述敏感性分析，但通过模型对比（SFA-JITL与其他模型）验证了模型的有效性。",
+      "visualization_types": [
+        "t-SNE降维可视化聚类结果",
+        "迭代优化过程中辛烷值和硫含量变化轨迹图"
+      ],
+      "key_conclusions": "通过SFA-JITL模型预测并优化操作变量，能在保证硫含量达标的前提下显著降低辛烷值损失（部分样本降幅>30%），为石化企业提供了科学稳健的优化操作方案。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2020年优秀论文\\B\\B20100040057.pdf",
+      "_year_dir": "2020年优秀论文",
+      "_problem_type": "B"
+    },
+    {
+      "source": "B20100050019.pdf",
+      "category": "modeling",
+      "problem_type": "优化|预测",
+      "year": "2020",
+      "award_level": "优秀奖",
+      "core_models": [
+        "灰色关联度分析",
+        "BP神经网络预测模型",
+        "遗传算法优化模型"
+      ],
+      "model_selection_reason": "针对S-Zorb装置变量庞杂、高度非线性且相互耦合的特点，选用灰色关联度分析筛选关键变量，并构建BP神经网络进行预测，最后用遗传算法求解优化问题。",
+      "innovation_points": [
+        "采用灰色关联度分析从庞杂变量中筛选出30个关键影响指标",
+        "将构建的BP神经网络预测模型嵌入遗传算法中，用于获取操作变量变化对应的产品指标值"
+      ],
+      "formula_structure": "以筛选出的30个变量为输入层，产品辛烷值和含硫量为输出层，构建三层BP神经网络；以变量取值范围、产品辛烷值损失<30%和含硫量<5μg/g为约束，以辛烷值损失最小为目标构建优化模型。",
+      "sensitivity_approach": "在关键操作变量取值范围内，以给定步长变化，代入辛烷值损失预测模型，观测产品辛烷值和含硫量的变化，绘制曲线图分析影响。",
+      "visualization_types": [
+        "曲线图"
+      ],
+      "key_conclusions": "通过灰色关联度分析筛选出30个关键变量，构建的BP神经网络预测模型拟合度较好，并利用遗传算法优化模型可在满足硫含量要求的同时最小化辛烷值损失。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2020年优秀论文\\B\\B20100050019.pdf",
+      "_year_dir": "2020年优秀论文",
+      "_problem_type": "B"
+    },
+    {
+      "source": "C20102470319.pdf",
+      "category": "modeling",
+      "problem_type": "分类",
+      "year": "2020",
+      "award_level": "优秀奖",
+      "core_models": [
+        "卷积神经网络",
+        "支持向量机",
+        "随机森林",
+        "自适应半监督学习"
+      ],
+      "model_selection_reason": "针对脑电信号分类问题，比较了多种机器学习算法，根据训练效果和预测准确率选择最优模型。",
+      "innovation_points": [
+        "利用卷积核权重进行个性化的脑电通道选择",
+        "采用自适应半监督学习算法提升小样本预测稳定性",
+        "结合多种机器学习方法进行对比分析和模型融合"
+      ],
+      "formula_structure": "未提供具体公式，但描述了基于卷积神经网络、支持向量机等算法的分类判别结构，涉及特征提取和分类决策函数。",
+      "sensitivity_approach": "通过比较不同训练样本比例（0.1-0.9）下支持向量机的预测准确率变化，分析模型对训练数据量的敏感性。",
+      "visualization_types": [
+        "准确率对比图表",
+        "通道权重分布图",
+        "训练样本比例-准确率关系曲线"
+      ],
+      "key_conclusions": "卷积神经网络在目标识别任务中表现最佳；通过通道选择可提升识别准确率；支持向量机在睡眠分期预测中能以较少训练样本（20%）实现约71%的准确率。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2020年优秀论文\\C\\C20102470319.pdf",
+      "_year_dir": "2020年优秀论文",
+      "_problem_type": "C"
+    },
+    {
+      "source": "C20102480095.pdf",
+      "category": "modeling",
+      "problem_type": "分类",
+      "year": "2020",
+      "award_level": "优秀奖",
+      "core_models": [
+        "1D-CNN（带注意力机制）",
+        "CatBoost"
+      ],
+      "model_selection_reason": "1D-CNN适合处理一维时序脑电信号特征，CatBoost在处理表格数据和特征交互方面表现优异。",
+      "innovation_points": [
+        "引入注意力机制进行脑电通道筛选，得到适用于所有被试者的最优5通道组合",
+        "设计了结合先验信息（行列约束）和无先验信息两种伪标签生成策略的半监督学习框架"
+      ],
+      "formula_structure": "模型以卷积、池化、全连接层及注意力权重计算为核心结构，用于特征提取与分类。",
+      "sensitivity_approach": "通过改变训练集占总样本的比例（0.8, 0.7, 0.6, 0.5, 0.4），观察CatBoost模型分类正确率的变化。",
+      "visualization_types": [
+        "注意力权重分布图",
+        "分类准确率对比图"
+      ],
+      "key_conclusions": "基于注意力机制筛选出的5个最优通道（Fz, CP3, P3, P4, O1）在减少数据量的同时保持了较高的识别准确率；设计的半监督学习方法能有效利用无标签数据，提升模型性能。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2020年优秀论文\\C\\C20102480095.pdf",
+      "_year_dir": "2020年优秀论文",
+      "_problem_type": "C"
+    },
+    {
+      "source": "D20102470005.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2020",
+      "award_level": "优秀奖",
+      "core_models": [
+        "离散时间追逃博弈模型",
+        "阿波罗尼奥斯圆几何分析模型"
+      ],
+      "model_selection_reason": "追逃博弈模型能有效描述红蓝双方在约束条件下的动态对抗决策过程。",
+      "innovation_points": [
+        "引入阿波罗尼奥斯圆定理将追逃问题转化为几何分析问题，定义了不可逃离角",
+        "提出了“分配-包围-围困-收缩-抓捕”的多对多协同拦截策略"
+      ],
+      "formula_structure": "基于离散时间状态转移方程，结合几何约束（如不可逃离角）和支付函数（如逃离区面积）构建优化目标。",
+      "sensitivity_approach": "通过临界状态分析（如M_min的求解）和参数变化（如无人机数量对扫描半径的影响）进行敏感性讨论。",
+      "visualization_types": [
+        "逃离区边界示意图",
+        "策略路径规划图"
+      ],
+      "key_conclusions": "确定了蓝方无人机的可逃离区面积及临界通道带宽，并给出了红蓝双方在单对单、一对多及多对多场景下的最优机动与协同策略。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2020年优秀论文\\D\\D20102470005.pdf",
+      "_year_dir": "2020年优秀论文",
+      "_problem_type": "D"
+    },
+    {
+      "source": "D20102690110.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2020",
+      "award_level": "优秀奖",
+      "core_models": [
+        "定性微分对策模型（界栅模型）",
+        "动态博弈模型",
+        "生存型定量微分对策模型",
+        "多对一拦截模型",
+        "协同对抗模型（含拍卖算法）"
+      ],
+      "model_selection_reason": "微分对策模型能有效描述无人机追逃对抗的动态博弈过程，适用于求解最优控制和策略问题。",
+      "innovation_points": [
+        "将微分对策的界栅理论用于求解无人机可逃脱区域",
+        "结合动态博弈与矩阵对策求解纳什均衡突防策略",
+        "采用栅格化、蚁群算法、差分进化等智能算法求解复杂微分对策的数值解",
+        "引入Dubins路径与RRT算法进行路径规划与优化",
+        "运用分布式一致性拍卖算法（CBAA）进行多无人机目标分配"
+      ],
+      "formula_structure": "基于极大值原理构建哈密顿函数（H = λ^T * f + L），通过求解最优控制（如奇异解处理）并倒向积分运动方程得到最优轨线（界栅）。",
+      "sensitivity_approach": "通过仿真分析不同参数（如通道宽度、红方发射点位置）对哈密顿函数值或最优策略的影响，以确定临界值（如通道宽度下限92.2Km，上限108.8Km）。",
+      "visualization_types": [
+        "界栅区域图",
+        "最优轨线图",
+        "栅格化路径规划图",
+        "仿真结果对比表"
+      ],
+      "key_conclusions": "针对无人机集群对抗问题，基于微分对策理论构建了从二对一到多对多的系列模型，并运用智能算法求解了最优突防策略、拦截策略及通道带宽临界值，模型具有现实指导意义。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2020年优秀论文\\D\\D20102690110.pdf",
+      "_year_dir": "2020年优秀论文",
+      "_problem_type": "D"
+    },
+    {
+      "source": "E20102690219.pdf",
+      "category": "modeling",
+      "problem_type": "预测",
+      "year": "2020",
+      "award_level": "优秀奖",
+      "core_models": [
+        "三次多项式回归模型",
+        "全连接神经网络深度学习模型",
+        "基于暗通道先验的图像估计算法",
+        "二次指数平滑法预测模型"
+      ],
+      "model_selection_reason": "针对不同问题（关系分析、图像识别、无观测值估计、时间序列预测）的特点和数据特性，分别选择了拟合能力强、特征提取有效、物理原理支撑和趋势捕捉合适的模型。",
+      "innovation_points": [
+        "结合相关性分析与Lasso方法筛选气象因子，并分白天/夜间场景建立三次多项式关系",
+        "采用SIFT特征提取结合全连接神经网络处理图像数据以估计能见度",
+        "利用暗通道先验规律和车道线间距，设计不依赖观测值的能见度图像估计算法"
+      ],
+      "formula_structure": "问题一：基于筛选因子（RH, TEMP, WS2A）的三次多项式拟合；问题三：基于大气散射系数和车道线间距推算气象光学视程的物理公式。",
+      "sensitivity_approach": "未在摘要中明确描述敏感性分析的具体做法。",
+      "visualization_types": [
+        "能见度随时间变化曲线",
+        "模型拟合效果图（如R²展示）",
+        "特征重要性或相关性图表"
+      ],
+      "key_conclusions": "建立了能见度与关键气象因子的高精度（R²>0.94）多项式关系；开发的深度学习模型在训练集和验证集上表现良好（R²分别为0.94和0.86）；设计的无观测值算法能估算出105-140米范围的能见度；预测能见度升至150米以上的时间约为当日9时05分前后。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2020年优秀论文\\E\\E20102690219.pdf",
+      "_year_dir": "2020年优秀论文",
+      "_problem_type": "E"
+    },
+    {
+      "source": "E20104250114.pdf",
+      "category": "modeling",
+      "problem_type": "预测",
+      "year": "2020",
+      "award_level": "优秀奖",
+      "core_models": [
+        "多元线性回归模型",
+        "VGG16卷积神经网络深度学习模型",
+        "基于景深特征的能见度估计算法",
+        "线性回归预测模型",
+        "灰度预测模型"
+      ],
+      "model_selection_reason": "针对不同问题（关系描述、图像估计、趋势预测）和数据特点（结构化观测数据、视频图像、时间序列）选择了相应的经典或先进模型。",
+      "innovation_points": [
+        "结合视频景深特征（车道线消失点、灰度拐点）进行能见度估计，不依赖地面观测数据",
+        "将VGG16卷积神经网络应用于能见度估计，并对模型进行改进以提升精度和效率",
+        "综合使用多元线性回归、深度学习和图像处理算法解决能见度估计与预测的系列问题"
+      ],
+      "formula_structure": "多元线性回归方程：Y = β₀ + β₁X₁ + ... + βₖXₖ，其中Y为能见度（RVR_1A或MOR_1A），X为气象观测指标；VGG16为深度卷积神经网络结构；能见度估计算法基于图像处理（Canny边缘检测、Hough变换）提取车道线并计算消失点/灰度拐点。",
+      "sensitivity_approach": "利用可决系数R²和均方根误差MSE对回归模型进行验证与评价，分析模型拟合效果。",
+      "visualization_types": [
+        "相关系数矩阵表",
+        "能见度随时间变化曲线",
+        "混淆矩阵（用于分类精度分析）"
+      ],
+      "key_conclusions": "建立的多元线性回归模型能较好描述能见度与地面气象数据的关系；VGG16模型能较准确估计能见度（验证集精度86.2%，测试集88.3%）；基于视频图像的算法能有效估计能见度变化趋势；预测模型表明大雾在约三小时后散去。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2020年优秀论文\\E\\E20104250114.pdf",
+      "_year_dir": "2020年优秀论文",
+      "_problem_type": "E"
+    },
+    {
+      "source": "F20100070005.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2020",
+      "award_level": "优秀奖",
+      "core_models": [
+        "基于供油模式的混合超启发式方法",
+        "差分进化算法"
+      ],
+      "model_selection_reason": "问题涉及超高维连续变量优化，通过引入供油模式将其转化为离散优化问题，并采用超启发式方法高效搜索规则以降低问题维度与约束处理难度。",
+      "innovation_points": [
+        "提出基于供油模式的混合超启发式方法，将连续优化问题转化为离散优化问题",
+        "采用遗传编程自动设计供油模式选择规则，避免人为设计规则的局限性",
+        "设计多阶段优化框架，结合差分进化算法对初始油量和供油速度进行精细优化"
+      ],
+      "formula_structure": "以飞行器质心位置与理想质心（或空载质心）的欧氏距离最大值为目标函数，约束包括供油连续性、油箱容量、供油速度、剩余油量等，通过几何关系建立质心位置与油箱油量、飞行器姿态（俯仰角）的数学模型。",
+      "sensitivity_approach": "未在摘要中明确提及具体的敏感性分析做法。",
+      "visualization_types": [
+        "质心变化曲线图"
+      ],
+      "key_conclusions": "所建立的模型和提出的混合超启发式方法能有效制定高质量的供油策略，显著降低了飞行器瞬时质心与理想质心的最大偏差（如问题二降至0.10233m），并优化了初始油量分配与总供油量。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2020年优秀论文\\F\\F20100070005.pdf",
+      "_year_dir": "2020年优秀论文",
+      "_problem_type": "F"
+    },
+    {
+      "source": "F20102480125.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2020",
+      "award_level": "优秀奖",
+      "core_models": [
+        "贪心算法",
+        "聚类修正算法"
+      ],
+      "model_selection_reason": "为在复杂约束下快速求解供油策略这一动态优化问题，采用贪心算法逐时间节点优化，并结合聚类方法修正以满足连续供油等约束。",
+      "innovation_points": [
+        "结合贪心与聚类方法迭代求解满足所有约束的最优可行解",
+        "在允许少量燃油浪费的前提下显著降低质心偏移",
+        "对存在俯仰角的情况采用平飞状态近似简化非线性计算"
+      ],
+      "formula_structure": "核心为飞行器质心坐标计算模型，通过几何方法（如多边形三角化）求解各油箱质心，再经坐标系转换和质点系质心公式合成整体质心，并与理想质心计算欧氏距离偏差。",
+      "sensitivity_approach": "通过对比允许燃油浪费与不允许浪费两种策略下的质心偏差结果（偏差增大约1790倍），分析燃油浪费容忍度对优化目标（质心偏差）的敏感性影响。",
+      "visualization_types": [
+        "结果数据表格",
+        "可能包含质心轨迹或偏差曲线图（摘要未明确提及具体图表）"
+      ],
+      "key_conclusions": "允许少量计划耗油浪费（如20%）的供油策略能极大降低飞行过程中实际质心与理想质心的最大偏差；对于存在俯仰角的复杂情况，采用分段平飞近似和分时段固定供油策略，能在可接受误差内有效求解。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2020年优秀论文\\F\\F20102480125.pdf",
+      "_year_dir": "2020年优秀论文",
+      "_problem_type": "F"
+    },
+    {
+      "source": "A19100030004.pdf",
+      "category": "modeling",
+      "problem_type": "预测",
+      "year": "2019",
+      "award_level": "优秀奖",
+      "core_models": [
+        "CatBoost",
+        "Cost 231-Hata模型"
+      ],
+      "model_selection_reason": "CatBoost在非线性传播特征建模中表现优异，且对地理、环境、天线参数等多源异构输入具有强泛化能力。",
+      "innovation_points": [
+        "融合传统无线传播模型（Cost 231-Hata）作为先验特征嵌入CatBoost输入",
+        "设计多尺度路径损耗残差校正机制，提升 urban micro-cell 场景预测精度"
+      ],
+      "formula_structure": "PL_pred = PL_Hata + f_catboost(Δh_b, Δh_m, d, f_c, building_density, clutter_class, ...)",
+      "sensitivity_approach": "采用Shapley值分析各输入变量（如基站高度、频率、距离、地物分类）对路径损耗预测的边际贡献",
+      "visualization_types": [
+        "SHAP summary plot",
+        "residual vs. distance scatter plot"
+      ],
+      "key_conclusions": "所提混合模型在5G urban micro-cell测试场景中RMSE为9.07421 dB，较纯Hata模型降低32.6%；地物复杂度与基站-终端高度差是路径损耗最敏感的两大因素。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2019年优秀论文\\A\\A19100030004.pdf",
+      "_year_dir": "2019年优秀论文",
+      "_problem_type": "A"
+    },
+    {
+      "source": "A19100270008.pdf",
+      "category": "modeling",
+      "problem_type": "预测",
+      "year": "2019",
+      "award_level": "优秀奖",
+      "core_models": [
+        "GBDT与多层神经网络融合模型",
+        "单GBDT模型"
+      ],
+      "model_selection_reason": "传统GBDT模型拟合效果不佳，因此将其预测输出与多种特征融合后输入多层神经网络进行多目标学习，以同时优化PCRR和RMSE指标。",
+      "innovation_points": [
+        "融合GBDT预测输出与经验、原始、统计特征构建多层神经网络进行多目标学习",
+        "通过因子分析和无线电波传播特性提取了19个有效统计特征（如波频影响因子、各类损耗因子等）"
+      ],
+      "formula_structure": "模型未给出单一显式核心公式，其结构为特征工程（提取19个特征）→ GBDT初步预测 → 将GBDT输出与原始特征融合 → 输入多层神经网络进行多目标优化（同时最小化RMSE和优化PCRR）。",
+      "sensitivity_approach": "文中未明确描述系统的敏感性分析做法。",
+      "visualization_types": [
+        "数据可视化图（具体类型未指明）",
+        "任务示意图"
+      ],
+      "key_conclusions": "基于AI的融合预测模型在线下取得了22.5834%的PCRR和8.5807的RMSE；发现传统经验模型特征帮助有限，而位置特征和统计特征对模型预测帮助很大。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2019年优秀论文\\A\\A19100270008.pdf",
+      "_year_dir": "2019年优秀论文",
+      "_problem_type": "A"
+    },
+    {
+      "source": "B19100030006.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2019",
+      "award_level": "优秀奖",
+      "core_models": [
+        "基于光轴的张角模型",
+        "离线特征匹配与角距匹配模型"
+      ],
+      "model_selection_reason": "针对光轴位姿解算和星图识别两个核心问题，分别选择了基于几何关系的张角模型和基于特征匹配的算法模型，以平衡精度与计算效率。",
+      "innovation_points": [
+        "针对同一问题提出多种模型并比较速度与精度，如矩阵可逆性讨论和解析求解方法",
+        "提出使用OLS估计提高光轴位姿解算精度的新思路",
+        "引入角距误差上限估计和星表分块策略提升算法鲁棒性和效率"
+      ],
+      "formula_structure": "核心为建立从星敏感器坐标系到天球坐标系的映射关系矩阵R，通过星敏感器几何信息、星图识别信息和恒星坐标信息求解，涉及线性误差项优化和泰勒一阶展开误差分析。",
+      "sensitivity_approach": "通过引入泰勒一阶展开将坐标误差剥离为MΔa形式，分析误差上界与‖M‖‖Δa‖的关系，并通过仿真比较不同星组合和拟合方法（如带约束OLS）的精度。",
+      "visualization_types": [
+        "仿真结果对比图表",
+        "误差分析图表"
+      ],
+      "key_conclusions": "在光轴位姿解算中，矢量信息比标量信息精度更高；在星图识别中，通过星表分块和角距误差上限估计的算法能有效降低计算复杂度并提升鲁棒性，识别精度可通过高阶星组匹配进一步提高。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2019年优秀论文\\B\\B19100030006.pdf",
+      "_year_dir": "2019年优秀论文",
+      "_problem_type": "B"
+    },
+    {
+      "source": "B19102690067.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2019",
+      "award_level": "优秀奖",
+      "core_models": [
+        "空间几何解析模型",
+        "最优化模型"
+      ],
+      "model_selection_reason": "星图识别和姿态解算问题本质上是基于空间几何关系和最优匹配的优化问题。",
+      "innovation_points": [
+        "设计了'先同步匹配，再相邻验证'的星图识别算法",
+        "提出了基于角距和几何分布的星点选取优化策略"
+      ],
+      "formula_structure": "核心公式基于空间三点共线及平面方程，通过星像点到投影中心的距离和成像平面法向量求解光轴指向的天球坐标(α, δ)。",
+      "sensitivity_approach": "通过误差分析，从'三点确定平面'的几何原理和角距相对误差两个角度，分析星点几何位置（角距大小、分布均匀性）对解算精度的影响。",
+      "visualization_types": [
+        "天球坐标系示意图",
+        "星点几何分布图",
+        "算法匹配结果表"
+      ],
+      "key_conclusions": "提出的星图识别算法具有存储量小、识别快、抗干扰能力强的优势，并成功识别出测试星图中的'假星'；星点选取应遵循角距大、不共线且分布均匀的原则以提高解算精度。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2019年优秀论文\\B\\B19102690067.pdf",
+      "_year_dir": "2019年优秀论文",
+      "_problem_type": "B"
+    },
+    {
+      "source": "C19100030017.pdf",
+      "category": "modeling",
+      "problem_type": "优化|预测|评价",
+      "year": "2019",
+      "award_level": "一等奖",
+      "core_models": [
+        "交比不变性几何模型",
+        "EPnP相机位姿估计模型",
+        "RANSAC视频运动补偿模型",
+        "SafeUAV深度预测模型"
+      ],
+      "model_selection_reason": "针对单目视觉下缺乏尺度和深度信息的核心难点，选择兼具几何可解释性与鲁棒性的射影几何模型（交比不变性、灭点约束）作为主干，并融合RANSAC抗噪、EPnP位姿估计与SafeUAV数据驱动深度估计以实现多场景适配。",
+      "innovation_points": [
+        "提出多算法融合的灭点检测框架（霍夫变换+Gabor小波+线性回归）并采用交叉验证提升鲁棒性",
+        "将交比不变性从单幅图像拓展至动态平面视频序列，结合隐含尺度线索与地平线几何约束实现无标定距离估计"
+      ],
+      "formula_structure": "交比公式 (A,B;C,D) = (AC/BC)/(AD/BD)，结合灭点坐标v与相机内参K推导单应矩阵H = K[R|t]，像素坐标u = H·X_world（齐次坐标）",
+      "sensitivity_approach": "通过扰动灭点坐标、内参初值及RANSAC采样次数，定量分析各参数对距离估计误差的偏导和相对误差变化率",
+      "visualization_types": [
+        "灭点检测对比热力图",
+        "去抖前后帧间运动矢量场图",
+        "深度预测伪彩色图",
+        "等高度网格投影可视化图"
+      ],
+      "key_conclusions": "灭点精度是单目距离估计的主导误差源；RANSAC运动补偿可使视频距离估计误差降低约42%；在无标定尺度条件下，利用地平线与交比不变性可实现<8%相对误差的距离估计；SafeUAV深度图结合射影几何可支撑立体视频下分层距离建模。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2019年优秀论文\\C\\C19100030017.pdf",
+      "_year_dir": "2019年优秀论文",
+      "_problem_type": "C"
+    },
+    {
+      "source": "C19102480006.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2019",
+      "award_level": "优秀奖",
+      "core_models": [
+        "消隐点测距法",
+        "透视变换法",
+        "单双目成像转换法",
+        "单目视觉SLAM算法",
+        "SFM算法"
+      ],
+      "model_selection_reason": "针对不同视觉情报场景（单图、视频、无人机航拍）的空间距离计算需求，选择相应的计算机视觉几何模型与算法。",
+      "innovation_points": [
+        "将单目图像通过连续帧转换为等效双目图像进行测距",
+        "结合三维重建算法（SFM）与单目视觉SLAM算法进行点云降噪与结构可视化"
+      ],
+      "formula_structure": "基于相机成像几何（内参矩阵K、外参矩阵T）与透视投影原理，通过已知参照物尺度反算目标距离。",
+      "sensitivity_approach": "通过使用不同算法（如深度学习深度估计）对同一问题进行交叉验证，以评估结果稳定性。",
+      "visualization_types": [
+        "三维点云图",
+        "结构特征可视化图"
+      ],
+      "key_conclusions": "所建立的系列模型能够有效解决从单张图片到无人机视频等多种视觉情报下的空间距离、尺寸、速度估算问题，算法应用面广且效果优良。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2019年优秀论文\\C\\C19102480006.pdf",
+      "_year_dir": "2019年优秀论文",
+      "_problem_type": "C"
+    },
+    {
+      "source": "D19100010050.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2019",
+      "award_level": "优秀奖",
+      "core_models": [
+        "随机搜索与聚类分析结合模型",
+        "径向基核化主成分分析（KernelPCA）与BIRCH层次聚类模型",
+        "自编码器（AutoEncoder）优化模型"
+      ],
+      "model_selection_reason": "针对汽车行驶工况构建问题，为克服随机搜索的随机性大和聚类分析误差大的缺点，创新性地结合了多种方法进行序列优化。",
+      "innovation_points": [
+        "提出以聚类中心的邻域作为候选集进行带约束搜索，结合了聚类与搜索的优点",
+        "首次提出使用自编码器（AutoEncoder）直接优化已有工况的特征参数误差"
+      ],
+      "formula_structure": "模型核心在于通过特征参数（如平均速度、平均行驶速度、平均加速度、平均减速度、怠速时间比例等11项）构建评估体系，并最小化构建工况与原始数据特征参数之间的误差率。",
+      "sensitivity_approach": "论文通过比较不同方法（随机搜索、PCA+K-means、KernelPCA+BIRCH、AutoEncoder优化）得到的误差率结果（分别为14.81%、9.40%、3.18%、2.94%、2.43%）来展示模型改进的有效性和稳定性。",
+      "visualization_types": [
+        "特征参数对比表",
+        "误差率比较图表",
+        "汽车行驶工况速度-时间曲线图"
+      ],
+      "key_conclusions": "提出的结合聚类中心邻域搜索的方法显著优于已有算法，将误差率从9.40%降至3.18%；进一步采用核化PCA、BIRCH聚类和自编码器优化后，误差率可进一步降至2.43%，为构建高精度、代表性的汽车行驶工况提供了先进方法。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2019年优秀论文\\D\\D19100010050.pdf",
+      "_year_dir": "2019年优秀论文",
+      "_problem_type": "D"
+    },
+    {
+      "source": "D19102470244.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2019",
+      "award_level": "优秀奖",
+      "core_models": [
+        "主成分分析(PCA)",
+        "K-means聚类分析"
+      ],
+      "model_selection_reason": "PCA用于对高维运动学特征参数进行降维，K-means用于对降维后的片段进行聚类，以提取代表性的行驶模式。",
+      "innovation_points": [
+        "提出结合线性插值的拉格朗日插值法处理缺失数据",
+        "基于片段长度分布和实际特征，参考WLTP提出了运动学片段筛选的三条准则"
+      ],
+      "formula_structure": "核心为PCA降维公式（特征值分解）和K-means聚类目标函数（最小化类内距离平方和），具体公式未在摘要中展开。",
+      "sensitivity_approach": "未在摘要中明确描述敏感性分析做法。",
+      "visualization_types": [
+        "特征参数矩阵",
+        "聚类结果图",
+        "行驶工况曲线图"
+      ],
+      "key_conclusions": "构建了一条时长1221秒的汽车行驶工况曲线，并通过误差分析（相对误差小于8%）和油耗特征评价验证了其合理性。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2019年优秀论文\\D\\D19102470244.pdf",
+      "_year_dir": "2019年优秀论文",
+      "_problem_type": "D"
+    },
+    {
+      "source": "E19102470046.pdf",
+      "category": "modeling",
+      "problem_type": "预测",
+      "year": "2019",
+      "award_level": "优秀奖",
+      "core_models": [
+        "多变量线性回归模型",
+        "基于随机森林算法的多变量非线性模型",
+        "ARIMA时间序列模型"
+      ],
+      "model_selection_reason": "为了全面刻画气候变化的线性、非线性及时间序列特性，并对比不同模型的预测效果和解释性。",
+      "innovation_points": [
+        "提出极端天气态势的三种模式（A、B、C模式）进行量化分析",
+        "提出“全球气候异常”和“全球气候振荡热移”新概念替代“全球变暖”"
+      ],
+      "formula_structure": "多变量回归模型（线性与非线性）结合时间序列模型（ARIMA），核心为建立全球温度与多影响因素（如温室气体、太阳辐射等）之间的关联方程。",
+      "sensitivity_approach": "通过构建并对比三种不同原理的预测模型（线性回归、随机森林、ARIMA），分析各自预测结果的优缺点和合理性，以此评估模型对假设和输入因素的敏感性。",
+      "visualization_types": [
+        "时空变化趋势图",
+        "关联性分析图",
+        "预测结果对比图"
+      ],
+      "key_conclusions": "全球气候变化受多因素影响，未来25年预测显示变暖趋势；极端天气变化接近C模式（全球平均温度升高，极热频次增加，极寒频次降低），局地极寒与全球变暖不矛盾，可用“全球气候异常”等新概念描述其复杂性。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2019年优秀论文\\E\\E19102470046.pdf",
+      "_year_dir": "2019年优秀论文",
+      "_problem_type": "E"
+    },
+    {
+      "source": "E19102540248.pdf",
+      "category": "modeling",
+      "problem_type": "预测",
+      "year": "2019",
+      "award_level": "优秀奖",
+      "core_models": [
+        "鲁棒变分回声状态网络预测方法",
+        "分层贝叶斯时空模型"
+      ],
+      "model_selection_reason": "针对全球气候数据的非线性、高维和复杂时序特征，选择具有鲁棒性和自适应能力的回声状态网络进行预测，以处理数据中的不确定性和非线性关系。",
+      "innovation_points": [
+        "结合多因素影响的鲁棒变分回声状态网络预测方法",
+        "采用分层贝叶斯时空模型分析全球变暖与局地极寒现象的关联性"
+      ],
+      "formula_structure": "回声状态网络（ESN）通过随机生成且固定的储备池（reservoir）对输入序列进行非线性映射，再通过线性输出层进行预测，其核心是动态系统的状态更新和输出计算。",
+      "sensitivity_approach": "通过对比模拟预测值与实际观测值验证模型有效性，并与其他预测模型进行对比，证明模型的优势。",
+      "visualization_types": [
+        "描述性统计分析图表",
+        "EOF分解模态图"
+      ],
+      "key_conclusions": "建立了精度高、鲁棒性强的气候预测模型，并分析了全球变暖与局地极寒现象之间的复杂关系，表明两者并不矛盾。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2019年优秀论文\\E\\E19102540248.pdf",
+      "_year_dir": "2019年优秀论文",
+      "_problem_type": "E"
+    },
+    {
+      "source": "F19102510081.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2019",
+      "award_level": "优秀奖",
+      "core_models": [
+        "0-1多目标整数规划模型",
+        "自适应改进型Dijkstra算法",
+        "自适应型蚁群算法"
+      ],
+      "model_selection_reason": "将航迹规划问题转化为0-1多目标整数规划问题，便于处理多约束和离散校正点选择。",
+      "innovation_points": [
+        "构建邻接距离网络将连续空间问题离散化",
+        "提出自适应改进型Dijkstra算法与蚁群算法结合的混合求解策略",
+        "采用分阶段优化方法（先满足约束再优化轨迹）"
+      ],
+      "formula_structure": "多目标整数规划：目标函数为最小化航迹长度和校正次数，约束条件包括误差累积约束（垂直/水平误差≤阈值）、校正可行性约束（误差≤α/β）和路径连续性约束。",
+      "sensitivity_approach": "通过放松约束条件（如问题三中放松校正节点选择）和改变参数（如校正失败概率影响）来观察模型输出的变化，分析成功概率与路径长度的权衡。",
+      "visualization_types": [
+        "航迹规划路径图（直线黑色，圆弧红色）",
+        "网络拓扑图"
+      ],
+      "key_conclusions": "对于附件一和附件二数据，分别求得了满足多约束条件的最优航迹，在问题三中通过调整策略实现了100%的成功到达概率，但航迹长度有所增加。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2019年优秀论文\\F\\F19102510081.pdf",
+      "_year_dir": "2019年优秀论文",
+      "_problem_type": "F"
+    },
+    {
+      "source": "F19102690110.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2019",
+      "award_level": "优秀奖",
+      "core_models": [
+        "改进的Dijkstra算法",
+        "多约束航迹规划模型"
+      ],
+      "model_selection_reason": "针对多约束条件下的航迹规划问题，选择改进的Dijkstra算法以实现快速、高效的路径搜索。",
+      "innovation_points": [
+        "提出了改进的Dijkstra算法，降低了算法复杂度",
+        "构建了多约束条件下的航迹规划模型，并进行了敏感性分析"
+      ],
+      "formula_structure": "算法复杂度为 O(V1 * V2 * ε + V2 * log V2)，其中V1、V2为节点数，ε为约束条件数量。",
+      "sensitivity_approach": "通过改变约束参数（如威胁区域半径）来分析对航迹长度和规划时间的影响。",
+      "visualization_types": [
+        "航迹规划结果图",
+        "敏感性分析对比图"
+      ],
+      "key_conclusions": "所提改进算法能有效规划出满足多约束条件的航迹，在测试案例中航迹长度分别为103512m和109336m，规划时间分别为9秒和12秒，且对威胁区域半径变化敏感。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\国赛论文\\2019年优秀论文\\F\\F19102690110.pdf",
+      "_year_dir": "2019年优秀论文",
+      "_problem_type": "F"
+    },
+    {
+      "source": "A类-O奖--55069.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2017",
+      "award_level": "一等奖",
+      "core_models": [
+        "AHP",
+        "多目标优化模型（集合覆盖）",
+        "TOPSIS",
+        "遗传算法",
+        "联合调度仿真模型"
+      ],
+      "model_selection_reason": "AHP适用于多准则决策的权重确定，集合覆盖建模契合‘最小数量+全覆盖需求’的选址本质，遗传算法能有效求解非线性、离散、多约束的选址与调度优化问题。",
+      "innovation_points": [
+        "将大坝重建策略优选（AHP）与分布式小坝布局优化（多目标集合覆盖）分层耦合",
+        "基于气候年型（四类年）划分构建动态联合调度仿真框架，并嵌入遗传算法实现多坝协同水文调节"
+      ],
+      "formula_structure": "min Σx_i （小坝数量） + λ·[1 - TOPSIS得分]；s.t. Σa_ij·x_i ≥ d_j（覆盖约束），x_i ∈ {0,1}；其中a_ij表第i个候选位置对第j个需求点的覆盖能力，d_j为j点水/电需求阈值",
+      "sensitivity_approach": "通过移除关键城市节点、修改区域经济指标测度、扰动发电输出系数等情景，分析选址结果与联合调度性能指标（如缺水率、弃水电量）的变化幅度",
+      "visualization_types": [
+        "地理热力图（小坝选址分布）",
+        "箱线图（四类年型月径流分布）",
+        "TOPSIS排序雷达图（三方案综合评价）"
+      ],
+      "key_conclusions": "选项3（新建12座分布式小坝并联合调度）为最优策略；其在成本可控前提下保障3.5百万人口安全，并提升全流域水资源与能源调度韧性；敏感性表明选址数量稳健，但部分位置对需求点变更敏感。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\美赛论文\\2017美赛特等奖原版论文集\\A\\A类-O奖--55069.pdf",
+      "_year_dir": "",
+      "_problem_type": "A"
+    },
+    {
+      "source": "A类-O奖--55280.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2017",
+      "award_level": "一等奖",
+      "core_models": [
+        "iMoDS (Integrated Model of Dams in Series)",
+        "遗传算法",
+        "AHP (层次分析法)"
+      ],
+      "model_selection_reason": "为了在满足总蓄水能力的前提下，优化一系列小水坝的数量、位置和高度，以平衡成本、安全性和发电能力等多目标。",
+      "innovation_points": [
+        "提出了集成系列水坝模型(iMoDS)，包含风险成本、供电能力和系列安全三个子模型",
+        "结合了物理公式（曼宁公式）、仿真（3ds MAX）和多目标优化算法（遗传算法）进行综合分析与设计"
+      ],
+      "formula_structure": "模型核心由三个子模型集成：风险成本模型（基于可接受风险比Pf平衡成本与安全）、系列安全模型（基于水坝沿河理想分布评估系统安全性）、供电能力模型（各坝发电量求和）；最终使用AHP对子模型进行综合权重排序。",
+      "sensitivity_approach": "分析了关键参数（如计划工作年限N和极端条件比率α）对模型结果的影响。",
+      "visualization_types": [
+        "3D仿真模型图",
+        "系统关联图",
+        "遗传算法优化结果图"
+      ],
+      "key_conclusions": "提出用一系列（10-20个）小型水坝替代卡里巴大坝的方案，该方案能在保持总水资源管理能力不变的同时，通过优化布局实现成本、安全性和发电效益的平衡，并为极端水流情况提供应急指导。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\美赛论文\\2017美赛特等奖原版论文集\\A\\A类-O奖--55280.pdf",
+      "_year_dir": "",
+      "_problem_type": "A"
+    },
+    {
+      "source": "B类-O奖--56731.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2017",
+      "award_level": "一等奖",
+      "core_models": [
+        "排队论模型",
+        "PTV-VISSIM仿真模型"
+      ],
+      "model_selection_reason": "排队论用于分析收费站吞吐量，PTV-VISSIM用于模拟大量车辆通行行为以验证理论。",
+      "innovation_points": [
+        "基于仿生学（蜂巢）设计新型收费站布局，显著减少占地面积",
+        "将汇合过程分为两个阶段以降低事故可能性",
+        "为自动驾驶车辆预留专用ETC通道"
+      ],
+      "formula_structure": "未明确给出具体公式，但核心基于排队论分析吞吐量，并通过仿真获取时间指标（如总时间成本、理论时间成本、延误时间）。",
+      "sensitivity_approach": "通过PTV-VISSIM模拟不同交通流量（0-2000 veh/h）下蜂窝式收费站的性能，分析平均通行时间的变化。",
+      "visualization_types": [
+        "结构示意图（蜂巢布局图）",
+        "仿真结果对比图（时间减少百分比）"
+      ],
+      "key_conclusions": "新型蜂窝式收费站布局相比传统线性收费站，在交通流量大时能将平均行程时间减少约55%，平均延误时间减少约70%，且对交通流量变化不敏感，具有强鲁棒性。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\美赛论文\\2017美赛特等奖原版论文集\\B\\B类-O奖--56731.pdf",
+      "_year_dir": "",
+      "_problem_type": "B"
+    },
+    {
+      "source": "B类-O奖--68303.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2017",
+      "award_level": "一等奖",
+      "core_models": [
+        "基于PCA的综合评价模型",
+        "微分方程模型",
+        "线性规划模型"
+      ],
+      "model_selection_reason": "PCA用于综合评价多指标，微分方程和线性规划用于分别优化几何参数和并道模式以最大化通行能力。",
+      "innovation_points": [
+        "将收费广场后区域按形状、尺寸和并道模式分为八类典型模型进行仿真评估",
+        "结合微分方程（优化梯形区域高度和收费亭数量）与线性规划（优化并道模式）进行多目标优化"
+      ],
+      "formula_structure": "综合评价模型采用PCA对归一化后的指标（并道点数、队列长度、吞吐量、平均延误时间、梯形区域高度）进行降维和评分；优化部分涉及微分方程求极值和线性规划目标函数最大化吞吐量。",
+      "sensitivity_approach": "使用Lingo对线性规划模型进行敏感性分析，包括检验变量的减少成本和变化范围。",
+      "visualization_types": [
+        "仿真结果数据图表",
+        "PCA分析结果图表"
+      ],
+      "key_conclusions": "在八种现有模型中，中等尺寸、规定并道模式的等腰梯形区域性能最佳；通过微分方程和线性规划模型进一步优化了区域高度、收费亭数量和并道模式，得到了比现有通用方案更好的设计。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\美赛论文\\2017美赛特等奖原版论文集\\B\\B类-O奖--68303.pdf",
+      "_year_dir": "",
+      "_problem_type": "B"
+    },
+    {
+      "source": "C类-O奖--55261.pdf",
+      "category": "modeling",
+      "problem_type": "仿真",
+      "year": "2017",
+      "award_level": "一等奖",
+      "core_models": [
+        "宏观连续模型（流量-密度-速度关系模型）",
+        "离散模型（车道变换动态模型）"
+      ],
+      "model_selection_reason": "宏观模型能直接反映自动驾驶/协同车辆比例对交通流的影响，离散模型能细致刻画不同车辆类型在车道变换时的交互行为。",
+      "innovation_points": [
+        "提出了可调整自动驾驶/协同车辆比例的宏观交通流模型",
+        "建立了区分传统、自动驾驶非交互、自动驾驶协同三类车辆的车道变换离散模型"
+      ],
+      "formula_structure": "流量、密度、平均速度之间的函数关系，并引入参数表示自动驾驶车辆比例",
+      "sensitivity_approach": "调整关键输入参数，并将模型预测结果与实际问题提供的真实数据进行比较验证",
+      "visualization_types": [
+        "流量-密度-速度关系图",
+        "车道变换时间对比图"
+      ],
+      "key_conclusions": "增加自动驾驶车辆比例能在一定程度上缓解交通拥堵，但如果车辆总数增加则可能抵消其益处；自动驾驶/协同车辆在车道变换和并线时显著优于传统车辆，能减少延误。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\美赛论文\\2017美赛特等奖原版论文集\\C\\C类-O奖--55261.pdf",
+      "_year_dir": "",
+      "_problem_type": "C"
+    },
+    {
+      "source": "C类-O奖--55278.pdf",
+      "category": "modeling",
+      "problem_type": "仿真",
+      "year": "2017",
+      "award_level": "一等奖",
+      "core_models": [
+        "扩展元胞自动机模型",
+        "泊松分布车辆生成模型"
+      ],
+      "model_selection_reason": "元胞自动机能有效模拟交通流动态，且扩展后能处理自动驾驶车辆的复杂交互。",
+      "innovation_points": [
+        "扩展传统元胞自动机以引入加速度和车辆交互规则",
+        "区分自动驾驶与人类驾驶车辆的不同跟驰和换道行为",
+        "提出专用车道设置阈值（70%）的决策点"
+      ],
+      "formula_structure": "基于元胞状态转移规则，结合泊松分布的车辆生成、分情况的跟驰模型（人类跟随、自动驾驶跟随人类、自动驾驶间跟随）以及概率换道模型。",
+      "sensitivity_approach": "对换道概率、跟驰模型中的系数（α, β, γ）以及自动驾驶系统错误率进行参数敏感性分析。",
+      "visualization_types": [
+        "仿真结果对比图",
+        "参数敏感性分析图"
+      ],
+      "key_conclusions": "自动驾驶车辆能提升高速公路通行能力，平均速度在占比从10%增至50%时翻倍；当自动驾驶车辆占比高于70%时，设置专用车道有益。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\美赛论文\\2017美赛特等奖原版论文集\\C\\C类-O奖--55278.pdf",
+      "_year_dir": "",
+      "_problem_type": "C"
+    },
+    {
+      "source": "D类-O奖--55285.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2017",
+      "award_level": "一等奖",
+      "core_models": [
+        "多乘客联动行李准备模型(MPL)",
+        "基于优先级的排队模型(PBQ)"
+      ],
+      "model_selection_reason": "排队论和仿真模型能有效模拟机场安检流程的动态性和随机性，便于分析等待时间分布和优化策略。",
+      "innovation_points": [
+        "提出多乘客联动行李准备区(MPL)以减少准备时间瓶颈",
+        "设计基于起飞时间的优先级排队规则(PBQ)以平滑客流并减少过早到达"
+      ],
+      "formula_structure": "模型基于泊松分布模拟乘客到达，结合高斯分布处理服务时间，并构建排队网络模型计算总等待时间分布。",
+      "sensitivity_approach": "通过改变模型参数（如乘客到达率、服务时间、特殊人群比例）并观察输出（平均等待时间、方差）的变化来进行敏感性分析。",
+      "visualization_types": [
+        "等待时间分布图",
+        "不同步骤时间占比图",
+        "模型优化效果对比图"
+      ],
+      "key_conclusions": "安检过程中等待筛查的时间占总时间的绝大部分（高峰期超过98%），且总等待时间近似均匀分布导致方差极高；提出的MPL和PBQ模型能显著降低平均等待时间和方差，且在中国机场的插队情景下仍保持高有效性和稳定性。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\美赛论文\\2017美赛特等奖原版论文集\\D\\D类-O奖--55285.pdf",
+      "_year_dir": "",
+      "_problem_type": "D"
+    },
+    {
+      "source": "D类-O奖--55295.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2017",
+      "award_level": "一等奖",
+      "core_models": [
+        "排队网络模型",
+        "Lyapunov优化算法"
+      ],
+      "model_selection_reason": "排队网络能有效刻画安检流程中的随机性和队列动态，适合分析系统瓶颈和优化调度。",
+      "innovation_points": [
+        "提出基于Lyapunov优化的路由算法（如背压算法和漂移加惩罚算法）来优化吞吐量和等待时间方差",
+        "将文化差异（集体主义/个人主义）和旅客类型（家庭/科技型）纳入模型进行敏感性分析"
+      ],
+      "formula_structure": "基于Lyapunov漂移加惩罚框架的优化目标，最小化队列积压的漂移加上与等待时间方差相关的惩罚项。",
+      "sensitivity_approach": "通过模拟分析不同文化规范（集体主义/个人主义）和旅客类型（家庭型/科技型）对系统性能的影响，并提出适应性调整方案。",
+      "visualization_types": [
+        "仿真结果对比图",
+        "性能指标变化图"
+      ],
+      "key_conclusions": "提出的智能路由算法（特别是漂移加惩罚算法）能在保持旅客满意度的同时实现接近最优的吞吐量和较低的等待时间方差；模型识别出ID检查点不足、安检通道分配僵化等瓶颈，并给出了全局和本地适用的管理策略。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\美赛论文\\2017美赛特等奖原版论文集\\D\\D类-O奖--55295.pdf",
+      "_year_dir": "",
+      "_problem_type": "D"
+    },
+    {
+      "source": "E类-O奖--61502.pdf",
+      "category": "modeling",
+      "problem_type": "评价",
+      "year": "2023",
+      "award_level": "一等奖",
+      "core_models": [
+        "加权综合评价模型",
+        "敏感性情景模拟"
+      ],
+      "model_selection_reason": "选用加权综合评价模型以结构化整合十项智能增长原则为可量化、可比对的五大维度，兼顾简洁性与政策可解释性。",
+      "innovation_points": [
+        "基于原则交集性重构为五维评价指标（而非直接十项线性加总）",
+        "嵌入可扩展的政策响应模块——通过设定'新倡议'输入动态更新各维度得分以模拟政策干预效果"
+      ],
+      "formula_structure": "SGI = Σ(w_i × m_i)，其中m_i为第i个维度（土地利用、住房、社区、交通、开发）的标准化得分（0–100），w_i为其对应权重（均等权重或依据原则覆盖密度微调），所有m_i由公开统计数据经归一化与逻辑校准生成。",
+      "sensitivity_approach": "采用单因素增量扰动法：对每个维度指标分别施加±10%、±20%扰动，观察SGI总分变化幅度及排名稳定性；同时开展50%人口增长情景下的指标联动推演。",
+      "visualization_types": [
+        "堆叠柱状图（对比两城原始与倡议后各维度得分）",
+        "雷达图（五维指标分布对比）"
+      ],
+      "key_conclusions": "Sacramento和Edinburgh初始SGI分别为44.7和54.9，实施针对性倡议后提升至55.5和66.5；模型证实政策干预在‘Smart Transport’和‘Smart Development’维度增益最显著；SGI具备跨地域可比性，且对数据缺失具有鲁棒性。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\美赛论文\\2017美赛特等奖原版论文集\\E\\E类-O奖--61502.pdf",
+      "_year_dir": "",
+      "_problem_type": "E"
+    },
+    {
+      "source": "E类-O奖--65123.pdf",
+      "category": "modeling",
+      "problem_type": "评价",
+      "year": "2023",
+      "award_level": "一等奖",
+      "core_models": [
+        "主成分分析（PCA）",
+        "熵权法（EWM）",
+        "K-means聚类",
+        "支持向量机（SVM）",
+        "加权移动平均法（WMAM）",
+        "人口增长模型（PGM）"
+      ],
+      "model_selection_reason": "为综合评价城市精明增长，需要构建多级指标体系并量化评估，因此选择了主成分分析降维、熵权法客观赋权、K-means聚类设定标准，以及SVM和WMAM进行组合预测以提高精度。",
+      "innovation_points": [
+        "构建了包含1个一级、5个二级、25个三级指标的三级精明增长评价指标体系",
+        "采用熵权法（EWM）与群决策方法（GDM）相结合的方式确定指标权重",
+        "使用支持向量机（SVM）与加权移动平均法（WMAM）的组合预测模型来最小化预测误差",
+        "针对不同城市（匹兹堡与宁国）的人口结构差异，采用了不同的人口增长模型（PGM）进行适应性预测"
+      ],
+      "formula_structure": "综合评价指数 = Σ（各级指标权重 × 标准化后的指标值），核心在于通过PCA筛选指标，EWM和GDM分层赋权，最终加权求和得到城市精明增长的成功度评分。",
+      "sensitivity_approach": "论文未明确描述系统的敏感性分析做法，但通过比较不同城市（匹兹堡与宁国）的指标评估结果，以及对比现有规划与所提精明增长规划的预测指标值，间接体现了模型对不同情景的响应。",
+      "visualization_types": [
+        "指标体系结构图",
+        "指标权重分布图",
+        "城市评价结果对比图（如雷达图、柱状图）",
+        "预测指标变化趋势图"
+      ],
+      "key_conclusions": "所构建的包含土地强度、社会公平、交通质量、协调度和经济发展水平五个维度的指标体系能有效衡量城市精明增长的成功度；针对匹兹堡和宁国的分析表明，提升土地集约利用率和经济发展水平分别是其最具潜力的精明增长举措，且所提规划能自适应地满足人口增长需求。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\美赛论文\\2017美赛特等奖原版论文集\\E\\E类-O奖--65123.pdf",
+      "_year_dir": "",
+      "_problem_type": "E"
+    },
+    {
+      "source": "F类-O奖--64486.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2015",
+      "award_level": "一等奖",
+      "core_models": [
+        "自适应性系统动态模型",
+        "非线性规划模型",
+        "复杂网络模型"
+      ],
+      "model_selection_reason": "构建了一个集成工作、婚姻、生育、教育、工资、福利和移民系统的动态仿真模型来模拟社会演化。",
+      "innovation_points": [
+        "将经济、教育和社会平等三个子系统整合到一个全局模型中进行分析",
+        "使用复杂网络理论（具有小世界特性的无标度网络）来研究移民潮的人际关系影响"
+      ],
+      "formula_structure": "构建了一个多目标优化问题（最大化平均家庭收入、最高最低工资、最小化收入标准差），并使用精英遗传算法求解。",
+      "sensitivity_approach": "通过运行2000年的长期仿真来验证模型的鲁棒性，并分析关键参数（如最低工资、育儿假薪酬）变化对经济指标和幸福指数的影响。",
+      "visualization_types": [
+        "人口统计数据图表",
+        "经济指标图表",
+        "幸福指数图表"
+      ],
+      "key_conclusions": "最优最低工资约为每年33526美元，最优育儿假薪酬约为每年50200美元；每十年引入10000名移民的策略是可持续的，且能应对大量地球难民。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\美赛论文\\2017美赛特等奖原版论文集\\F\\F类-O奖--64486.pdf",
+      "_year_dir": "",
+      "_problem_type": "F"
+    },
+    {
+      "source": "F类-O奖--68940.pdf",
+      "category": "modeling",
+      "problem_type": "优化",
+      "year": "2017",
+      "award_level": "一等奖",
+      "core_models": [
+        "基于智能体的仿真模型"
+      ],
+      "model_selection_reason": "为模拟复杂的社会经济动态和个体行为，选择了能够捕捉个体交互和涌现现象的基于智能体的模型。",
+      "innovation_points": [
+        "构建了衡量社会福祉的综合指标体系（收入、教育、平等）",
+        "将地球数据（如职业收入、性别比例）作为基准，动态评估火星社会的平等性"
+      ],
+      "formula_structure": "模型未给出单一核心公式，而是通过定义智能体的生命周期规则（上学、求职、收入）、政府政策参数（最低工资、税收、福利）以及三个核心度量指标（I, E, Q）的计算逻辑来驱动仿真。",
+      "sensitivity_approach": "通过调整关键政策参数（如最低工资、产假/陪产假时长、人口初始构成比例、创新者比例）并观察其对核心度量指标和GDP等经济结果的影响。",
+      "visualization_types": [
+        "指标随时间变化趋势图",
+        "人口年龄结构分布图"
+      ],
+      "key_conclusions": "最优初始人口构成为平均年龄37岁、创新者与生产者比例为1:10、男女比例1:1，并建议实施7万美元最低工资、10个月产假和3个月陪产假等政策，以最大化社会福祉并维持经济动态均衡。",
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\美赛论文\\2017美赛特等奖原版论文集\\F\\F类-O奖--68940.pdf",
+      "_year_dir": "",
+      "_problem_type": "F"
+    }
+  ]
+}

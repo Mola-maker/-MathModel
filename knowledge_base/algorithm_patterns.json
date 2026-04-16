@@ -1,0 +1,279 @@
+{
+  "category": "algorithm",
+  "description": "编程手专用：MATLAB算法实现、算法模板、代码骨架",
+  "consumer": "coder subagent + code_agent",
+  "built_at": "2026-04-15 17:09:06",
+  "entry_count": 11,
+  "entries": [
+    {
+      "source": "xiaobofenxi.m",
+      "category": "algorithm",
+      "algorithm_name": "小波神经网络",
+      "algorithm_type": "预测",
+      "use_cases": [
+        "函数逼近",
+        "非线性回归"
+      ],
+      "core_logic": "结合小波基函数与BP神经网络，通过梯度下降优化网络参数以逼近目标函数。",
+      "python_equivalent": "自定义网络结构（如使用PyTorch或TensorFlow），无直接等效库函数。",
+      "key_parameters": [
+        "学习率eta",
+        "动量因子aerfa",
+        "小波节点数H",
+        "训练轮次P"
+      ],
+      "pitfalls": [
+        "需手动设计小波基函数及其导数",
+        "训练可能陷入局部最优，需设置最大迭代次数"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\现代算法\\小波分析\\xiaobofenxi.m"
+    },
+    {
+      "source": "monituihuo.m",
+      "category": "algorithm",
+      "algorithm_name": "模拟退火算法",
+      "algorithm_type": "优化",
+      "use_cases": [
+        "旅行商问题（TSP）",
+        "组合优化问题",
+        "路径规划"
+      ],
+      "core_logic": "通过模拟物理退火过程，以一定概率接受较差解来跳出局部最优，逐步降低温度（搜索范围）寻找全局最优解。",
+      "python_equivalent": "可参考scipy.optimize.basinhopping或自定义实现，无直接等价函数",
+      "key_parameters": [
+        "初始温度t0",
+        "终止温度tf",
+        "温度衰减系数a",
+        "Markov链长度Markov_length"
+      ],
+      "pitfalls": [
+        "参数设置敏感（温度、衰减率）影响收敛速度和解质量",
+        "需要足够长的Markov链和合理的降温策略避免早熟收敛"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\现代算法\\模拟退火法\\monituihuo.m"
+    },
+    {
+      "source": "appcr1.m",
+      "category": "algorithm",
+      "algorithm_name": "带噪声训练的字符识别神经网络",
+      "algorithm_type": "分类",
+      "use_cases": [
+        "字符识别",
+        "噪声环境下的模式识别"
+      ],
+      "core_logic": "使用两层前馈神经网络（logsig激活函数）训练字符识别模型，通过添加噪声训练提高鲁棒性",
+      "python_equivalent": "sklearn.neural_network.MLPClassifier 或 tensorflow.keras.Sequential",
+      "key_parameters": [
+        "隐藏层神经元数",
+        "训练目标误差",
+        "动量常数",
+        "噪声水平"
+      ],
+      "pitfalls": [
+        "需要调整隐藏层大小防止过拟合",
+        "噪声训练后需用干净数据微调"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\现代算法\\神经网络\\lecture 16\\appcr1.m"
+    },
+    {
+      "source": "char.m",
+      "category": "algorithm",
+      "algorithm_name": "噪声鲁棒性神经网络训练",
+      "algorithm_type": "分类",
+      "use_cases": [
+        "字符识别",
+        "噪声环境下的模式识别",
+        "鲁棒性神经网络训练"
+      ],
+      "core_logic": "使用带噪声的数据增强训练神经网络，提高模型对输入噪声的鲁棒性",
+      "python_equivalent": "sklearn.neural_network.MLPClassifier + 数据增强(添加高斯噪声)",
+      "key_parameters": [
+        "噪声水平(noise_range)",
+        "训练轮次(epochs)",
+        "动量常数(mc)",
+        "误差目标(goal)"
+      ],
+      "pitfalls": [
+        "噪声水平需要逐步增加，避免训练不稳定",
+        "需要平衡干净数据和噪声数据的训练比例",
+        "注意过拟合风险，需要验证集监控"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\现代算法\\神经网络\\lecture 16\\char.m"
+    },
+    {
+      "source": "crab.m",
+      "category": "algorithm",
+      "algorithm_name": "基于前馈神经网络的螃蟹性别分类",
+      "algorithm_type": "分类",
+      "use_cases": [
+        "生物特征分类",
+        "二分类问题",
+        "模式识别"
+      ],
+      "core_logic": "使用6个物理特征作为输入，通过单隐层前馈神经网络（20个神经元）进行训练，输出层使用2个神经元对应性别分类，采用数据归一化和训练/验证/测试集划分",
+      "python_equivalent": "sklearn.neural_network.MLPClassifier 或 tensorflow.keras.Sequential",
+      "key_parameters": [
+        "隐层神经元数量(20)",
+        "输入特征维度(6)",
+        "输出类别数(2)",
+        "数据划分比例(0.1验证集,0.1测试集)"
+      ],
+      "pitfalls": [
+        "需要数据归一化(mapminmax)",
+        "随机种子影响可重复性",
+        "需要足够训练数据避免过拟合",
+        "分类矩阵计算需注意索引对应关系"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\现代算法\\神经网络\\lecture 16\\crab.m"
+    },
+    {
+      "source": "yeast.m",
+      "category": "algorithm",
+      "algorithm_name": "基因表达数据聚类分析流程",
+      "algorithm_type": "分类",
+      "use_cases": [
+        "基因表达数据分析",
+        "生物信息学数据预处理与聚类"
+      ],
+      "core_logic": "通过过滤、标准化、PCA降维后，使用自组织映射(SOM)对基因表达数据进行聚类分析",
+      "python_equivalent": "scikit-learn: StandardScaler, PCA, MiniBatchKMeans 或 sklearn-som.SOM",
+      "key_parameters": [
+        "genevarfilter阈值",
+        "genelowvalfilter的absval参数",
+        "geneentropyfilter的prctile参数",
+        "PCA保留方差比例",
+        "SOM网络结构"
+      ],
+      "pitfalls": [
+        "需要生物信息学工具箱(Matlab)",
+        "数据预处理步骤较多，顺序重要",
+        "SOM训练结果可能受初始权重影响"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\现代算法\\神经网络\\lecture 16\\yeast.m"
+    },
+    {
+      "source": "SIsin.m",
+      "category": "algorithm",
+      "algorithm_name": "前馈神经网络正弦函数拟合",
+      "algorithm_type": "预测",
+      "use_cases": [
+        "函数逼近",
+        "信号拟合",
+        "非线性回归"
+      ],
+      "core_logic": "使用两层前馈神经网络（隐藏层tanh激活，输出层线性）通过Levenberg-Marquardt算法拟合正弦函数",
+      "python_equivalent": "sklearn.neural_network.MLPRegressor 或 tensorflow.keras.Sequential",
+      "key_parameters": [
+        "网络结构[10,1]",
+        "激活函数['tansig','purelin']",
+        "训练算法'trainlm'",
+        "目标误差1e-8",
+        "最大迭代10000"
+      ],
+      "pitfalls": [
+        "MATLAB代码需转换为Python实现",
+        "trainlm算法在Python中需手动实现或使用其他优化器",
+        "注意数据归一化范围[-1,1]"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\现代算法\\神经网络\\Lecture 2\\SIsin.m"
+    },
+    {
+      "source": "SIsin.m",
+      "category": "algorithm",
+      "algorithm_name": "前馈神经网络拟合正弦函数",
+      "algorithm_type": "预测",
+      "use_cases": [
+        "函数拟合",
+        "信号逼近",
+        "非线性回归"
+      ],
+      "core_logic": "使用两层前馈神经网络（隐藏层tansig激活，输出层线性）通过Levenberg-Marquardt算法训练拟合正弦函数",
+      "python_equivalent": "sklearn.neural_network.MLPRegressor 或 tensorflow.keras.Sequential",
+      "key_parameters": [
+        "网络结构[10 1]",
+        "激活函数组合{'tansig','purelin'}",
+        "训练算法'trainlm'",
+        "训练目标goal=1e-8",
+        "最大迭代epochs=10000"
+      ],
+      "pitfalls": [
+        "MATLAB的newff已过时，建议使用feedforwardnet",
+        "trainlm需要大量内存，大数据集慎用",
+        "需注意过拟合风险，可添加验证集"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\现代算法\\神经网络\\lecture 4\\SIsin.m"
+    },
+    {
+      "source": "kmDemo.m",
+      "category": "algorithm",
+      "algorithm_name": "K-means聚类与轮廓系数评估",
+      "algorithm_type": "分类",
+      "use_cases": [
+        "无监督聚类分析",
+        "数据分组",
+        "聚类效果评估"
+      ],
+      "core_logic": "使用K-means算法对数据进行聚类，并通过轮廓系数评估不同聚类数（k=3,4,5）的聚类质量，选择最优聚类数",
+      "python_equivalent": "sklearn.cluster.KMeans + sklearn.metrics.silhouette_score",
+      "key_parameters": [
+        "聚类数k",
+        "距离度量（cityblock）",
+        "重复次数replicates（避免局部最优）"
+      ],
+      "pitfalls": [
+        "需要预先指定聚类数k",
+        "K-means对初始中心敏感，需多次重复（replicates）",
+        "轮廓系数接近1表示聚类效果好"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\现代算法\\神经网络\\lecture 5\\kmDemo.m"
+    },
+    {
+      "source": "rbESin.m",
+      "category": "algorithm",
+      "algorithm_name": "径向基函数神经网络（RBF）",
+      "algorithm_type": "预测",
+      "use_cases": [
+        "函数逼近",
+        "时间序列预测",
+        "非线性回归"
+      ],
+      "core_logic": "使用径向基函数作为隐层激活函数，通过调整隐层中心点和宽度来逼近任意非线性函数",
+      "python_equivalent": "sklearn.neural_network.MLPRegressor(activation='rbf') 或 scipy.interpolate.Rbf",
+      "key_parameters": [
+        "扩展常数（spread）",
+        "隐层神经元数量",
+        "训练误差目标"
+      ],
+      "pitfalls": [
+        "扩展常数过小会导致过拟合",
+        "隐层神经元过多会增加计算复杂度"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\现代算法\\神经网络\\lecture 5\\rbESin.m"
+    },
+    {
+      "source": "rbsin.m",
+      "category": "algorithm",
+      "algorithm_name": "径向基函数神经网络（RBF）",
+      "algorithm_type": "预测",
+      "use_cases": [
+        "函数逼近",
+        "时间序列预测",
+        "非线性回归"
+      ],
+      "core_logic": "使用径向基函数网络逼近正弦函数，通过调整隐层神经元数量实现最小均方误差",
+      "python_equivalent": "sklearn.neural_network.MLPRegressor(activation='rbf') 或 sklearn.gaussian_process.GaussianProcessRegressor",
+      "key_parameters": [
+        "目标误差（1e-2）",
+        "径向基函数扩展速度（0.1）",
+        "最大神经元数（5）",
+        "每步添加神经元数（1）"
+      ],
+      "pitfalls": [
+        "需要选择合适的径向基函数宽度参数",
+        "隐层神经元过多可能导致过拟合",
+        "MATLAB的newrb是增量训练，Python实现需注意等效性"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\现代算法\\神经网络\\lecture 5\\rbsin.m"
+    }
+  ]
+}

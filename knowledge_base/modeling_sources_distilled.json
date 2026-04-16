@@ -1,0 +1,60 @@
+{
+  "topic": "standing long jump modeling evidence",
+  "selection_rule": "keyword-overlap with biomechanics/pose/evaluation + recency",
+  "top_papers": [
+    {
+      "title": "OpenCap: Human movement dynamics from smartphone videos",
+      "year": 2023,
+      "doi": "10.1371/journal.pcbi.1011462",
+      "id": "https://openalex.org/W4387772280"
+    },
+    {
+      "title": "OpenSim: Simulating musculoskeletal dynamics and neuromuscular control to study human and animal movement",
+      "year": 2018,
+      "doi": "10.1371/journal.pcbi.1006223",
+      "id": "https://openalex.org/W2884696611"
+    },
+    {
+      "title": "A Review of the Evolution of Vision-Based Motion Analysis and the Integration of Advanced Computer Vision Methods Towards Developing a Markerless System",
+      "year": 2018,
+      "doi": "10.1186/s40798-018-0139-y",
+      "id": "https://openalex.org/W2805442627"
+    },
+    {
+      "title": "Survey of Motion Tracking Methods Based on Inertial Sensors: A Focus on Upper Limb Human Motion",
+      "year": 2017,
+      "doi": "10.3390/s17061257",
+      "id": "https://openalex.org/W2618272117"
+    },
+    {
+      "title": "Assessing the stability of human locomotion: a review of current measures",
+      "year": 2013,
+      "doi": "10.1098/rsif.2012.0999",
+      "id": "https://openalex.org/W2114121779"
+    },
+    {
+      "title": "CrossFit Overview: Systematic Review and Meta-analysis",
+      "year": 2018,
+      "doi": "10.1186/s40798-018-0124-5",
+      "id": "https://openalex.org/W2790709818"
+    },
+    {
+      "title": "Evidence review for the 2016 International Ankle Consortium consensus statement on the prevalence, impact and long-term consequences of lateral ankle sprains",
+      "year": 2016,
+      "doi": "10.1136/bjsports-2016-096189",
+      "id": "https://openalex.org/W2417274707"
+    },
+    {
+      "title": "Control strategies for active lower extremity prosthetics and orthotics: a review",
+      "year": 2015,
+      "doi": "10.1186/1743-0003-12-1",
+      "id": "https://openalex.org/W2142114107"
+    }
+  ],
+  "method_takeaways": [
+    "Use markerless pose estimation + kinematic feature extraction",
+    "Use biomechanical priors for interpretable indicators",
+    "Validate with expert scoring correlation and sensitivity analysis"
+  ],
+  "notes": "CNKI/WoS direct retrieval unavailable in current pipeline; using OpenAlex as open substitute."
+}

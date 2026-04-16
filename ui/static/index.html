@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCM Pipeline Dashboard</title>
+<style>
+/* ── Design Tokens ── */
+:root {
+  --parchment: #f5f4ed;
+  --ivory: #faf9f5;
+  --white: #ffffff;
+  --sand: #e8e6dc;
+  --near-black: #141413;
+  --dark-surface: #30302e;
+  --terracotta: #c96442;
+  --coral: #d97757;
+  --charcoal: #4d4c48;
+  --olive: #5e5d59;
+  --stone: #87867f;
+  --silver: #b0aea5;
+  --border-cream: #f0eee6;
+  --border-warm: #e8e6dc;
+  --border-dark: #30302e;
+  --ring-warm: #d1cfc5;
+  --error: #b53333;
+  --success: #4a7c59;
+  --warning: #b8860b;
+  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.07);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --sidebar-w: 300px;
+  --nav-h: 56px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-black);line-height:1.6;min-height:100vh;overflow-x:hidden}
+
+/* ── Layout shell ── */
+.shell{display:flex;min-height:100vh}
+
+/* ── Sidebar ── */
+.sidebar{
+  position:fixed;top:0;left:0;z-index:200;
+  width:var(--sidebar-w);height:100vh;
+  background:var(--ivory);
+  border-right:1px solid var(--border-cream);
+  display:flex;flex-direction:column;
+  transform:translateX(-100%);
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+}
+.sidebar.open{transform:translateX(0)}
+
+.sidebar-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--border-cream);
+  flex-shrink:0;
+}
+.sidebar-title{font-family:var(--font-serif);font-size:1rem;font-weight:600;color:var(--near-black)}
+.sidebar-close{background:none;border:none;cursor:pointer;color:var(--stone);font-size:1.3rem;line-height:1;padding:2px 6px}
+.sidebar-close:hover{color:var(--near-black)}
+
+.sidebar-body{flex:1;overflow-y:auto;padding:0 0 16px}
+
+.sidebar-section{padding:16px 20px;border-bottom:1px solid var(--border-cream)}
+.sidebar-section-title{
+  font-size:.72rem;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--stone);margin-bottom:12px;
+}
+
+/* Sidebar form controls */
+.cfg-row{margin-bottom:10px}
+.cfg-label{font-size:.8rem;color:var(--charcoal);margin-bottom:3px;display:block}
+.cfg-task-header{
+  font-size:.78rem;font-weight:600;color:var(--terracotta);
+  margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em;
+}
+.cfg-input,.cfg-select{
+  width:100%;padding:6px 10px;
+  border:1px solid var(--border-warm);border-radius:var(--radius-sm);
+  font-size:.82rem;background:var(--white);color:var(--charcoal);
+  font-family:var(--font-sans);
+}
+.cfg-input:focus,.cfg-select:focus{outline:none;border-color:var(--terracotta)}
+
+.cfg-row-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.cfg-row-2 .cfg-label{font-size:.75rem}
+
+/* Sidebar logs */
+.sidebar-logs{
+  background:var(--near-black);border-radius:var(--radius-sm);
+  padding:10px 12px;max-height:200px;overflow-y:auto;
+  font-family:var(--font-mono);font-size:.72rem;
+  line-height:1.6;color:var(--silver);white-space:pre-wrap;
+  margin-top:4px;
+}
+
+.sidebar-footer{
+  padding:16px 20px;border-top:1px solid var(--border-cream);flex-shrink:0;
+  display:flex;gap:8px;
+}
+
+/* ── Overlay ── */
+.sidebar-overlay{
+  display:none;position:fixed;inset:0;z-index:150;
+  background:rgba(20,20,19,.35);backdrop-filter:blur(2px);
+}
+.sidebar-overlay.visible{display:block}
+
+/* ── Main area ── */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+
+/* ── Nav ── */
+.nav{
+  position:sticky;top:0;z-index:100;height:var(--nav-h);
+  background:var(--parchment);border-bottom:1px solid var(--border-cream);
+  display:flex;align-items:center;gap:12px;padding:0 24px;
+  backdrop-filter:blur(8px);
+}
+.nav-menu-btn{
+  background:none;border:none;cursor:pointer;color:var(--charcoal);
+  font-size:1.1rem;padding:6px 8px;border-radius:var(--radius-sm);
+  line-height:1;
+}
+.nav-menu-btn:hover{background:var(--sand)}
+.nav-brand{font-family:var(--font-serif);font-size:1.15rem;font-weight:500;color:var(--near-black);margin-right:8px}
+.nav-brand span{color:var(--terracotta)}
+
+/* Page tabs in nav */
+.page-tabs{display:flex;gap:4px;margin-left:auto}
+.page-tab{
+  padding:6px 14px;border-radius:var(--radius-sm);
+  font-size:.82rem;font-weight:500;border:none;
+  cursor:pointer;background:transparent;color:var(--olive);
+  transition:all .18s;
+}
+.page-tab:hover{background:var(--sand);color:var(--near-black)}
+.page-tab.active{background:var(--near-black);color:var(--ivory)}
+
+.nav-status{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--olive);margin-left:16px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--stone)}
+.status-dot.running{background:var(--terracotta);animation:pulse 1.4s ease-in-out infinite}
+.status-dot.done{background:var(--success)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── Pages ── */
+.page{display:none;flex:1;overflow-y:auto}
+.page.active{display:block}
+
+/* ── Dashboard page ── */
+.dashboard-content{max-width:1200px;margin:0 auto;padding:28px 24px}
+
+/* Hero stats */
+.hero{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+.stat-card{
+  background:var(--ivory);border:1px solid var(--border-cream);
+  border-radius:var(--radius-md);padding:20px 24px;
+  box-shadow:var(--shadow-sm);
+}
+.stat-label{font-size:.78rem;color:var(--stone);margin-bottom:6px;letter-spacing:.02em}
+.stat-value{font-family:var(--font-serif);font-size:1.5rem;font-weight:500;color:var(--near-black)}
+.stat-value.terracotta{color:var(--terracotta)}
+.stat-value.success{color:var(--success)}
+
+/* Section titles */
+.section-title{font-family:var(--font-serif);font-size:1.1rem;font-weight:500;color:var(--near-black);margin-bottom:16px}
+
+/* Pipeline viz */
+.pipeline{
+  display:flex;align-items:flex-start;gap:0;
+  overflow-x:auto;padding-bottom:8px;margin-bottom:28px;
+}
+.phase-card{
+  display:flex;flex-direction:column;align-items:center;
+  position:relative;flex-shrink:0;cursor:pointer;
+}
+.phase-node{
+  width:56px;height:56px;border-radius:50%;
+  border:2px solid var(--border-warm);
+  background:var(--ivory);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:700;color:var(--stone);
+  transition:all .2s;z-index:1;
+}
+.phase-card.completed .phase-node{background:var(--near-black);border-color:var(--near-black);color:var(--ivory)}
+.phase-card.running .phase-node{background:var(--terracotta);border-color:var(--terracotta);color:var(--ivory);animation:pulse 1.4s ease-in-out infinite}
+.phase-card.error .phase-node{background:var(--error);border-color:var(--error);color:var(--ivory)}
+.phase-label{font-size:.68rem;color:var(--stone);margin-top:6px;text-align:center;max-width:72px;line-height:1.3}
+.phase-card.completed .phase-label{color:var(--near-black)}
+.phase-card.running .phase-label{color:var(--terracotta);font-weight:600}
+
+.phase-connector{
+  width:32px;height:2px;background:var(--border-warm);
+  position:relative;top:28px;flex-shrink:0;
+}
+.phase-card.completed + .phase-connector{background:var(--near-black)}
+
+/* Controls */
+.controls{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.controls select{
+  padding:8px 12px;border:1px solid var(--border-warm);
+  border-radius:var(--radius-sm);font-size:.84rem;
+  background:var(--ivory);color:var(--charcoal);
+}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 16px;border-radius:var(--radius-sm);
+  font-size:.84rem;font-weight:500;border:none;
+  cursor:pointer;transition:all .18s;font-family:var(--font-sans);
+}
+.btn-primary{background:var(--terracotta);color:var(--ivory)}
+.btn-primary:hover{background:var(--coral)}
+.btn-primary:disabled{background:var(--sand);color:var(--stone);cursor:not-allowed}
+.btn-secondary{background:var(--sand);color:var(--charcoal);box-shadow:0 0 0 1px var(--ring-warm)}
+.btn-secondary:hover{background:var(--ring-warm)}
+.btn-dark{background:var(--dark-surface);color:var(--ivory)}
+.btn-dark:hover{background:var(--charcoal)}
+.btn-danger{background:var(--error);color:var(--ivory)}
+.btn-danger:hover{opacity:.9}
+.btn-sm{padding:5px 12px;font-size:.78rem}
+
+/* Live console */
+.live-console{background:var(--near-black);border-radius:var(--radius-md);margin-bottom:24px;overflow:hidden;display:none}
+.live-console.visible{display:block}
+.live-console-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;background:var(--dark-surface);border-bottom:1px solid var(--border-dark);
+}
+.live-console-title{font-size:.78rem;font-weight:500;color:var(--silver);font-family:var(--font-mono)}
+.console-body{
+  padding:14px 16px;max-height:280px;overflow-y:auto;
+  font-family:var(--font-mono);font-size:.76rem;line-height:1.7;
+  color:var(--silver);white-space:pre-wrap;
+}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border-cream);padding-bottom:0}
+.tab{
+  padding:8px 16px;border-radius:var(--radius-sm) var(--radius-sm) 0 0;
+  font-size:.82rem;font-weight:500;border:none;cursor:pointer;
+  background:transparent;color:var(--olive);transition:all .18s;
+  border-bottom:2px solid transparent;
+}
+.tab:hover{color:var(--near-black)}
+.tab.active{color:var(--terracotta);border-bottom-color:var(--terracotta);font-weight:600}
+
+.panel{display:none;padding-top:16px}
+.panel.active{display:block}
+
+/* Phase detail cards */
+.phase-details{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.detail-card{
+  background:var(--ivory);border:1px solid var(--border-cream);
+  border-radius:var(--radius-md);padding:20px;
+}
+.detail-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.detail-card-title{font-weight:600;font-size:.9rem;color:var(--near-black)}
+.detail-card-body{font-size:.84rem;color:var(--olive);line-height:1.8}
+.detail-card-agent{font-size:.72rem;color:var(--stone);font-family:var(--font-mono);margin-top:10px}
+
+/* Badges */
+.badge{
+  display:inline-block;padding:2px 8px;border-radius:20px;
+  font-size:.72rem;font-weight:600;letter-spacing:.03em;
+}
+.badge.completed{background:#e8f4ec;color:var(--success)}
+.badge.running{background:#fce8e0;color:var(--terracotta)}
+.badge.pending{background:var(--sand);color:var(--stone)}
+.badge.error{background:#fde8e8;color:var(--error)}
+.badge.pass{background:#e8f4ec;color:var(--success)}
+.badge.fail{background:#fde8e8;color:var(--error)}
+.badge.warning{background:#fff3cd;color:var(--warning)}
+
+/* File table */
+.file-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.file-table th{text-align:left;padding:10px 14px;font-size:.76rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--stone);border-bottom:2px solid var(--border-cream)}
+.file-table td{padding:10px 14px;border-bottom:1px solid var(--border-cream);color:var(--charcoal)}
+.file-category{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:600}
+.file-category.data{background:#e8f0fe;color:#3050a0}
+.file-category.paper{background:#fce8e0;color:var(--terracotta)}
+.file-category.figure{background:#e8f4ec;color:var(--success)}
+
+/* Figures grid */
+.figures-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.figure-card{background:var(--ivory);border:1px solid var(--border-cream);border-radius:var(--radius-md);overflow:hidden}
+.figure-card img{width:100%;aspect-ratio:4/3;object-fit:contain;background:var(--white);display:block}
+.figure-card-caption{padding:8px 12px;font-size:.72rem;color:var(--stone);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Log viewer */
+.log-viewer{
+  background:var(--near-black);border-radius:var(--radius-md);
+  padding:16px 20px;max-height:500px;overflow-y:auto;
+  font-family:var(--font-mono);font-size:.76rem;line-height:1.7;
+}
+.log-line{color:var(--silver)}
+.log-ok{color:#6fcf97}
+.log-err{color:#eb5757}
+.log-warn{color:#f2c94c}
+.log-phase{color:var(--terracotta);font-weight:700}
+
+/* Reports */
+.report-section{background:var(--ivory);border:1px solid var(--border-cream);border-radius:var(--radius-md);padding:20px;margin-bottom:16px}
+.report-section h3{font-family:var(--font-serif);font-size:.95rem;margin-bottom:12px;color:var(--near-black)}
+.score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.score-item{text-align:center;padding:12px;background:var(--parchment);border-radius:var(--radius-sm)}
+.score-number{font-family:var(--font-serif);font-size:1.8rem;color:var(--terracotta)}
+.score-label{font-size:.72rem;color:var(--stone);text-transform:capitalize}
+.issue-list{list-style:none;font-size:.84rem;color:var(--olive)}
+.issue-list li{padding:4px 0;display:flex;align-items:flex-start;gap:8px}
+.issue-severity{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:6px}
+.issue-severity.critical{background:var(--error)}
+.issue-severity.high{background:var(--warning)}
+.issue-severity.medium{background:var(--stone)}
+
+/* Knowledge base */
+.kb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.kb-card{background:var(--ivory);border:1px solid var(--border-cream);border-radius:var(--radius-sm);padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+.kb-name{font-size:.84rem;font-weight:500;color:var(--charcoal)}
+.kb-count{font-family:var(--font-serif);font-size:1.3rem;font-weight:500;color:var(--terracotta)}
+
+/* ── Assistant page ── */
+.assistant-layout{
+  display:flex;flex-direction:column;height:calc(100vh - var(--nav-h));
+  max-width:800px;margin:0 auto;padding:0;
+}
+
+.chat-header{
+  padding:20px 24px 16px;border-bottom:1px solid var(--border-cream);
+  flex-shrink:0;
+}
+.chat-header-title{font-family:var(--font-serif);font-size:1.15rem;color:var(--near-black)}
+.chat-header-sub{font-size:.8rem;color:var(--stone);margin-top:2px}
+
+.chat-status-bar{
+  display:flex;gap:16px;padding:8px 24px;
+  background:var(--ivory);border-bottom:1px solid var(--border-cream);
+  font-size:.78rem;color:var(--olive);flex-shrink:0;
+}
+.chat-status-item{display:flex;align-items:center;gap:6px}
+.chat-status-dot{width:6px;height:6px;border-radius:50%}
+
+.chat-messages{
+  flex:1;overflow-y:auto;padding:20px 24px;
+  display:flex;flex-direction:column;gap:16px;
+}
+
+.msg{display:flex;gap:12px;max-width:90%}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg.assistant{align-self:flex-start}
+.msg.system{align-self:center;max-width:100%}
+
+.msg-avatar{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;
+}
+.msg.assistant .msg-avatar{background:var(--near-black);color:var(--ivory)}
+.msg.user .msg-avatar{background:var(--terracotta);color:var(--ivory)}
+
+.msg-bubble{
+  padding:12px 16px;border-radius:var(--radius-md);
+  font-size:.88rem;line-height:1.65;word-break:break-word;
+}
+.msg.user .msg-bubble{background:var(--terracotta);color:var(--ivory);border-bottom-right-radius:4px}
+.msg.assistant .msg-bubble{background:var(--ivory);border:1px solid var(--border-cream);color:var(--near-black);border-bottom-left-radius:4px}
+.msg.system .msg-bubble{background:var(--sand);color:var(--olive);font-size:.8rem;border-radius:var(--radius-sm);padding:8px 14px}
+
+/* Action results in chat */
+.action-results{
+  margin-top:10px;padding:10px 14px;
+  background:rgba(0,0,0,.04);border-radius:var(--radius-sm);
+  font-family:var(--font-mono);font-size:.76rem;color:var(--charcoal);
+  border-left:3px solid var(--terracotta);
+}
+.action-result-line{display:flex;align-items:center;gap:6px;padding:2px 0}
+
+/* Typing indicator */
+.typing{display:flex;align-items:center;gap:4px;padding:12px 16px}
+.typing-dot{width:7px;height:7px;border-radius:50%;background:var(--stone);animation:typing .9s ease-in-out infinite}
+.typing-dot:nth-child(2){animation-delay:.15s}
+.typing-dot:nth-child(3){animation-delay:.3s}
+@keyframes typing{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+.chat-input-area{
+  padding:16px 24px;border-top:1px solid var(--border-cream);
+  display:flex;gap:10px;align-items:flex-end;flex-shrink:0;
+  background:var(--ivory);
+}
+#chatInput{
+  flex:1;padding:10px 14px;border:1px solid var(--border-warm);
+  border-radius:var(--radius-md);font-size:.88rem;
+  font-family:var(--font-sans);color:var(--near-black);
+  background:var(--white);resize:none;line-height:1.5;
+  max-height:120px;min-height:44px;overflow-y:auto;
+}
+#chatInput:focus{outline:none;border-color:var(--terracotta)}
+
+/* Suggested actions */
+.chat-suggestions{
+  padding:8px 24px 0;display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;
+}
+.suggestion-chip{
+  padding:5px 12px;border-radius:20px;font-size:.78rem;
+  background:var(--sand);color:var(--charcoal);border:none;
+  cursor:pointer;transition:all .18s;
+}
+.suggestion-chip:hover{background:var(--ring-warm);color:var(--near-black)}
+
+/* Footer */
+.footer{padding:24px;text-align:center;font-size:.72rem;color:var(--stone);border-top:1px solid var(--border-cream);margin-top:20px}
+
+/* ── Modal ── */
+.modal-backdrop{
+  display:none;position:fixed;inset:0;z-index:500;
+  background:rgba(20,20,19,.5);backdrop-filter:blur(3px);
+  align-items:center;justify-content:center;
+}
+.modal-backdrop.visible{display:flex}
+.modal{
+  background:var(--ivory);border-radius:var(--radius-md);
+  padding:28px 32px;max-width:480px;width:92%;
+  box-shadow:0 16px 48px rgba(0,0,0,.18);
+  border:1px solid var(--border-cream);
+}
+.modal-title{
+  font-family:var(--font-serif);font-size:1.1rem;font-weight:600;
+  color:var(--near-black);margin-bottom:12px;
+  display:flex;align-items:center;gap:10px;
+}
+.modal-title .warn-icon{color:var(--error);font-size:1.3rem}
+.modal-body{font-size:.88rem;color:var(--olive);line-height:1.7;margin-bottom:20px}
+.modal-scope{background:var(--parchment);border-radius:var(--radius-sm);padding:12px 16px;margin:12px 0;font-size:.82rem}
+.modal-scope ul{padding-left:18px;margin:6px 0}
+.modal-scope li{margin-bottom:3px;color:var(--charcoal)}
+.modal-scope li.keep{color:var(--success)}
+.modal-option{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:.84rem;color:var(--charcoal);cursor:pointer}
+.modal-option input{width:15px;height:15px;accent-color:var(--terracotta)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:4px}
+.btn-clear-confirm{background:var(--error);color:var(--ivory);font-weight:600}
+.btn-clear-confirm:hover{opacity:.88}
+.btn-clear-confirm:disabled{opacity:.45;cursor:not-allowed}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .hero{grid-template-columns:1fr 1fr}
+  .phase-card{min-width:auto}
+  .score-grid{grid-template-columns:1fr 1fr}
+}
+/* Experience page */
+.exp-filter-btn{
+  padding:4px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:var(--parchment);color:var(--ink-light);font-size:.78rem;cursor:pointer;
+  transition:all .15s;
+}
+.exp-filter-btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
+.exp-filter-btn.active{background:var(--terracotta);color:#fff;border-color:var(--terracotta)}
+.exp-card{
+  background:var(--parchment);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;transition:box-shadow .2s;
+}
+.exp-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.exp-card-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.exp-phase-badge{
+  background:var(--terracotta);color:#fff;padding:2px 10px;border-radius:20px;
+  font-size:.75rem;font-weight:700;letter-spacing:.04em;white-space:nowrap;
+}
+.exp-card-title{font-weight:600;color:var(--ink);font-size:.95rem;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exp-card-date{font-size:.75rem;color:var(--ink-light);white-space:nowrap}
+.exp-tips{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.exp-tips li{
+  padding:8px 12px;background:rgba(180,120,80,.06);border-left:3px solid var(--terracotta);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:.83rem;color:var(--ink);
+  line-height:1.5;
+}
+.exp-fields{margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+.exp-field{font-size:.78rem;color:var(--ink-light)}
+.exp-field strong{color:var(--ink);display:block;margin-bottom:2px;font-size:.8rem}
+.exp-expand-btn{
+  margin-top:12px;font-size:.78rem;color:var(--terracotta);cursor:pointer;
+  background:none;border:none;padding:0;text-decoration:underline;
+}
+@media(max-width:480px){
+  .hero{grid-template-columns:1fr}
+  .page-tabs .page-tab{padding:5px 10px;font-size:.75rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <span class="sidebar-title">Settings</span>
+    <button class="sidebar-close" onclick="closeSidebar()">×</button>
+  </div>
+
+  <div class="sidebar-body" id="sidebarBody">
+
+    <!-- Model Config -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Model Configuration</div>
+      <div id="modelConfigPanel">
+        <p style="font-size:.8rem;color:var(--stone)">Loading...</p>
+      </div>
+    </div>
+
+    <!-- Pipeline Settings -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Pipeline Settings</div>
+      <div class="cfg-row">
+        <label class="cfg-label">Max Rollbacks</label>
+        <input type="number" class="cfg-input" id="cfgMaxRollbacks" min="0" max="10" value="2">
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-label">Max Heal Iterations</label>
+        <input type="number" class="cfg-input" id="cfgMaxHeal" min="1" max="10" value="3">
+      </div>
+      <div class="sidebar-section-title" style="margin-top:14px">Token Limits per Task</div>
+      <div id="tokenLimitsPanel">
+        <!-- injected by JS -->
+      </div>
+    </div>
+
+    <!-- Live Logs -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title" style="display:flex;justify-content:space-between">
+        <span>Live Logs</span>
+        <button class="btn btn-sm btn-secondary" onclick="refreshSidebarLogs()" style="font-size:.7rem;padding:2px 8px">↻</button>
+      </div>
+      <div class="sidebar-logs" id="sidebarLogs">(loading...)</div>
+    </div>
+
+  </div>
+
+  <div class="sidebar-footer">
+    <button class="btn btn-primary" onclick="saveConfig()" style="flex:1">Save Settings</button>
+    <button class="btn btn-secondary" onclick="loadConfig()" style="flex:1">Reset</button>
+  </div>
+</aside>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ── Clear Workspace Modal ── -->
+<div class="modal-backdrop" id="clearModal" onclick="if(event.target===this)closeClearModal()">
+  <div class="modal">
+    <div class="modal-title">
+      <span class="warn-icon">⚠</span>清除工作区数据
+    </div>
+    <div class="modal-body">
+      切换题目前建议清除所有中间产物，防止旧数据污染新题目的建模结果。
+      <div class="modal-scope">
+        <strong>将删除：</strong>
+        <ul>
+          <li>context_store/context.json（重置为 init）</li>
+          <li>vol/data/cleaned_*.csv 和清洗报告</li>
+          <li>vol/outputs/（所有图表和产物）</li>
+          <li>vol/scripts/*.py（生成的求解脚本）</li>
+          <li>vol/logs/run.log</li>
+          <li>paper/（论文 .tex / .bib / .json 及图片）</li>
+        </ul>
+        <strong>将保留：</strong>
+        <ul>
+          <li class="keep">vol/data/*.xlsx / *.csv（原始数据，不动）</li>
+          <li class="keep">questiontest/*.pdf（原始题目）</li>
+          <li class="keep">knowledge_base/（知识库）</li>
+        </ul>
+      </div>
+      <label class="modal-option">
+        <input type="checkbox" id="clearKeepTranslations" checked>
+        保留 translation/*.md（PDF 已转译，重译费时）
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeClearModal()">取消</button>
+      <button class="btn btn-clear-confirm" id="btnClearConfirm" onclick="confirmClear()">确认清除</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main ── -->
+<div class="main">
+
+  <!-- ── Nav ── -->
+  <nav class="nav">
+    <button class="nav-menu-btn" onclick="toggleSidebar()" title="Settings">☰</button>
+    <div class="nav-brand">MCM <span>Pipeline</span></div>
+    <div class="page-tabs">
+      <button class="page-tab active" id="tabDashboard" onclick="switchPage('dashboard')">Dashboard</button>
+      <button class="page-tab" id="tabAssistant" onclick="switchPage('assistant')">Assistant</button>
+      <button class="page-tab" id="tabExperience" onclick="switchPage('experience')">Experience</button>
+    </div>
+    <button class="btn btn-danger btn-sm" onclick="openClearModal()" title="清除题目数据，切换新题目" style="margin-left:8px">
+      &#x1F5D1; 清除数据
+    </button>
+    <div class="nav-status">
+      <div class="status-dot" id="globalDot"></div>
+      <span id="globalStatus">Loading...</span>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════ PAGE 1: Dashboard ═══════════════════════════ -->
+  <div class="page active" id="page-dashboard">
+  <div class="dashboard-content">
+
+    <!-- Hero Stats -->
+    <div class="hero" id="heroStats">
+      <div class="stat-card">
+        <div class="stat-label">Current Phase</div>
+        <div class="stat-value terracotta" id="statPhase">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Selected Problem</div>
+        <div class="stat-value" id="statProblem">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Model</div>
+        <div class="stat-value" id="statModel">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Review Score</div>
+        <div class="stat-value success" id="statScore">--</div>
+      </div>
+    </div>
+
+    <!-- Pipeline Visualization -->
+    <h2 class="section-title">Pipeline Progress</h2>
+    <div class="pipeline" id="pipeline"></div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <select id="phaseSelect">
+        <option value="P0b">P0b — PDF 转译</option>
+        <option value="P1">P1 — 题目解析</option>
+        <option value="P1.5">P1.5 — 数据清洗</option>
+        <option value="P2">P2 — 数学建模</option>
+        <option value="P3">P3 — 代码求解</option>
+        <option value="P3.5">P3.5 — 数据验证</option>
+        <option value="P4">P4 — 论文撰写</option>
+        <option value="P4.5">P4.5 — LaTeX 检查</option>
+        <option value="P5">P5 — 审校评分</option>
+        <option value="P5.5">P5.5 — 数据审计</option>
+      </select>
+      <button class="btn btn-primary" id="btnRun" onclick="runPhase()">▶ Run from phase</button>
+      <button class="btn btn-danger" id="btnStop" onclick="stopPipeline()" style="display:none">■ Stop</button>
+      <button class="btn btn-secondary" onclick="refreshAll()">↻ Refresh</button>
+    </div>
+
+    <!-- Live Console -->
+    <div class="live-console" id="liveConsole">
+      <div class="live-console-header">
+        <span class="live-console-title">▶ Pipeline Output</span>
+        <button class="btn btn-secondary btn-sm" onclick="clearConsole()">Clear</button>
+      </div>
+      <div class="console-body" id="consoleBody"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-panel="phases" onclick="switchTab(this)">Phases</button>
+      <button class="tab" data-panel="files" onclick="switchTab(this)">Files</button>
+      <button class="tab" data-panel="figures" onclick="switchTab(this)">Figures</button>
+      <button class="tab" data-panel="logs" onclick="switchTab(this)">Logs</button>
+      <button class="tab" data-panel="reports" onclick="switchTab(this)">Reports</button>
+      <button class="tab" data-panel="knowledge" onclick="switchTab(this)">Knowledge</button>
+    </div>
+
+    <div class="panel active" id="panel-phases">
+      <div class="phase-details" id="phaseDetails"></div>
+    </div>
+
+    <div class="panel" id="panel-files">
+      <table class="file-table" id="fileTable">
+        <thead><tr><th>Name</th><th>Category</th><th>Size</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="panel" id="panel-figures">
+      <div class="figures-grid" id="figuresGrid"></div>
+    </div>
+
+    <div class="panel" id="panel-logs">
+      <div class="controls" style="margin-bottom:12px">
+        <button class="btn btn-secondary" onclick="loadLogs()">↻ Reload</button>
+      </div>
+      <div class="log-viewer" id="logViewer">(loading...)</div>
+    </div>
+
+    <div class="panel" id="panel-reports">
+      <div id="reportContent"><p style="color:var(--stone)">Select a report below.</p></div>
+      <div class="controls" style="margin-top:12px">
+        <button class="btn btn-secondary" onclick="loadReport('review')">Review Report</button>
+        <button class="btn btn-secondary" onclick="loadReport('latex')">LaTeX Check</button>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-knowledge">
+      <div class="kb-grid" id="kbGrid"></div>
+    </div>
+
+    <div class="footer">MCM/ICM Multi-Agent System &mdash; Pipeline Dashboard</div>
+
+  </div><!-- /dashboard-content -->
+  </div><!-- /page-dashboard -->
+
+
+  <!-- ═══════════════════════════ PAGE 2: Assistant ═══════════════════════════ -->
+  <div class="page" id="page-assistant">
+  <div class="assistant-layout">
+
+    <div class="chat-header">
+      <div class="chat-header-title">MCM 流水线控制助手</div>
+      <div class="chat-header-sub">告诉我你的需求，我可以暂停流水线、修改配置、从指定阶段重启</div>
+    </div>
+
+    <div class="chat-status-bar" id="chatStatusBar">
+      <div class="chat-status-item">
+        <div class="chat-status-dot" id="chatPipelineDot" style="background:var(--stone)"></div>
+        <span id="chatPipelineStatus">未运行</span>
+      </div>
+      <div class="chat-status-item">阶段: <strong id="chatCurrentPhase">--</strong></div>
+      <div class="chat-status-item">题目: <strong id="chatProblem">--</strong></div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <!-- Initial greeting added by JS -->
+    </div>
+
+    <div class="chat-suggestions" id="chatSuggestions">
+      <button class="suggestion-chip" onclick="fillChat('当前流水线状态如何？')">当前状态</button>
+      <button class="suggestion-chip" onclick="fillChat('暂停当前流水线')">暂停流水线</button>
+      <button class="suggestion-chip" onclick="fillChat('把建模模型改成 deepseek')">换建模模型</button>
+      <button class="suggestion-chip" onclick="fillChat('从 P3 重新开始运行')">从P3重启</button>
+      <button class="suggestion-chip" onclick="fillChat('把最大循环次数改为 5')">改循环次数</button>
+    </div>
+
+    <div class="chat-input-area">
+      <textarea id="chatInput" placeholder="输入你的指令... (Enter 发送，Shift+Enter 换行)" rows="1"
+        onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="btn btn-primary" id="btnChatSend" onclick="sendChat()">发送</button>
+    </div>
+
+  </div><!-- /assistant-layout -->
+  </div><!-- /page-assistant -->
+
+
+  <!-- ═══════════════════════════ PAGE 3: Experience ═══════════════════════════ -->
+  <div class="page" id="page-experience">
+  <div class="dashboard-content">
+
+    <div class="section-title" style="margin-bottom:16px">
+      <h2 style="font-family:var(--font-serif);font-size:1.5rem;color:var(--ink)">历次运行经验库</h2>
+      <p style="color:var(--ink-light);font-size:.875rem;margin-top:4px">每阶段成功完成后自动提炼，供后续运行参考</p>
+    </div>
+
+    <!-- Filter bar -->
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:.8rem;color:var(--ink-light);font-weight:600">筛选阶段：</span>
+      <button class="exp-filter-btn active" data-phase="" onclick="filterExperience('')">全部</button>
+      <button class="exp-filter-btn" data-phase="P1" onclick="filterExperience('P1')">P1 题目解析</button>
+      <button class="exp-filter-btn" data-phase="P1.5" onclick="filterExperience('P1.5')">P1.5 数据清洗</button>
+      <button class="exp-filter-btn" data-phase="P2" onclick="filterExperience('P2')">P2 数学建模</button>
+      <button class="exp-filter-btn" data-phase="P3" onclick="filterExperience('P3')">P3 代码求解</button>
+      <button class="exp-filter-btn" data-phase="P4" onclick="filterExperience('P4')">P4 论文撰写</button>
+      <button class="exp-filter-btn" data-phase="P5" onclick="filterExperience('P5')">P5 审校评分</button>
+      <button class="exp-filter-btn" data-phase="P5.5" onclick="filterExperience('P5.5')">P5.5 数据审计</button>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="loadExperience()">↻ 刷新</button>
+    </div>
+
+    <!-- Experience cards -->
+    <div id="exp-cards" style="display:grid;gap:16px"></div>
+    <div id="exp-empty" style="display:none;text-align:center;padding:48px;color:var(--ink-light)">
+      <div style="font-size:2rem;margin-bottom:8px">📚</div>
+      <div>暂无经验记录。完成一次流水线运行后，经验将自动提炼保存到此处。</div>
+    </div>
+    <div id="exp-total" style="margin-top:12px;font-size:.8rem;color:var(--ink-light)"></div>
+
+  </div>
+  </div><!-- /page-experience -->
+
+</div><!-- /main -->
+
+<script>
+'use strict';
+
+/* ══════════════════════════════ State ══════════════════════════ */
+let currentStatus = null;
+let sseSource = null;
+let chatHistory = [];
+let chatWaiting = false;
+
+/* ══════════════════════════════ Sidebar ════════════════════════ */
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  const isOpen = sb.classList.contains('open');
+  if (isOpen) { closeSidebar(); }
+  else {
+    sb.classList.add('open');
+    ov.classList.add('visible');
+    loadConfig();
+    refreshSidebarLogs();
+  }
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('visible');
+}
+
+/* ══════════════════════════════ Page switching ═════════════════ */
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.getElementById(`tab${name.charAt(0).toUpperCase()+name.slice(1)}`).classList.add('active');
+  if (name === 'assistant') syncChatStatus();
+  if (name === 'experience') loadExperience();
+}
+
+/* ══════════════════════════════ API helpers ════════════════════ */
+async function api(path, options) {
+  const r = await fetch(path, options);
+  if (!r.ok) {
+    const txt = await r.text().catch(() => r.statusText);
+    throw new Error(`${r.status}: ${txt}`);
+  }
+  return r.json();
+}
+
+/* ══════════════════════════════ Pipeline viz ═══════════════════ */
+function renderPipeline(phases) {
+  const el = document.getElementById('pipeline');
+  el.innerHTML = phases.map((p, i) => `
+    <div class="phase-card ${p.status}" data-phase="${p.id}" onclick="scrollToDetail('${p.id}')">
+      <div class="phase-node">${p.id}</div>
+      ${i < phases.length - 1 ? '<div class="phase-connector"></div>' : ''}
+      <div class="phase-label">${p.name}</div>
+    </div>
+  `).join('');
+}
+
+function renderPhaseDetails(phases, ctx) {
+  const extra = {
+    'P0b': () => '',
+    'P1': () => {
+      const sel = ctx.competition?.selected_problem || '';
+      const kw = (ctx.competition?.keywords || []).slice(0,5).join(', ');
+      return sel ? `<p>Selected: <strong>${sel}</strong></p><p>Keywords: ${kw||'--'}</p>` : '';
+    },
+    'P1.5': () => {
+      const dc = ctx.data_cleaning || {};
+      return `<p>Files: ${dc.files_processed||0}</p><p>Figures: ${(dc.all_figures||[]).length}</p>`;
+    },
+    'P2': () => {
+      const m = ctx.modeling || {};
+      return `<p>Type: ${m.model_type||'--'}</p><p>Model: ${m.primary_model?.model_name||'--'}</p>`;
+    },
+    'P3': () => {
+      const ce = ctx.code_execution || {};
+      return `<p>Status: ${ce.status||'--'}</p><p>Artifacts: ${(ce.artifacts||[]).length}</p>`;
+    },
+    'P3.5': () => {
+      const dv = ctx.data_validation?.pre_write || {};
+      return dv.valid !== undefined ? `<p>Valid: ${dv.valid?'Yes':'No'}</p>` : '';
+    },
+    'P4': () => {
+      const secs = Object.keys(ctx.paper?.sections || {});
+      return secs.length ? `<p>Sections: ${secs.length}</p>` : '';
+    },
+    'P4.5': () => {
+      const lc = ctx.latex_check || {};
+      return lc.status ? `<p>Fixes: ${lc.fixes_applied||0}</p><p>Critical: ${lc.critical_remaining||0}</p>` : '';
+    },
+    'P5': () => {
+      const r = ctx.review || {};
+      return `<p>Suggestions: ${(r.suggestions||[]).length}</p>`;
+    },
+    'P5.5': () => {
+      const dv = ctx.data_validation?.post_review || {};
+      return dv.valid !== undefined ? `<p>Valid: ${dv.valid?'Yes':'No'}</p><p>Critical: ${dv.critical_count||0}</p>` : '';
+    },
+  };
+  document.getElementById('phaseDetails').innerHTML = phases.map(p => `
+    <div class="detail-card" id="detail-${p.id}">
+      <div class="detail-card-header">
+        <div class="detail-card-title">${p.id} ${p.name}</div>
+        <span class="badge ${p.status}">${p.status}</span>
+      </div>
+      <div class="detail-card-body">${(extra[p.id]||(() => ''))()}</div>
+      <div class="detail-card-agent">${p.agent}</div>
+    </div>
+  `).join('');
+}
+
+/* ══════════════════════════════ Files / Figures ════════════════ */
+async function loadFiles() {
+  try {
+    const data = await api('/api/files');
+    document.querySelector('#fileTable tbody').innerHTML = data.files.map(f => `
+      <tr>
+        <td>${escapeHtml(f.name)}</td>
+        <td><span class="file-category ${f.category}">${f.category}</span></td>
+        <td>${formatSize(f.size)}</td>
+      </tr>
+    `).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function loadFigures() {
+  try {
+    const data = await api('/api/files');
+    const figs = data.files.filter(f => f.category === 'figure');
+    const el = document.getElementById('figuresGrid');
+    el.innerHTML = figs.length
+      ? figs.map(f => `
+          <div class="figure-card">
+            <img src="/api/figures/${encodeURIComponent(f.name)}" alt="${escapeHtml(f.name)}" loading="lazy">
+            <div class="figure-card-caption">${escapeHtml(f.name)}</div>
+          </div>`)
+          .join('')
+      : '<p style="color:var(--stone);grid-column:1/-1">No figures yet.</p>';
+  } catch(e) { console.error(e); }
+}
+
+/* ══════════════════════════════ Logs ══════════════════════════ */
+async function loadLogs() {
+  try {
+    const data = await api('/api/logs');
+    document.getElementById('logViewer').innerHTML = colorizeLog(data.log || '(empty)');
+  } catch(e) { console.error(e); }
+}
+
+function colorizeLog(text) {
+  return text.split('\n').map(line => {
+    let cls = 'log-line';
+    if (/\[.*OK\]|\[.*DONE\]|success/i.test(line)) cls += ' log-ok';
+    else if (/\[.*ERR\]|\[.*FAIL\]|error|traceback/i.test(line)) cls += ' log-err';
+    else if (/\[.*WARN\]|warning/i.test(line)) cls += ' log-warn';
+    else if (/^={3,}|开始 P/.test(line)) cls += ' log-phase';
+    return `<div class="${cls}">${escapeHtml(line)}</div>`;
+  }).join('');
+}
+
+async function refreshSidebarLogs() {
+  try {
+    const data = await api('/api/logs');
+    const el = document.getElementById('sidebarLogs');
+    const lines = (data.log || '(empty)').split('\n').slice(-60).join('\n');
+    el.textContent = lines;
+    el.scrollTop = el.scrollHeight;
+  } catch(e) { /* ignore */ }
+}
+
+/* ══════════════════════════════ Reports ═══════════════════════ */
+async function loadReport(type) {
+  const el = document.getElementById('reportContent');
+  try {
+    const data = await api(`/api/reports/${type}`);
+    el.innerHTML = type === 'review' ? renderReviewReport(data)
+                 : type === 'latex'  ? renderLatexReport(data)
+                 : `<pre>${JSON.stringify(data,null,2)}</pre>`;
+  } catch(e) {
+    el.innerHTML = '<p style="color:var(--stone)">Report not available yet.</p>';
+  }
+}
+
+function renderReviewReport(data) {
+  const scores = data.scores?.scores || data.scores || {};
+  const dims = ['innovation','completeness','readability','math_rigor'];
+  const cards = dims.map(d => {
+    const it = scores[d] || {};
+    return `<div class="score-item"><div class="score-number">${it.score||'--'}</div><div class="score-label">${d}</div></div>`;
+  }).join('');
+  const total = data.scores?.total || '--';
+  const tier = data.scores?.tier || '--';
+  const fixes = data.scores?.critical_fixes || [];
+  const sugs = data.scores?.suggestions || [];
+  return `
+    <div class="report-section"><h3>Scores (Total: ${total}/100, Tier: ${tier})</h3><div class="score-grid">${cards}</div></div>
+    ${fixes.length?`<div class="report-section"><h3>Critical Fixes</h3><ul class="issue-list">${fixes.map(f=>`<li><span class="issue-severity critical"></span>${escapeHtml(f)}</li>`).join('')}</ul></div>`:''}
+    ${sugs.length?`<div class="report-section"><h3>Suggestions</h3><ul class="issue-list">${sugs.map(s=>`<li>${escapeHtml(s)}</li>`).join('')}</ul></div>`:''}
+  `;
+}
+
+function renderLatexReport(data) {
+  const files = data.file_reports || [];
+  return `
+    <div class="report-section">
+      <h3>LaTeX Check: <span class="badge ${data.overall_status==='pass'?'pass':'fail'}">${data.overall_status||'--'}</span></h3>
+      <p style="color:var(--olive);font-size:.84rem">Files: ${data.files_checked||0} | Fixes: ${data.total_fixes_applied||0} | Critical: ${data.total_critical_remaining||0}</p>
+    </div>
+    ${files.map(f=>`
+      <div class="report-section">
+        <h3>${escapeHtml(f.filename)} <span class="badge ${f.status==='pass'?'pass':'fail'}">${f.status}</span></h3>
+        ${f.remaining_issues?.length?`<ul class="issue-list">${f.remaining_issues.map(i=>`<li><span class="issue-severity ${i.severity}"></span>[${i.type}] ${escapeHtml(i.message)}</li>`).join('')}</ul>`:''}
+      </div>`).join('')}
+  `;
+}
+
+/* ══════════════════════════════ Knowledge ══════════════════════ */
+async function loadKnowledge() {
+  try {
+    const data = await api('/api/knowledge');
+    document.getElementById('kbGrid').innerHTML =
+      (data.knowledge_base||[]).map(k=>`<div class="kb-card"><div class="kb-name">${escapeHtml(k.name)}</div><div class="kb-count">${k.entries}</div></div>`).join('')
+      || '<p style="color:var(--stone)">No knowledge base files.</p>';
+  } catch(e) { console.error(e); }
+}
+
+/* ══════════════════════════════ Run / Stop  (FIX: use POST) ════ */
+async function runPhase() {
+  const phase = document.getElementById('phaseSelect').value;
+  try {
+    await api(`/api/run/${phase}`, { method: 'POST' });   // ← POST, not GET
+    document.getElementById('btnRun').disabled = true;
+    document.getElementById('btnStop').style.display = '';
+    showConsole();
+    streamOutput();
+    setTimeout(refreshAll, 2000);
+  } catch(e) {
+    alert(e.message);
+  }
+}
+
+async function stopPipeline() {
+  try { await api('/api/stop', { method: 'POST' }); } catch(e) {}
+  document.getElementById('btnRun').disabled = false;
+  document.getElementById('btnStop').style.display = 'none';
+  refreshAll();
+}
+
+function showConsole() { document.getElementById('liveConsole').classList.add('visible'); }
+function clearConsole() { document.getElementById('consoleBody').textContent = ''; }
+
+function streamOutput() {
+  const body = document.getElementById('consoleBody');
+  const es = new EventSource('/api/pipeline-output');
+  es.onmessage = e => {
+    const data = JSON.parse(e.data);
+    if (data.done) {
+      es.close();
+      document.getElementById('btnRun').disabled = false;
+      document.getElementById('btnStop').style.display = 'none';
+      refreshAll();
+      return;
+    }
+    if (data.line) {
+      body.textContent += data.line + '\n';
+      body.scrollTop = body.scrollHeight;
+    }
+  };
+  es.onerror = () => es.close();
+}
+
+/* ══════════════════════════════ SSE status ═════════════════════ */
+function startSSE() {
+  if (sseSource) { sseSource.close(); }
+  sseSource = new EventSource('/api/sse');
+  sseSource.onmessage = e => {
+    const data = JSON.parse(e.data);
+    updateRunningUI(data.running);
+    if (data.phase) {
+      document.getElementById('statPhase').textContent = data.phase;
+      document.getElementById('chatCurrentPhase').textContent = data.phase;
+    }
+  };
+  sseSource.onerror = () => { setTimeout(startSSE, 5000); };
+}
+
+/* ══════════════════════════════ RefreshAll ═════════════════════ */
+async function refreshAll() {
+  try {
+    const data = await api('/api/status');
+    currentStatus = data;
+    document.getElementById('statPhase').textContent = data.current_phase || '--';
+    document.getElementById('statProblem').textContent = data.selected_problem || '--';
+    document.getElementById('statModel').textContent = truncate(data.model_name || data.model_type || '--', 28);
+    document.getElementById('statScore').textContent = data.review_score ? `${data.review_score}/100` : '--';
+    updateRunningUI(data.pipeline_running);
+    renderPipeline(data.phases);
+
+    const ctx = await api('/api/context');
+    renderPhaseDetails(data.phases, ctx);
+    syncChatStatus();
+  } catch(e) { console.error('refreshAll:', e); }
+}
+
+function updateRunningUI(running) {
+  const dot = document.getElementById('globalDot');
+  const lbl = document.getElementById('globalStatus');
+  if (running) {
+    dot.className = 'status-dot running';
+    lbl.textContent = 'Running';
+    document.getElementById('btnRun').disabled = true;
+    document.getElementById('btnStop').style.display = '';
+  } else {
+    const phase = currentStatus?.current_phase || 'init';
+    const done = phase.includes('complete') || phase === 'P5.5_complete';
+    dot.className = 'status-dot' + (done ? ' done' : '');
+    lbl.textContent = done ? 'Done' : 'Idle';
+    document.getElementById('btnRun').disabled = false;
+    document.getElementById('btnStop').style.display = 'none';
+  }
+}
+
+/* ══════════════════════════════ Tabs ═══════════════════════════ */
+function switchTab(btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(`panel-${btn.dataset.panel}`).classList.add('active');
+  if (btn.dataset.panel === 'files') loadFiles();
+  if (btn.dataset.panel === 'figures') loadFigures();
+  if (btn.dataset.panel === 'logs') loadLogs();
+  if (btn.dataset.panel === 'knowledge') loadKnowledge();
+}
+
+function scrollToDetail(id) {
+  const el = document.getElementById(`detail-${id}`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/* ══════════════════════════════ Config / Sidebar ═══════════════ */
+let _cfgCache = null;
+
+async function loadConfig() {
+  try {
+    const cfg = await api('/api/config');
+    _cfgCache = cfg;
+    renderModelConfigPanel(cfg.model_routes);
+    renderTokenLimits(cfg.pipeline);
+    document.getElementById('cfgMaxRollbacks').value = cfg.pipeline.max_rollbacks ?? 2;
+    document.getElementById('cfgMaxHeal').value = cfg.pipeline.max_heal_iterations ?? 3;
+  } catch(e) { console.error('loadConfig:', e); }
+}
+
+function renderModelConfigPanel(routes) {
+  const panel = document.getElementById('modelConfigPanel');
+  const knownTasks = ['default','extraction','modeling','codegen','writing','review','healing'];
+  const allTasks = [...new Set([...knownTasks, ...Object.keys(routes)])];
+  const modelOptions = [
+    'or:anthropic/claude-opus-4-6',
+    'or:anthropic/claude-sonnet-4-6',
+    'ds:deepseek-chat',
+    'or:qwen/qwen-plus',
+  ];
+  panel.innerHTML = allTasks.map(task => {
+    const info = routes[task] || {};
+    const models = info.models || [];
+    const primary = models[0] || '';
+    const timeout = info.timeout_seconds ?? 60;
+    const budget = info.budget_seconds ?? 180;
+    const opts = [...new Set([...modelOptions, ...(primary && !modelOptions.includes(primary) ? [primary] : [])])];
+    return `
+      <div class="cfg-task-header">${task}</div>
+      <div class="cfg-row">
+        <label class="cfg-label">Primary Model</label>
+        <select class="cfg-select" id="cfgModel_${task}" onchange="updateModelRoute('${task}')">
+          ${opts.map(m => `<option value="${m}" ${m===primary?'selected':''}>${m}</option>`).join('')}
+          <option value="__custom__">自定义...</option>
+        </select>
+      </div>
+      <div class="cfg-row-2">
+        <div>
+          <label class="cfg-label">Timeout (s)</label>
+          <input type="number" class="cfg-input" id="cfgTimeout_${task}" value="${timeout}" min="10" max="600">
+        </div>
+        <div>
+          <label class="cfg-label">Budget (s)</label>
+          <input type="number" class="cfg-input" id="cfgBudget_${task}" value="${budget}" min="30" max="3600">
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateModelRoute(task) {
+  const sel = document.getElementById(`cfgModel_${task}`);
+  if (sel.value === '__custom__') {
+    const custom = prompt('输入模型 ID (例: or:anthropic/claude-opus-4-6):');
+    if (custom) {
+      const opt = document.createElement('option');
+      opt.value = custom; opt.textContent = custom; opt.selected = true;
+      sel.insertBefore(opt, sel.firstChild);
+      sel.value = custom;
+    } else {
+      sel.value = sel.options[0].value;
+    }
+  }
+}
+
+function renderTokenLimits(pipeline) {
+  const tokens = pipeline.max_tokens || {};
+  const tasks = ['modeling','codegen','writing','extraction','default'];
+  document.getElementById('tokenLimitsPanel').innerHTML = tasks.map(task => `
+    <div class="cfg-row">
+      <label class="cfg-label">${task}</label>
+      <input type="number" class="cfg-input" id="cfgTokens_${task}" value="${tokens[task]||2048}" min="256" step="256">
+    </div>
+  `).join('');
+}
+
+async function saveConfig() {
+  if (!_cfgCache) return;
+
+  // Collect model routes
+  const routes = JSON.parse(JSON.stringify(_cfgCache.model_routes));
+  const knownTasks = ['default','extraction','modeling','codegen','writing','review','healing'];
+  const allTasks = [...new Set([...knownTasks, ...Object.keys(routes)])];
+
+  allTasks.forEach(task => {
+    const modelEl = document.getElementById(`cfgModel_${task}`);
+    const timeoutEl = document.getElementById(`cfgTimeout_${task}`);
+    const budgetEl = document.getElementById(`cfgBudget_${task}`);
+    if (!modelEl) return;
+    if (!routes[task]) routes[task] = { models: [], timeout_seconds: 60, budget_seconds: 180 };
+    const primary = modelEl.value;
+    let models = routes[task].models || [];
+    models = models.filter(m => m !== primary);
+    models.unshift(primary);
+    routes[task].models = models;
+    if (timeoutEl) routes[task].timeout_seconds = parseInt(timeoutEl.value) || 60;
+    if (budgetEl) routes[task].budget_seconds = parseInt(budgetEl.value) || 180;
+  });
+
+  // Collect pipeline settings
+  const tokenTasks = ['modeling','codegen','writing','extraction','default'];
+  const tokens = {};
+  tokenTasks.forEach(task => {
+    const el = document.getElementById(`cfgTokens_${task}`);
+    if (el) tokens[task] = parseInt(el.value) || 2048;
+  });
+
+  const pipeline = {
+    max_rollbacks: parseInt(document.getElementById('cfgMaxRollbacks').value) || 2,
+    max_heal_iterations: parseInt(document.getElementById('cfgMaxHeal').value) || 3,
+    max_tokens: tokens,
+  };
+
+  try {
+    await api('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model_routes: routes, pipeline }),
+    });
+    _cfgCache = { model_routes: routes, pipeline };
+    // brief flash feedback
+    const btn = document.querySelector('.sidebar-footer .btn-primary');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Saved';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  } catch(e) {
+    alert('Save failed: ' + e.message);
+  }
+}
+
+/* ══════════════════════════════ Clear workspace ════════════════ */
+function openClearModal() {
+  document.getElementById('clearModal').classList.add('visible');
+}
+function closeClearModal() {
+  document.getElementById('clearModal').classList.remove('visible');
+}
+
+async function confirmClear() {
+  const btn = document.getElementById('btnClearConfirm');
+  const keepTranslations = document.getElementById('clearKeepTranslations').checked;
+  btn.disabled = true;
+  btn.textContent = '清除中...';
+
+  try {
+    const result = await api('/api/clear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keep_translations: keepTranslations }),
+    });
+    closeClearModal();
+
+    // Show result summary in a brief overlay then refresh
+    const n = result.removed_count;
+    const errs = result.errors || [];
+    const msg = `已清除 ${n} 项产物。${errs.length ? '⚠ ' + errs.length + ' 个错误。' : ''}`;
+
+    // Flash notification
+    showToast(msg, errs.length ? 'warning' : 'success');
+
+    // Reset chat history too
+    chatHistory = [];
+    document.getElementById('chatMessages').innerHTML = '';
+    appendMsg('assistant', '工作区已清除。可以开始新题目了！\n\n上传新的竞赛题目到 questiontest/ 目录，然后从 P0b 运行流水线。');
+
+    setTimeout(refreshAll, 600);
+  } catch(e) {
+    closeClearModal();
+    showToast('清除失败: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '确认清除';
+  }
+}
+
+function showToast(msg, type) {
+  const existing = document.getElementById('toastEl');
+  if (existing) existing.remove();
+
+  const el = document.createElement('div');
+  el.id = 'toastEl';
+  const color = type === 'success' ? 'var(--success)' : type === 'warning' ? 'var(--warning)' : 'var(--error)';
+  el.style.cssText = `
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+    background:var(--near-black);color:var(--ivory);
+    padding:12px 24px;border-radius:var(--radius-md);font-size:.84rem;
+    z-index:600;border-left:4px solid ${color};
+    box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:420px;text-align:center;
+    animation:fadeUp .25s ease;
+  `;
+  el.textContent = msg;
+
+  // Add keyframe if not present
+  if (!document.getElementById('toastStyle')) {
+    const s = document.createElement('style');
+    s.id = 'toastStyle';
+    s.textContent = '@keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+    document.head.appendChild(s);
+  }
+
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+/* ══════════════════════════════ Chat ═══════════════════════════ */
+function syncChatStatus() {
+  if (!currentStatus) return;
+  const running = currentStatus.pipeline_running;
+  document.getElementById('chatPipelineDot').style.background =
+    running ? 'var(--terracotta)' : (currentStatus.current_phase?.includes('complete') ? 'var(--success)' : 'var(--stone)');
+  document.getElementById('chatPipelineStatus').textContent = running ? '运行中' : '空闲';
+  document.getElementById('chatCurrentPhase').textContent = currentStatus.current_phase || '--';
+  document.getElementById('chatProblem').textContent = currentStatus.selected_problem || '--';
+}
+
+function appendMsg(role, content, actionResults) {
+  const container = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+
+  let avatarLabel = role === 'user' ? 'U' : role === 'assistant' ? 'AI' : '⚙';
+  let bubbleHTML = `<div class="msg-bubble">${escapeHtml(content).replace(/\n/g,'<br>')}</div>`;
+
+  if (actionResults && actionResults.length) {
+    bubbleHTML += `<div class="action-results">${actionResults.map(r =>
+      `<div class="action-result-line">${escapeHtml(r)}</div>`).join('')}</div>`;
+  }
+
+  if (role === 'system') {
+    div.innerHTML = bubbleHTML;
+  } else {
+    div.innerHTML = `<div class="msg-avatar">${avatarLabel}</div>${bubbleHTML}`;
+  }
+
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+function showTyping() {
+  const container = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg assistant';
+  div.id = 'typingIndicator';
+  div.innerHTML = `<div class="msg-avatar">AI</div><div class="msg-bubble"><div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function removeTyping() {
+  document.getElementById('typingIndicator')?.remove();
+}
+
+async function sendChat() {
+  if (chatWaiting) return;
+  const input = document.getElementById('chatInput');
+  const message = input.value.trim();
+  if (!message) return;
+
+  input.value = '';
+  autoResize(input);
+  appendMsg('user', message);
+  chatHistory.push({ role: 'user', content: message });
+
+  chatWaiting = true;
+  document.getElementById('btnChatSend').disabled = true;
+  showTyping();
+
+  try {
+    const result = await api('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, history: chatHistory.slice(-10) }),
+    });
+
+    removeTyping();
+    appendMsg('assistant', result.reply, result.action_results);
+    chatHistory.push({ role: 'assistant', content: result.reply });
+
+    // Refresh status if any actions were executed
+    if (result.actions && result.actions.length) {
+      setTimeout(refreshAll, 1000);
+    }
+  } catch(e) {
+    removeTyping();
+    appendMsg('system', `错误: ${e.message}`);
+  } finally {
+    chatWaiting = false;
+    document.getElementById('btnChatSend').disabled = false;
+  }
+}
+
+function fillChat(text) {
+  const input = document.getElementById('chatInput');
+  input.value = text;
+  autoResize(input);
+  input.focus();
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChat();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+/* ══════════════════════════════ Utilities ══════════════════════ */
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1048576).toFixed(1) + ' MB';
+}
+function truncate(s, n) { return s.length > n ? s.slice(0,n) + '…' : s; }
+
+/* ══════════════════════════════ Init ═══════════════════════════ */
+(function init() {
+  // Greeting message in chat
+  appendMsg('assistant',
+    '你好！我是 MCM 流水线控制助手。\n\n我可以帮你：\n• 查看当前流水线状态\n• 暂停或重启流水线\n• 修改模型配置（切换 LLM）\n• 调整循环次数和 Token 限制\n\n有什么需要我做的？');
+
+  refreshAll();
+  startSSE();
+  // Auto refresh every 15s
+  setInterval(refreshAll, 15000);
+  // Auto refresh sidebar logs every 10s when sidebar open
+  setInterval(() => {
+    if (document.getElementById('sidebar').classList.contains('open')) {
+      refreshSidebarLogs();
+    }
+  }, 10000);
+})();
+
+/* ══════════════════════════════ Experience ═════════════════════ */
+let _expCurrentPhase = '';
+
+async function loadExperience(phase) {
+  if (phase === undefined) phase = _expCurrentPhase;
+  _expCurrentPhase = phase;
+  const qs = phase ? `?phase=${encodeURIComponent(phase)}&limit=40` : '?limit=40';
+  try {
+    const data = await api('/api/experience' + qs);
+    renderExperienceCards(data.entries || [], data.total || 0);
+  } catch(e) {
+    document.getElementById('exp-cards').innerHTML = `<div style="color:var(--error);padding:16px">加载失败: ${e.message}</div>`;
+  }
+}
+
+function filterExperience(phase) {
+  _expCurrentPhase = phase;
+  document.querySelectorAll('.exp-filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.phase === phase);
+  });
+  loadExperience(phase);
+}
+
+function renderExperienceCards(entries, total) {
+  const container = document.getElementById('exp-cards');
+  const empty = document.getElementById('exp-empty');
+  const totalEl = document.getElementById('exp-total');
+
+  if (!entries.length) {
+    container.innerHTML = '';
+    empty.style.display = 'block';
+    totalEl.textContent = '';
+    return;
+  }
+  empty.style.display = 'none';
+  totalEl.textContent = `共 ${total} 条经验记录`;
+
+  const PHASE_COLORS = {
+    'P1':'#6b7280','P1.5':'#8b5cf6','P2':'#2563eb','P3':'#059669',
+    'P4':'#d97706','P5':'#dc2626','P5.5':'#9f1239'
+  };
+
+  container.innerHTML = entries.map((e, idx) => {
+    const color = PHASE_COLORS[e.phase] || 'var(--terracotta)';
+    const date = (e.timestamp || '').slice(0, 10);
+    const tips = e.reuse_tips || [];
+    const id = `exp-card-${idx}`;
+
+    // Build key fields (exclude noisy ones)
+    const skipKeys = new Set(['id','phase','phase_name','timestamp','problem','model_type','reuse_tips']);
+    const fields = Object.entries(e).filter(([k]) => !skipKeys.has(k));
+
+    const fieldHtml = fields.slice(0,4).map(([k, v]) => {
+      const label = k.replace(/_/g,' ');
+      const val = Array.isArray(v) ? v.slice(0,2).join(' / ') : (typeof v === 'object' ? JSON.stringify(v).slice(0,80) : String(v).slice(0,100));
+      return `<div class="exp-field"><strong>${label}</strong>${val}</div>`;
+    }).join('');
+
+    const tipsHtml = tips.length
+      ? `<ul class="exp-tips">${tips.map(t => `<li>${t}</li>`).join('')}</ul>`
+      : '';
+
+    const moreFields = fields.slice(4);
+    const detailId = `exp-detail-${idx}`;
+    const moreHtml = moreFields.length ? `
+      <button class="exp-expand-btn" onclick="toggleExpDetail('${detailId}',this)">展开全部字段 ▾</button>
+      <div id="${detailId}" style="display:none;margin-top:8px">
+        <div class="exp-fields">${moreFields.map(([k,v])=>{
+          const label=k.replace(/_/g,' ');
+          const val=Array.isArray(v)?v.join('<br>• '):(typeof v==='object'?JSON.stringify(v,null,2):String(v));
+          return `<div class="exp-field" style="grid-column:1/-1"><strong>${label}</strong>${val}</div>`;
+        }).join('')}</div>
+      </div>` : '';
+
+    return `
+      <div class="exp-card" id="${id}">
+        <div class="exp-card-header">
+          <span class="exp-phase-badge" style="background:${color}">${e.phase} ${e.phase_name||''}</span>
+          <span class="exp-card-title" title="${e.problem||''}">${e.problem || '（未知题目）'}</span>
+          <span class="exp-card-date">${date}</span>
+        </div>
+        ${tipsHtml}
+        <div class="exp-fields" style="margin-top:${tips.length?'12px':'0'}">${fieldHtml}</div>
+        ${moreHtml}
+      </div>`;
+  }).join('');
+}
+
+function toggleExpDetail(id, btn) {
+  const el = document.getElementById(id);
+  const open = el.style.display === 'block';
+  el.style.display = open ? 'none' : 'block';
+  btn.textContent = open ? '展开全部字段 ▾' : '收起 ▴';
+}
+</script>
+</body>
+</html>

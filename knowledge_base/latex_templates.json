@@ -1,0 +1,165 @@
+{
+  "category": "latex",
+  "description": "写作手专用：LaTeX论文格式、宏包配置、竞赛模板",
+  "consumer": "writer subagent（LaTeX专项）",
+  "built_at": "2026-04-15 17:10:29",
+  "entry_count": 4,
+  "entries": [
+    {
+      "source": "GMCM.tex",
+      "category": "latex",
+      "document_class": "gmcmthesis",
+      "key_packages": [],
+      "page_layout": "使用gmcmthesis文档类，支持bwprint选项（可能用于黑白打印），可去掉封面与编号页（通过withoutpreface选项）。",
+      "font_settings": "未在模板中明确指定，由gmcmthesis文档类默认设置。",
+      "equation_style": "模板中未展示具体公式，但推测应遵循标准LaTeX数学环境。",
+      "figure_style": "使用figure环境，居中（\\centering），可指定宽度（如width=5cm），需提供标题（\\caption）。",
+      "section_structure": [
+        "问题重述",
+        "模型假设",
+        "符号说明",
+        "问题的分析（包含子问题：问题描述和分析、模型建立与求解）",
+        "模型的评价（包含优点和缺点）",
+        "写作参考格式（可删除）",
+        "参考文献",
+        "附录（程序代码）"
+      ],
+      "special_commands": [
+        "\\baominghao{}",
+        "\\schoolname{}",
+        "\\membera{}",
+        "\\memberb{}",
+        "\\memberc{}",
+        "\\uwave{}"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\2018年研究生数学建模\\2018年Latex模版\\GMCM.tex"
+    },
+    {
+      "source": "gmcmthesis.cls",
+      "category": "latex",
+      "document_class": "article",
+      "key_packages": [
+        "ctex",
+        "geometry",
+        "amsmath",
+        "fontspec",
+        "xcolor",
+        "graphicx",
+        "tabularx",
+        "longtable",
+        "booktabs",
+        "multirow",
+        "listings",
+        "caption",
+        "enumitem"
+      ],
+      "page_layout": "A4纸，上下边距25.4mm，左右边距31.8mm，页眉间距8mm，行距1.0倍，段落首行缩进2个汉字",
+      "font_settings": "主字体Times New Roman，等宽字体Courier New，无衬线字体Arial；中文使用宋体、黑体等，图表标题为宋体小四加粗",
+      "equation_style": "使用amsmath、amsfonts、amssymb、bm数学宏包，支持定理、定义、引理、推论等数学环境",
+      "figure_style": "支持.pdf, .eps, .jpg, .png格式，搜索路径包括figures/等多个目录；图表标题格式为悬挂缩进，标签与标题间用空格分隔，位置可设置",
+      "section_structure": [
+        "封面页（含承诺书）",
+        "正文章节（基于article类结构）"
+      ],
+      "special_commands": [
+        "\\mcm@tokens@keywords",
+        "\\mcm@tokens@tihao",
+        "\\mcm@tokens@baominghao",
+        "\\mcm@tokens@schoolname",
+        "\\mcm@tokens@membera",
+        "\\mcm@tokens@memberb",
+        "\\mcm@tokens@memberc",
+        "\\mcm@tokens@supervisor",
+        "\\lishu",
+        "\\xinwei"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\2018年研究生数学建模\\2018年Latex模版\\gmcmthesis.cls"
+    },
+    {
+      "source": "gmcmthesis.cls",
+      "category": "latex",
+      "document_class": "ctexart",
+      "key_packages": [
+        "geometry",
+        "amsmath",
+        "amsfonts",
+        "amssymb",
+        "bm",
+        "xcolor",
+        "graphicx",
+        "tabularx",
+        "longtable",
+        "booktabs",
+        "multirow",
+        "bigstrut",
+        "bigdelim",
+        "cprotect",
+        "listings",
+        "indentfirst",
+        "caption",
+        "enumitem",
+        "ulem",
+        "calc",
+        "titletoc",
+        "url",
+        "etoolbox",
+        "hyperref"
+      ],
+      "page_layout": "A4纸，上边距30mm，下边距25mm，左右边距31.7mm，页眉间距8mm，行距为1倍",
+      "font_settings": "主字体为Times New Roman，等宽字体为Courier New，无衬线字体为Arial；中文字体：宋体（SimSun）为主，支持楷体（KaiTi）斜体，自定义新魏体（STXinwei）和隶书（LiSu）",
+      "equation_style": "使用amsmath等数学宏包，定义了定理类环境（definition, theorem, lemma, corollary, assumption, conjecture, axiom, principle, problem, example, proof, solution）",
+      "figure_style": "支持.pdf, .eps, .jpg, .png格式，搜索路径包括figures/, figure/, pictures/, picture/, pic/, pics/, image/, images/；图标题：宋体小四加粗，底部位置，悬挂缩进；表标题：宋体小四加粗，顶部位置，悬挂缩进",
+      "section_structure": [
+        "封面（含承诺书信息）",
+        "编号专用页",
+        "正文章节"
+      ],
+      "special_commands": [
+        "\\gmcm@tokens@keywords",
+        "\\gmcm@tokens@tihao",
+        "\\gmcm@tokens@baominghao",
+        "\\gmcm@tokens@schoolname",
+        "\\gmcm@tokens@membera",
+        "\\gmcm@tokens@memberb",
+        "\\gmcm@tokens@memberc",
+        "\\gmcm@tokens@supervisor",
+        "\\gmcm@tokens@yearinput",
+        "\\gmcm@tokens@monthinput",
+        "\\gmcm@tokens@dayinput",
+        "\\xinwei",
+        "\\lishu"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\2019年论文模版\\2019年Latex模版\\gmcmthesis.cls"
+    },
+    {
+      "source": "MathModel.tex",
+      "category": "latex",
+      "document_class": "gmcmthesis",
+      "key_packages": [
+        "amsmath"
+      ],
+      "page_layout": "使用gmcmthesis文档类的bwprint选项，推测为黑白打印格式。包含标题页、摘要、目录、正文、参考文献和附录。",
+      "font_settings": "未在模板中明确指定，使用文档类默认字体设置。",
+      "equation_style": "未在模板中明确指定，使用amsmath包提供的标准数学环境。",
+      "figure_style": "图表编号与章节关联（\\numberwithin{figure}{section}），编号格式为“章节号-图号”（如1-1）。图表使用figure环境，居中（\\centering），宽度通常设置为0.7\\textwidth，位置参数为[!h]（尽量放在当前位置）。",
+      "section_structure": [
+        "问题重述",
+        "模型假设",
+        "符号说明",
+        "问题的分析（包含问题一、二、三、四的subsection和subsubsection）",
+        "模型的评价（包含优点和缺点subsection）",
+        "写作参考格式",
+        "参考文献",
+        "附录（程序代码）"
+      ],
+      "special_commands": [
+        "\\baominghao{}",
+        "\\schoolname{}",
+        "\\membera{}",
+        "\\memberb{}",
+        "\\memberc{}"
+      ],
+      "_source_path": "E:\\mathmodel\\gitclone\\MathModel\\2019年论文模版\\2019年Latex模版\\MathModel.tex"
+    }
+  ]
+}

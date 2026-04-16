@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 模型路由配置
+# 前缀说明:
+#   or:   → OpenRouter   (https://openrouter.ai/api/v1)
+#   ds:   → DeepSeek     (https://api.deepseek.com)
+#   qwen: → Dashscope    (https://dashscope.aliyuncs.com/compatible-mode/v1)
+#目前还属于测试阶段就全部统一采用ds
+# ─────────────────────────────────────────────────────────────────────────────
+
+# 默认路由（其余任务用 DeepSeek）
+[default]
+models = [
+  "ds:deepseek-chat",
+  "or:qwen/qwen-plus",
+]
+timeout_seconds = 60
+budget_seconds = 180
+
+# 知识库提炼（knowledge_builder 专用）
+[extraction]
+models = [
+  "ds:deepseek-chat",
+  "or:qwen/qwen-plus",
+]
+timeout_seconds = 60
+budget_seconds = 180
+
+# 建模手 → Claude Opus 4.6（最强推理）
+[modeling]
+models = [
+#"or:anthropic/claude-opus-4-6",
+  "ds:deepseek-chat",
+]
+timeout_seconds = 120
+budget_seconds = 360
+
+# 编程手 → Claude Sonnet 4.6（最佳编码）
+[codegen]
+models = [
+#"or:anthropic/claude-sonnet-4-6",
+
+  "ds:deepseek-chat",
+]
+timeout_seconds = 120
+budget_seconds = 360
+
+# 写作手 / LaTeX → Claude Sonnet 4.6
+[writing]
+models = [
+#"or:anthropic/claude-sonnet-4-6"
+  "ds:deepseek-chat",
+]
+timeout_seconds = 120
+budget_seconds = 360
+
+# 审校 → DeepSeek
+[review]
+models = [
+  "ds:deepseek-chat",
+  "or:qwen/qwen-plus",
+]
+timeout_seconds = 80
+budget_seconds = 240
+
+# 自愈 → DeepSeek
+[healing]
+models = [
+  "ds:deepseek-chat",
+  "or:qwen/qwen-plus",
+]
+timeout_seconds = 80
+budget_seconds = 240

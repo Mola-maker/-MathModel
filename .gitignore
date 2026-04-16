@@ -1,0 +1,12 @@
+.claude/
+.vscode/
+__pycache__/
+translation/
+gitclone/
+# Ignore all .env files
+.env
+# Ignore all .log files
+*.log
+CLAUDE.md
+DESIGN.md
+Dockerfile

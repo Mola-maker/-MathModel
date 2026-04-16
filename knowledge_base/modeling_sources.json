@@ -1,0 +1,82 @@
+{
+  "query": "B题",
+  "source_status": {
+    "cnki": {
+      "status": "manual_export_supported",
+      "reason": "无公开API；请手动导出BibTeX到 reference/manual/ 目录，AI会自动读取",
+      "manual_dir": "E:\\mathmodel\\reference\\manual",
+      "files_found": 0
+    },
+    "web_of_science": {
+      "status": "manual_export_supported",
+      "reason": "需机构账号；请手动导出BibTeX到 reference/manual/ 目录，AI会自动读取",
+      "manual_dir": "E:\\mathmodel\\reference\\manual",
+      "files_found": 0
+    },
+    "openalex": {
+      "status": "available",
+      "reason": "完全开放API，可直接检索"
+    },
+    "semantic_scholar": {
+      "status": "available",
+      "reason": "完全开放API，数学/CS/工程覆盖好，可选 S2_API_KEY 提升速率"
+    },
+    "crossref": {
+      "status": "available",
+      "reason": "完全开放API，DOI验证权威来源"
+    },
+    "github": {
+      "status": "available",
+      "reason": "可通过GitHub REST API检索公开仓库"
+    }
+  },
+  "openalex_results": [],
+  "semantic_scholar_results": [],
+  "crossref_results": [
+    {
+      "title": "问题1",
+      "year": "2008",
+      "authors": [
+        "ctae ca"
+      ],
+      "doi": "10.3724/sp.j.1001.2008.00012",
+      "journal": "ACTA AGRONOMICA SINICA",
+      "cited_by": 0,
+      "source": "crossref"
+    },
+    {
+      "title": "基于母题的简单算术应用题出题系统",
+      "year": "2020",
+      "authors": [
+        "培鑫 贺"
+      ],
+      "doi": "10.36012/sde.v2i3.1645",
+      "journal": "教育科学发展",
+      "cited_by": 0,
+      "source": "crossref"
+    },
+    {
+      "title": "以高考真题为例评析命题蓝图的命题指引价值",
+      "year": "2025",
+      "authors": [
+        "刘娴"
+      ],
+      "doi": "10.63887/etr.2025.1.3.10",
+      "journal": "教育理论与研究",
+      "cited_by": 1,
+      "source": "crossref"
+    },
+    {
+      "title": "致力于解决高分子科学中的关键问题 &amp;mdash;&amp;mdash;《10000个科学难题》化学卷读感",
+      "year": "2009",
+      "authors": [
+        "佛松 王"
+      ],
+      "doi": "10.1360/zb2009-39-12-1674",
+      "journal": "Science in China Series B-Chemistry (in Chinese)",
+      "cited_by": 12,
+      "source": "crossref"
+    }
+  ],
+  "manual_exports": []
+}
