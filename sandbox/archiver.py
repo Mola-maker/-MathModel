@@ -4,7 +4,8 @@ import json
 import os
 from pathlib import Path
 
-VOL_HOST = Path(os.getenv("VOL_HOST", "E:/mathmodel/vol"))
+_BASE = Path(__file__).resolve().parent.parent
+VOL_HOST = Path(os.getenv("VOL_HOST", str(_BASE / "vol")))
 CONTEXT_PATH = Path(os.getenv("CONTEXT_STORE", "context_store/context.json"))
 OUTPUT_DIR = VOL_HOST / "outputs"
 

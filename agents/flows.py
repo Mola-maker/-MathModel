@@ -54,7 +54,7 @@ class Flows:
                 f"对数据进行 EDA 分析（数据清洗、缺失值处理、异常值检测、分布可视化、相关性分析）。\n"
                 f"建模手的 EDA 方案：{eda_plan}\n"
                 f"不需要复杂模型，清洗后的数据保存到当前目录。\n"
-                f"图片保存到 E:/mathmodel/vol/outputs/figures/"
+                f"图片保存到 /workspace/vol/outputs/figures/"
             ),
         )
 
@@ -80,7 +80,7 @@ class Flows:
                     f"核心方程：\n{equations_str}\n\n"
                     f"可视化方案：{viz_for_q}\n"
                     f"请生成完整可运行的 Python 脚本求解此问题。\n"
-                    f"图片保存到 E:/mathmodel/vol/outputs/figures/"
+                    f"图片保存到 /workspace/vol/outputs/figures/"
                 ),
             ))
 
@@ -93,7 +93,7 @@ class Flows:
                 f"建模手方案：{sensitivity_plan}\n"
                 f"模型类型：{model_type}，模型名称：{model_name}\n"
                 f"变量：{variables}\n"
-                f"图片保存到 E:/mathmodel/vol/outputs/figures/"
+                f"图片保存到 /workspace/vol/outputs/figures/"
             ),
         )
 

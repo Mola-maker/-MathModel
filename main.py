@@ -145,7 +145,7 @@ def run_pipeline(start_phase: str = "P0b", selected_problem: str | None = None) 
         elif phase == "P4":
             agent = WritingAgent()
             ctx = agent.run()
-            print("[P4-OK] 论文已生成: E:/mathmodel/paper/main.tex")
+            print(f"[P4-OK] 论文已生成: {BASE_DIR / 'paper' / 'main.tex'}")
             record_experience("P4")
 
         elif phase == "P4.5":
@@ -190,11 +190,12 @@ def run_pipeline(start_phase: str = "P0b", selected_problem: str | None = None) 
     print(f"\n{'=' * 50}")
     print(f"  全流程完成 (回滚次数: {rollback_count})")
     print(f"{'=' * 50}")
-    print("论文:         E:/mathmodel/paper/main.tex")
-    print("LaTeX检查:    E:/mathmodel/paper/latex_check_report.json")
-    print("参考文献:     E:/mathmodel/paper/references_draft.bib")
-    print("审校报告:     E:/mathmodel/paper/review_report.json")
-    print("Context:      E:/mathmodel/context_store/context.json")
+    paper = BASE_DIR / "paper"
+    print(f"论文:         {paper / 'main.tex'}")
+    print(f"LaTeX检查:    {paper / 'latex_check_report.json'}")
+    print(f"参考文献:     {paper / 'references_draft.bib'}")
+    print(f"审校报告:     {paper / 'review_report.json'}")
+    print(f"Context:      {BASE_DIR / 'context_store' / 'context.json'}")
 
     # Print token usage & cost summary
     recorder = get_recorder()
@@ -208,14 +209,23 @@ if __name__ == "__main__":
     import sys
 
     # ── 特殊命令：不走 argparse，直接处理 ──
-    if len(sys.argv) > 1 and sys.argv[1].lstrip("/") == "override_model":
+    _cmd = sys.argv[1].lstrip("/").lower() if len(sys.argv) > 1 else ""
+    if _cmd == "override_model":
         from agents.model_override import run_override_cli
         run_override_cli()
+        sys.exit(0)
+    if _cmd == "checkllm":
+        from agents.llm_checker import run_check_cli
+        run_check_cli()
         sys.exit(0)
 
     parser = argparse.ArgumentParser(
         description="MCM/ICM 全流程 MAS",
-        epilog="特殊命令：python main.py /override_model  — 交互式覆盖各阶段模型",
+        epilog=(
+            "特殊命令：\n"
+            "  python main.py /override_model  — 交互式覆盖各阶段模型\n"
+            "  python main.py /checkLLM        — 检查所有路由模型可用性"
+        ),
     )
     parser.add_argument(
         "--start",

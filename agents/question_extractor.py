@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import json
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -14,7 +15,8 @@ from agents.subagents.modeler import ModelingHandAgent
 from agents.subagents.writer import WritingHandAgent
 from agents.utils import parse_json
 
-TRANSLATION_DIR = Path("E:/mathmodel/translation")
+_BASE = Path(__file__).resolve().parent.parent
+TRANSLATION_DIR = Path(os.getenv("TRANSLATION_DIR", str(_BASE / "translation")))
 
 SYSTEM_EXTRACT = """You are an MCM/ICM problem parser.
 Extract structured data from markdown contest text.

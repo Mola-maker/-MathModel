@@ -11,6 +11,7 @@ Sits between P4 (writing) and P5 (review). Performs:
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
@@ -21,7 +22,8 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 from agents.orchestrator import call_model, load_context, save_context
 from agents.utils import parse_json as _parse_json
 
-PAPER_DIR = Path("E:/mathmodel/paper")
+_BASE = Path(__file__).resolve().parent.parent
+PAPER_DIR = Path(os.getenv("PAPER_DIR", str(_BASE / "paper")))
 
 # Maximum LLM fix attempts per file
 MAX_FIX_ROUNDS = 3

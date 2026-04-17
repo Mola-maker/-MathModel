@@ -7,7 +7,7 @@ knowledge_builder.py — 一次性将 gitclone/MathModel/ 所有资料
     python -m agents.knowledge_builder --cat writing  # 只构建写作库
     python -m agents.knowledge_builder --force   # 强制重建（忽略缓存）
 
-输出目录：E:/mathmodel/knowledge_base/
+输出目录：knowledge_base/
     ├── modeling_patterns.json   → 建模手（modeler）
     ├── writing_patterns.json    → 写作手（writer）
     ├── algorithm_patterns.json  → 编程手（coder）
@@ -34,7 +34,8 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 from agents.orchestrator import call_model
 from agents.knowledge_base import KNOWLEDGE_BASE_DIR
 
-GITCLONE_DIR = Path("E:/mathmodel/gitclone/MathModel")
+_BASE = Path(__file__).resolve().parent.parent
+GITCLONE_DIR = Path(os.getenv("GITCLONE_DIR", str(_BASE / "gitclone" / "MathModel")))
 MANIFEST_PATH = KNOWLEDGE_BASE_DIR / "build_manifest.json"
 
 # ── 分类规则 ──────────────────────────────────────────────────────────────────

@@ -31,8 +31,9 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 from agents.orchestrator import call_model
 from agents.utils import docker_cp, docker_exec, vol_host
 
-QUESTION_DIR = Path("E:/mathmodel/questiontest")
-TRANSLATION_DIR = Path("E:/mathmodel/translation")
+_BASE = Path(__file__).resolve().parent.parent
+QUESTION_DIR = Path(os.getenv("QUESTIONTEST_DIR", str(_BASE / "questiontest")))
+TRANSLATION_DIR = Path(os.getenv("TRANSLATION_DIR", str(_BASE / "translation")))
 
 # ---------------------------------------------------------------------------
 # OCR script injected into the container at runtime

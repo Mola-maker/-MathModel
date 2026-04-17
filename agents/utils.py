@@ -53,7 +53,8 @@ def docker_exec(container: str, cmd: str, timeout: int = 300) -> tuple[int, str,
 
 
 def vol_host() -> Path:
-    return Path(os.getenv("VOL_HOST", "E:/mathmodel/vol"))
+    _base = Path(__file__).resolve().parent.parent
+    return Path(os.getenv("VOL_HOST", str(_base / "vol")))
 
 
 def _running_container_names() -> list[str]:

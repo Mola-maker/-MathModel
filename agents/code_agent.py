@@ -33,7 +33,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-OUT = Path("E:/mathmodel/vol/outputs")
+OUT = Path("/workspace/vol/outputs")
 OUT.mkdir(parents=True, exist_ok=True)
 
 x = np.linspace(0, 1, 100)

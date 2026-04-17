@@ -10,7 +10,8 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 from agents.orchestrator import call_model, load_context, save_context
 from agents.utils import parse_json as _parse_json
 
-PAPER_DIR = Path("E:/mathmodel/paper")
+_BASE = Path(__file__).resolve().parent.parent
+PAPER_DIR = Path(os.getenv("PAPER_DIR", str(_BASE / "paper")))
 
 SYSTEM_JUDGE = """你是一位经验丰富的 MCM/ICM 竞赛评审委员。
 请从评委视角对论文进行四维打分，输出严格 JSON（不含 markdown 代码块），结构：

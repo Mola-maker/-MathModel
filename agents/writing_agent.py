@@ -16,8 +16,9 @@ from agents.orchestrator import call_model, load_context, save_context
 from agents.prompts.writer import get_writer_section_prompts, MCM_LATEX_TEMPLATE
 from agents.experience_recorder import get_relevant_experience
 
-OUTPUT_DIR = Path(os.getenv("VOL_HOST", "E:/mathmodel/vol")) / "outputs"
-PAPER_DIR = Path("E:/mathmodel/paper")
+_BASE = Path(__file__).resolve().parent.parent
+OUTPUT_DIR = Path(os.getenv("VOL_HOST", str(_BASE / "vol"))) / "outputs"
+PAPER_DIR = Path(os.getenv("PAPER_DIR", str(_BASE / "paper")))
 
 SECTIONS = [
     "abstract",

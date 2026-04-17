@@ -423,7 +423,7 @@ class DataCleaningAgent:
 
         if not data_files:
             print("[P1.5] vol/data/ 中未发现数据文件，跳过数据清洗")
-            print("[P1.5] 请将 .xlsx/.csv 文件放入 E:/mathmodel/vol/data/")
+            print("[P1.5] 请将 .xlsx/.csv 文件放入 vol/data/ 目录")
             ctx["phase"] = "P1.5_skipped"
             save_context(ctx)
             return ctx

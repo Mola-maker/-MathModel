@@ -203,7 +203,7 @@ def search_all_sources(query: str, top_k_each: int = 5) -> dict[str, list[dict]]
 
 def load_manual_bibtex_entries() -> list[dict]:
     """
-    读取 E:/mathmodel/reference/manual/ 下所有 .bib 文件。
+    读取 reference/manual/ 下所有 .bib 文件。
     用户将 WoS / CNKI 导出的 BibTeX 放在这个目录，AI 自动合并。
     """
     entries: list[dict] = []
@@ -227,7 +227,7 @@ def merge_manual_bibtex_to_paper() -> Path:
     将 reference/manual/*.bib 全部合并追加到 paper/references_draft.bib。
     由写作手调用，或用户手动触发。
     """
-    paper_dir = Path("E:/mathmodel/paper")
+    paper_dir = Path(os.getenv("PAPER_DIR", str(BASE_DIR / "paper")))
     paper_dir.mkdir(parents=True, exist_ok=True)
     draft_bib = paper_dir / "references_draft.bib"
 

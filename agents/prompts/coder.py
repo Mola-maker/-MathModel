@@ -245,7 +245,7 @@ print("=" * 60)
 - 输出完整可运行 Python 脚本
 - 用 ```python ... ``` 包裹代码
 - matplotlib 必须使用 Agg backend
-- 所有图片保存到 E:/mathmodel/vol/outputs/figures/
+- 所有图片保存到 /workspace/vol/outputs/figures/
 - 图片格式 PNG，dpi=300
 
 # 代码展示过程规范（供论文附录引用）

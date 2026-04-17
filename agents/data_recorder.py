@@ -172,6 +172,7 @@ def get_recorder() -> DataRecorder:
     """Get or create the global DataRecorder."""
     global _recorder
     if _recorder is None:
-        log_dir = os.getenv("VOL_HOST", "E:/mathmodel/vol")
+        _base = Path(__file__).resolve().parent.parent
+        log_dir = os.getenv("VOL_HOST", str(_base / "vol"))
         _recorder = DataRecorder(log_dir=Path(log_dir) / "logs")
     return _recorder

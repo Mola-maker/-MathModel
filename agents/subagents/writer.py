@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -12,8 +13,9 @@ from agents.prompt_sanitizer import build_brief_problem, clamp_keywords
 from agents.utils import parse_json
 from agents.knowledge_builder import format_knowledge_for_prompt
 
-RULE_LATEX_DIR = Path("E:/mathmodel/rule_latex")
-PAPER_DIR = Path("E:/mathmodel/paper")
+_BASE = Path(__file__).resolve().parent.parent.parent
+RULE_LATEX_DIR = Path(os.getenv("RULE_LATEX_DIR", str(_BASE / "rule_latex")))
+PAPER_DIR = Path(os.getenv("PAPER_DIR", str(_BASE / "paper")))
 
 SYSTEM_WRITER = """You are an MCM/ICM paper writing assistant.
 Return JSON only with keys:

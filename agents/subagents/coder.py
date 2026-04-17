@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -25,7 +26,8 @@ Return JSON only with this schema:
 }
 """
 
-VOL_SCRIPTS = Path("E:/mathmodel/vol/scripts")
+_BASE = Path(__file__).resolve().parent.parent.parent
+VOL_SCRIPTS = Path(os.getenv("VOL_SCRIPTS", str(_BASE / "vol" / "scripts")))
 
 
 class CodingHandAgent:
