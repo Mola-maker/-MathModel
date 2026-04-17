@@ -1,0 +1,47 @@
+services:
+  # ── Code execution sandbox ─────────────────────────────────────────────────
+  mathmodel-sandbox:
+    build:
+      context: .
+      dockerfile: sandbox/Dockerfile
+    container_name: mathmodel-sandbox
+    volumes:
+      - ./vol:/workspace/vol
+    restart: unless-stopped
+
+  # ── Main application ───────────────────────────────────────────────────────
+  # PaddleOCR (P0b) uses the pre-existing host container `stoic_shaw`
+  # (ccr.../paddleocr-vl:latest-nvidia-gpu), reached via the Docker socket.
+  # No need to build a new OCR image.
+  mathmodel-app:
+    build: .
+    container_name: mathmodel-app
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SANDBOX_CONTAINER=mathmodel-sandbox
+      - PADDLEOCR_CONTAINER=stoic_shaw           # existing local paddleocr-vl container
+      - VOL_HOST=/app/vol
+      - VOL_CONTAINER=/workspace/vol
+      - CONTEXT_STORE=context_store/context.json
+      - KNOWLEDGE_BASE_DIR=/app/knowledge_base
+      - MANUAL_REF_DIR=/app/reference/manual
+      - PAPER_DIR=/app/paper
+      - TRANSLATION_DIR=/app/translation
+      - QUESTIONTEST_DIR=/app/questiontest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./vol:/app/vol
+      - ./context_store:/app/context_store
+      - ./knowledge_base:/app/knowledge_base
+      - ./paper:/app/paper
+      - ./translation:/app/translation
+      - ./questiontest:/app/questiontest
+      - ./config:/app/config
+      - ./reference:/app/reference
+    depends_on:
+      - mathmodel-sandbox
+    restart: unless-stopped

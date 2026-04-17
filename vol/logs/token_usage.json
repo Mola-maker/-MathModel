@@ -1,44 +1,20 @@
 {
-  "total_cost_usd": 0.072086,
+  "total_cost_usd": 0.018907,
   "agents": {
     "extraction": {
-      "prompt_tokens": 4749,
-      "completion_tokens": 3593,
-      "total_tokens": 8342,
-      "chat_count": 5,
-      "cost": 0.00458687,
+      "prompt_tokens": 7067,
+      "completion_tokens": 3436,
+      "total_tokens": 10503,
+      "chat_count": 11,
+      "cost": 0.0056876900000000005,
       "model": "deepseek-chat"
     },
     "modeling": {
-      "prompt_tokens": 12302,
-      "completion_tokens": 10889,
-      "total_tokens": 23191,
-      "chat_count": 5,
-      "cost": 0.015299440000000001,
-      "model": "deepseek-chat"
-    },
-    "writing": {
-      "prompt_tokens": 1171,
-      "completion_tokens": 2580,
-      "total_tokens": 3751,
-      "chat_count": 1,
-      "cost": 0.0031541700000000004,
-      "model": "deepseek-chat"
-    },
-    "codegen": {
-      "prompt_tokens": 8137,
-      "completion_tokens": 11872,
-      "total_tokens": 20009,
-      "chat_count": 3,
-      "cost": 0.01525619,
-      "model": "deepseek-chat"
-    },
-    "healing": {
-      "prompt_tokens": 25151,
-      "completion_tokens": 24544,
-      "total_tokens": 49695,
-      "chat_count": 6,
-      "cost": 0.03378917,
+      "prompt_tokens": 14166,
+      "completion_tokens": 8540,
+      "total_tokens": 22706,
+      "chat_count": 4,
+      "cost": 0.013218820000000001,
       "model": "deepseek-chat"
     }
   }

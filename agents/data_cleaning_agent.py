@@ -15,6 +15,9 @@ import json
 import os
 import re
 from pathlib import Path
+from typing import Literal
+
+from pydantic import BaseModel, ValidationError
 
 from dotenv import load_dotenv
 
@@ -136,13 +139,356 @@ sns.set_theme(style='ticks')
 - 用 ```python ... ``` 包裹代码
 - 禁止交互式输入
 - 所有路径使用参数中给出的路径
+- 禁止写入子脚本到 /tmp 或其他路径再 subprocess 调用（所有逻辑必须在一个脚本内完成）
+- 禁止在字符串或多行字符串中嵌入 ``` 围栏
 """
 
 
+# ── Structured spec models (Pydantic) ────────────────────────────────────────
+
+class ColumnSpec(BaseModel):
+    name: str
+    dtype: Literal["numeric", "datetime", "categorical", "id", "drop"]
+    missing_action: Literal[
+        "fill_mean", "fill_median", "fill_mode",
+        "fill_zero", "interpolate", "drop_rows", "drop_col", "keep"
+    ]
+    outlier_action: Literal["clip_iqr", "keep", "drop_rows"]
+
+
+class CleaningSpec(BaseModel):
+    read_func: Literal["pd.read_excel", "pd.read_csv"]
+    columns: list[ColumnSpec]
+    plot_cols: list[str]  # numeric column names to include in EDA plots (≤ 6)
+
+
+SYSTEM_SPEC = """\
+你是数据清洗专家。根据数据文件预览信息，输出一份清洗规格 JSON。
+严格输出 JSON，不要包含任何解释或 markdown 代码块。
+
+格式（字段必须完全匹配，不能添加额外字段）:
+{
+  "read_func": "pd.read_excel",
+  "columns": [
+    {
+      "name": "列名",
+      "dtype": "numeric | datetime | categorical | id | drop",
+      "missing_action": "fill_mean | fill_median | fill_mode | fill_zero | interpolate | drop_rows | drop_col | keep",
+      "outlier_action": "clip_iqr | keep | drop_rows"
+    }
+  ],
+  "plot_cols": ["数值列名1", "数值列名2"]
+}
+
+规则:
+- dtype=id 或 dtype=drop 时 missing_action="keep", outlier_action="keep"
+- 缺失率 > 80% 时 dtype="drop"
+- plot_cols 只填数值列名，最多 6 个
+- read_func 根据文件扩展名选择
+"""
+
+
+def _request_cleaning_spec(preview: dict) -> "CleaningSpec | None":
+    """Ask LLM for a structured spec; validate with Pydantic. Retry up to 3×."""
+    user_prompt = (
+        f"数据文件预览:\n{json.dumps(preview, ensure_ascii=False, indent=2)}\n\n"
+        "请输出清洗规格 JSON："
+    )
+    for attempt in range(3):
+        try:
+            raw = call_model(SYSTEM_SPEC, user_prompt, task="extraction")
+            raw = raw.strip()
+            # Strip any markdown fence the LLM might add despite instructions
+            if raw.startswith("```"):
+                lines = raw.splitlines()
+                end = next(
+                    (i for i in range(len(lines) - 1, 0, -1) if lines[i].strip() == "```"),
+                    len(lines),
+                )
+                raw = "\n".join(lines[1:end]).strip()
+            data = json.loads(raw)
+            return CleaningSpec(**data)
+        except (json.JSONDecodeError, ValidationError, Exception) as exc:
+            print(f"  [P1.5] spec 解析失败 (第 {attempt + 1} 次): {exc}")
+    return None
+
+
+def _build_script_from_spec(
+    spec: "CleaningSpec",
+    data_path: str,
+    output_dir: str,
+    fig_dir: str,
+    stem: str,
+) -> str:
+    """Generate a deterministic, template-based cleaning script from a validated spec.
+
+    The LLM provides *decisions* (what dtype each column is, how to fill missing
+    values, etc.); this function writes the actual Python — no LLM-generated code,
+    no syntax surprises.
+    """
+    c: list[str] = []
+
+    # ── Header ──────────────────────────────────────────────────────────
+    c += [
+        "import matplotlib",
+        "matplotlib.use('Agg')",
+        "import matplotlib.pyplot as plt",
+        "import seaborn as sns",
+        "import pandas as pd",
+        "import numpy as np",
+        "import json, os, sys",
+        "",
+        "plt.rcParams.update({'font.family': 'Arial', 'font.size': 10,",
+        "                      'savefig.dpi': 150, 'savefig.bbox': 'tight'})",
+        "plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'DejaVu Sans']",
+        "plt.rcParams['axes.unicode_minus'] = False",
+        "sns.set_theme(style='ticks')",
+        f"os.makedirs({repr(fig_dir)}, exist_ok=True)",
+        "",
+    ]
+
+    # ── Load data ────────────────────────────────────────────────────────
+    dp = repr(data_path)
+    if spec.read_func == "pd.read_excel":
+        c += [
+            f"_path = {dp}",
+            "try:",
+            "    df = pd.read_excel(_path)",
+            "except Exception:",
+            "    try:",
+            "        df = pd.read_csv(_path, encoding='utf-8')",
+            "    except Exception:",
+            "        df = pd.read_csv(_path, encoding='gbk')",
+        ]
+    else:
+        c += [
+            f"_path = {dp}",
+            "try:",
+            "    df = pd.read_csv(_path, encoding='utf-8')",
+            "except UnicodeDecodeError:",
+            "    try:",
+            "        df = pd.read_csv(_path, encoding='gbk')",
+            "    except Exception:",
+            "        df = pd.read_csv(_path, encoding='latin-1')",
+        ]
+    c += [
+        "print('Loaded:', df.shape)",
+        "_orig_len = len(df)",
+        "_report = {'original_shape': list(df.shape), 'ops': []}",
+        "",
+    ]
+
+    # ── Drop columns ─────────────────────────────────────────────────────
+    drop_names = [col.name for col in spec.columns if col.dtype == "drop"]
+    if drop_names:
+        c += [
+            f"df = df.drop(columns={repr(drop_names)}, errors='ignore')",
+            f"_report['ops'].append({{'action': 'drop_cols', 'cols': {repr(drop_names)}}})",
+            "",
+        ]
+
+    # ── Per-column operations ─────────────────────────────────────────────
+    for col in spec.columns:
+        if col.dtype in ("drop", "id"):
+            continue
+        cn = repr(col.name)
+
+        c.append(f"if {cn} in df.columns:")
+
+        # Type coercion
+        if col.dtype == "numeric":
+            c.append(f"    df[{cn}] = pd.to_numeric(df[{cn}], errors='coerce')")
+        elif col.dtype == "datetime":
+            c.append(f"    df[{cn}] = pd.to_datetime(df[{cn}], errors='coerce')")
+
+        # Missing value handling
+        act = col.missing_action
+        if act == "fill_mean":
+            c += [
+                f"    _fv = df[{cn}].mean() if pd.api.types.is_numeric_dtype(df[{cn}]) else None",
+                f"    if _fv is not None and pd.notna(_fv): df[{cn}] = df[{cn}].fillna(_fv)",
+                f"    _report['ops'].append({{'col': {cn}, 'action': 'fill_mean'}})",
+            ]
+        elif act == "fill_median":
+            c += [
+                f"    _fv = df[{cn}].median() if pd.api.types.is_numeric_dtype(df[{cn}]) else None",
+                f"    if _fv is not None and pd.notna(_fv): df[{cn}] = df[{cn}].fillna(_fv)",
+                f"    _report['ops'].append({{'col': {cn}, 'action': 'fill_median'}})",
+            ]
+        elif act == "fill_mode":
+            c += [
+                f"    _mv = df[{cn}].mode()",
+                f"    if len(_mv) > 0: df[{cn}] = df[{cn}].fillna(_mv.iloc[0])",
+                f"    _report['ops'].append({{'col': {cn}, 'action': 'fill_mode'}})",
+            ]
+        elif act == "fill_zero":
+            c += [
+                f"    df[{cn}] = df[{cn}].fillna(0)",
+                f"    _report['ops'].append({{'col': {cn}, 'action': 'fill_zero'}})",
+            ]
+        elif act == "interpolate":
+            c += [
+                f"    df[{cn}] = df[{cn}].interpolate(method='linear', limit_direction='both')",
+                f"    _report['ops'].append({{'col': {cn}, 'action': 'interpolate'}})",
+            ]
+        elif act == "drop_rows":
+            c += [
+                f"    _b = len(df); df = df.dropna(subset=[{cn}])",
+                f"    _report['ops'].append({{'col': {cn}, 'action': 'drop_rows', 'dropped': _b - len(df)}})",
+            ]
+        elif act == "drop_col":
+            c += [
+                f"    df = df.drop(columns=[{cn}], errors='ignore')",
+                f"    _report['ops'].append({{'col': {cn}, 'action': 'drop_col'}})",
+            ]
+
+        # Outlier handling (numeric only)
+        if col.dtype == "numeric" and col.outlier_action in ("clip_iqr", "drop_rows"):
+            c += [
+                f"    if {cn} in df.columns and pd.api.types.is_numeric_dtype(df[{cn}]):",
+                f"        _q1 = df[{cn}].quantile(0.25)",
+                f"        _q3 = df[{cn}].quantile(0.75)",
+                f"        _iqr = _q3 - _q1",
+            ]
+            if col.outlier_action == "clip_iqr":
+                c.append(f"        df[{cn}] = df[{cn}].clip(_q1 - 1.5*_iqr, _q3 + 1.5*_iqr)")
+            else:
+                c.append(f"        df = df[df[{cn}].between(_q1 - 1.5*_iqr, _q3 + 1.5*_iqr)]")
+
+    c += ["", f"print('After cleaning:', df.shape)", ""]
+
+    # ── EDA plots ────────────────────────────────────────────────────────
+    # Only plot columns that exist and are numeric in the spec
+    valid_plot = [
+        col.name for col in spec.columns
+        if col.name in spec.plot_cols and col.dtype == "numeric"
+    ]
+    c.append(
+        f"_plot_cols = [c for c in {repr(valid_plot)} "
+        f"if c in df.columns and pd.api.types.is_numeric_dtype(df[c])]"
+    )
+    c.append("_figs = []")
+    c.append("")
+
+    # Distribution histograms
+    c += [
+        "if _plot_cols:",
+        "    _n = min(len(_plot_cols), 6)",
+        "    _nc = min(_n, 3); _nr = (_n + _nc - 1) // _nc",
+        "    _fig, _axes = plt.subplots(_nr, _nc, figsize=(_nc*4, _nr*3))",
+        "    _ax_list = list(_axes.flat) if hasattr(_axes, 'flat') else [_axes]",
+        "    for _i, _col in enumerate(_plot_cols[:_n]):",
+        "        _ax = _ax_list[_i]",
+        "        _vals = df[_col].dropna()",
+        "        if len(_vals) > 0:",
+        "            _ax.hist(_vals, bins=30, color='#c96442', alpha=0.75, edgecolor='white')",
+        "        _ax.set_title(str(_col))",
+        "    for _ax in _ax_list[_n:]: _ax.set_visible(False)",
+        f"    _fp = os.path.join({repr(fig_dir)}, 'distribution_{stem}.png')",
+        "    plt.tight_layout(); plt.savefig(_fp); plt.close(); _figs.append(_fp)",
+        "",
+    ]
+
+    # Correlation heatmap
+    c += [
+        "if len(_plot_cols) >= 2:",
+        "    _num = df[[c for c in _plot_cols if c in df.columns]].select_dtypes(include='number')",
+        "    if len(_num.columns) >= 2:",
+        "        _fig, _ax = plt.subplots(figsize=(max(6, len(_num.columns)), max(5, len(_num.columns))))",
+        "        sns.heatmap(_num.corr(), ax=_ax, annot=True, fmt='.2f',",
+        "                    cmap='RdBu_r', center=0, square=True, linewidths=.5)",
+        "        _ax.set_title('Correlation')",
+        f"        _fp = os.path.join({repr(fig_dir)}, 'correlation_{stem}.png')",
+        "        plt.tight_layout(); plt.savefig(_fp); plt.close(); _figs.append(_fp)",
+        "",
+    ]
+
+    # Missing value bar
+    c += [
+        "_miss = df.isnull().sum()",
+        "_miss = _miss[_miss > 0]",
+        "if len(_miss) > 0:",
+        "    _fig, _ax = plt.subplots(figsize=(max(6, len(_miss)), 3))",
+        "    _miss.plot.bar(ax=_ax, color='#c96442', alpha=0.8)",
+        "    _ax.set_title('Missing Values'); _ax.set_ylabel('Count')",
+        "    plt.xticks(rotation=45, ha='right')",
+        f"    _fp = os.path.join({repr(fig_dir)}, 'missing_{stem}.png')",
+        "    plt.tight_layout(); plt.savefig(_fp); plt.close(); _figs.append(_fp)",
+        "",
+    ]
+
+    # Boxplots
+    c += [
+        "if _plot_cols:",
+        "    _n = min(len(_plot_cols), 6)",
+        "    _nc = min(_n, 3); _nr = (_n + _nc - 1) // _nc",
+        "    _fig, _axes = plt.subplots(_nr, _nc, figsize=(_nc*3, _nr*3))",
+        "    _ax_list = list(_axes.flat) if hasattr(_axes, 'flat') else [_axes]",
+        "    for _i, _col in enumerate(_plot_cols[:_n]):",
+        "        _ax = _ax_list[_i]",
+        "        _vals = df[_col].dropna()",
+        "        if len(_vals) > 0:",
+        "            _ax.boxplot(_vals, patch_artist=True,",
+        "                        boxprops=dict(facecolor='#c96442', alpha=0.6))",
+        "        _ax.set_title(str(_col))",
+        "    for _ax in _ax_list[_n:]: _ax.set_visible(False)",
+        f"    _fp = os.path.join({repr(fig_dir)}, 'boxplot_{stem}.png')",
+        "    plt.tight_layout(); plt.savefig(_fp); plt.close(); _figs.append(_fp)",
+        "",
+    ]
+
+    # ── Save outputs ─────────────────────────────────────────────────────
+    c += [
+        f"_out = os.path.join({repr(output_dir)}, 'cleaned_{stem}.csv')",
+        "df.to_csv(_out, index=False, encoding='utf-8')",
+        "print('Saved:', _out)",
+        "_report['cleaned_shape'] = list(df.shape)",
+        "_report['rows_removed'] = _orig_len - len(df)",
+        "_report['figures'] = _figs",
+        f"_rpt = os.path.join({repr(output_dir)}, 'cleaning_report_{stem}.json')",
+        "with open(_rpt, 'w', encoding='utf-8') as _f:",
+        "    json.dump(_report, _f, ensure_ascii=False, indent=2)",
+        "print('Report:', _rpt)",
+        "print('Figures:', _figs)",
+        "print('DONE')",
+    ]
+
+    return "\n".join(c)
+
+
 def _extract_code(response: str) -> str:
-    """Extract Python code from LLM response."""
-    match = re.search(r"```python\s*(.*?)```", response, re.DOTALL)
-    return match.group(1).strip() if match else response.strip()
+    """Extract Python code from LLM response, stripping markdown fences robustly.
+
+    Uses line-by-line scanning so that triple backticks *inside* string
+    literals (e.g. LLM wrote a sub-script in a heredoc) don't confuse the
+    regex and cause partial extraction.
+    """
+    lines = response.strip().splitlines()
+
+    # Find the first opening fence (```python / ```py / ```)
+    start = None
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith("```python") or stripped.startswith("```py") or stripped == "```":
+            start = i
+            break
+
+    if start is not None:
+        # Find the matching closing fence after the opening
+        end = None
+        for i in range(start + 1, len(lines)):
+            if lines[i].strip() == "```":
+                end = i
+                break
+        code_lines = lines[start + 1 : end] if end is not None else lines[start + 1 :]
+        return "\n".join(code_lines).strip()
+
+    # Fallback: strip any leading/trailing fence lines and return
+    if lines and lines[0].strip().startswith("```"):
+        lines = lines[1:]
+    if lines and lines[-1].strip() == "```":
+        lines = lines[:-1]
+    return "\n".join(lines).strip()
 
 
 def _generate_preview_script(file_path: str) -> str:
@@ -198,75 +544,38 @@ class DataCleaningAgent:
         return files
 
     def _ensure_data_in_container(self) -> None:
-        """Copy vol/data/ files into the container so scripts can read them."""
+        """Ensure required directories exist in the sandbox container.
+
+        Data files don't need to be copied — both containers share the ./vol
+        bind mount, so /app/vol/data/* in mathmodel-app is already visible as
+        /workspace/vol/data/* in mathmodel-sandbox.
+        """
         cname = container_name()
         vol_container = os.getenv("VOL_CONTAINER", "/workspace/vol")
-        # Ensure directories exist in container
         docker_exec(cname, f"mkdir -p {vol_container}/data {vol_container}/outputs/figures {vol_container}/scripts")
-        # Copy all data files
-        if DATA_DIR.exists():
-            for f in DATA_DIR.iterdir():
-                if f.is_file():
-                    c_path = f"{vol_container}/data/{f.name}"
-                    try:
-                        docker_cp(str(f), cname, c_path)
-                    except Exception as e:
-                        print(f"  [P1.5] 警告: 无法复制 {f.name} 到容器: {e}")
 
     def _sync_outputs_from_container(self) -> None:
-        """Copy cleaned CSVs and figures from container back to host."""
-        import subprocess
-        cname = container_name()
-        vol_container = os.getenv("VOL_CONTAINER", "/workspace/vol")
+        """No-op: outputs written by sandbox scripts are instantly visible here.
+
+        Both containers share ./vol via bind mount — sandbox writes to
+        /workspace/vol/data/cleaned_*.csv and /workspace/vol/outputs/figures/
+        which are the same physical directory as /app/vol/data/ and
+        /app/vol/outputs/figures/ in this container.
+        """
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Copy cleaned CSVs
-        result = subprocess.run(
-            ["docker", "exec", cname, "sh", "-c",
-             f"ls {vol_container}/data/cleaned_*.csv 2>/dev/null || ls {vol_container}/data/cleaning_report_*.json 2>/dev/null || true"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace"
-        )
-        for line in result.stdout.strip().splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            fname = line.split("/")[-1]
-            dest = DATA_DIR / fname
-            try:
-                subprocess.run(
-                    ["docker", "cp", f"{cname}:{line}", str(dest)],
-                    capture_output=True, check=True
-                )
-            except Exception as e:
-                print(f"  [P1.5] 警告: 无法从容器复制 {fname}: {e}")
-
-        # Copy figures
-        fig_result = subprocess.run(
-            ["docker", "exec", cname, "sh", "-c",
-             f"ls {vol_container}/outputs/figures/*.png 2>/dev/null || true"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace"
-        )
-        for line in fig_result.stdout.strip().splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            fname = line.split("/")[-1]
-            dest = FIGURES_DIR / fname
-            try:
-                subprocess.run(
-                    ["docker", "cp", f"{cname}:{line}", str(dest)],
-                    capture_output=True, check=True
-                )
-            except Exception as e:
-                print(f"  [P1.5] 警告: 无法从容器复制图片 {fname}: {e}")
-
     def _run_in_container(self, script_path: str) -> tuple[int, str, str]:
-        """Sync script to container and run."""
-        fname = Path(script_path).name
-        docker_cp(script_path, container_name(), f"/tmp/{fname}")
+        """Run script in sandbox via shared vol bind mount (no docker cp needed)."""
+        import shlex
+        # Both containers share the vol/ bind mount:
+        #   mathmodel-app:  /app/vol  →  host ./vol
+        #   mathmodel-sandbox: /workspace/vol  →  host ./vol
+        # So a script written to /app/vol/scripts/foo.py is immediately
+        # accessible at /workspace/vol/scripts/foo.py in the sandbox.
+        container_path = host_to_container_path(script_path)
         exit_code, stdout, stderr = docker_exec(
-            container_name(), f"python3 /tmp/{fname}", timeout=300
+            container_name(), f"python3 {shlex.quote(container_path)}", timeout=300
         )
         return exit_code, stdout, stderr
 
@@ -317,28 +626,44 @@ class DataCleaningAgent:
             return {"file": file_path.name, "error": "JSON parse failed", "raw": stdout[:500]}
 
     def generate_cleaning_script(self, file_path: Path, preview: dict, analysis: dict) -> str:
-        """Call LLM to generate a cleaning + EDA script for one data file.
+        """Generate a cleaning + EDA script for one data file.
 
-        All paths passed to the LLM are container paths so the generated
-        script runs correctly inside Docker.
+        Strategy:
+          1. Ask LLM for a *structured spec* (JSON decisions only, validated
+             with Pydantic) — no code generation yet.
+          2. Build the actual Python script from the spec using our own
+             deterministic template (zero LLM code, zero syntax bugs).
+          3. Fall back to the old LLM codegen approach only if spec parsing
+             fails after 3 retries.
         """
         FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-        # Convert host paths → container paths for in-container execution
-        fig_dir = host_to_container_path(str(FIGURES_DIR))
-        data_path = host_to_container_path(str(file_path))
-        cleaned_dir = host_to_container_path(str(DATA_DIR))
+        fig_dir    = host_to_container_path(str(FIGURES_DIR))
+        data_path  = host_to_container_path(str(file_path))
+        output_dir = host_to_container_path(str(DATA_DIR))
+        stem       = file_path.stem
 
+        # ── Path 1: spec-based (preferred, no LLM code gen) ──────────────
+        spec = _request_cleaning_spec(preview)
+        if spec is not None:
+            print("  [P1.5] 使用结构化规格生成清洗脚本（无 LLM 代码生成）")
+            return _build_script_from_spec(spec, data_path, output_dir, fig_dir, stem)
+
+        # ── Path 2: fallback — LLM generates full Python script ───────────
+        print("  [P1.5] spec 解析失败，回退到 LLM 代码生成")
         user_prompt = (
             f"数据文件路径: {data_path}\n"
-            f"清洗后保存目录: {cleaned_dir}\n"
+            f"清洗后保存目录: {output_dir}\n"
             f"图片保存目录: {fig_dir}\n\n"
             f"数据预览信息:\n{json.dumps(preview, ensure_ascii=False, indent=2)}\n\n"
             f"LLM 分析建议:\n{json.dumps(analysis, ensure_ascii=False, indent=2)}\n\n"
-            f"请生成完整可运行的数据清洗 + EDA 脚本。"
+            "请生成完整可运行的数据清洗 + EDA 脚本。"
         )
-
         response = call_model(SYSTEM_CLEANING_CODE, user_prompt, task="codegen")
-        return _extract_code(response)
+        code = _extract_code(response)
+        if code.lstrip().startswith("```"):
+            code = re.sub(r"^```[^\n]*\n?", "", code.lstrip())
+            code = re.sub(r"\n?```\s*$", "", code.rstrip())
+        return code
 
     def analyze_preview(self, preview: dict) -> dict:
         """Call LLM to analyze preview and suggest cleaning strategies."""
@@ -362,6 +687,8 @@ class DataCleaningAgent:
                 }
 
             print(f"  [P1.5] {file_name} 第 {attempt + 1} 次执行失败，尝试修复...")
+            if stderr:
+                print(f"  [P1.5] stderr:\n{stderr[:800]}")
 
             # Ask LLM to fix the error
             code = Path(script_path).read_text(encoding="utf-8")
@@ -374,6 +701,11 @@ class DataCleaningAgent:
             fixed = _extract_code(
                 call_model(SYSTEM_CLEANING_CODE, fix_prompt, task="codegen")
             )
+            # Last-resort guard: if extraction still left a fence, strip it hard
+            if fixed.lstrip().startswith("```"):
+                fixed = re.sub(r"^```[^\n]*\n?", "", fixed.lstrip())
+                fixed = re.sub(r"\n?```\s*$", "", fixed.rstrip())
+                print("  [P1.5] 警告: 二次剥离 markdown 围栏")
             Path(script_path).write_text(fixed, encoding="utf-8")
 
         return {

@@ -758,6 +758,66 @@ async def clear_workspace(request: Request):
     }
 
 
+# ─────────────────────────────────────────────── latex compile / cleanup ──
+
+_compile_lock = asyncio.Lock()   # 防止多次同时触发编译
+
+
+@app.get("/api/compile-stream")
+async def compile_stream(max_rounds: int = 5):
+    """SSE: 流式输出 compile_fix_loop 的实时日志。
+
+    事件格式：
+      {"type": "log"|"phase"|"success"|"error", "line": str}
+      {"type": "done", "success": bool, "rounds": int, "pdf_path": str|None}
+    """
+    import threading
+
+    if _compile_lock.locked():
+        async def _busy():
+            yield 'data: {"type":"error","line":"已有编译任务在运行，请稍候"}\n\n'
+            yield 'data: {"type":"done","success":false,"rounds":0,"pdf_path":null}\n\n'
+        return StreamingResponse(_busy(), media_type="text/event-stream")
+
+    queue: asyncio.Queue = asyncio.Queue()
+    ev_loop = asyncio.get_event_loop()
+
+    def log_cb(msg: dict):
+        ev_loop.call_soon_threadsafe(queue.put_nowait, msg)
+
+    def worker():
+        try:
+            sys.path.insert(0, str(BASE))
+            from agents.latex_compiler import compile_fix_loop
+            compile_fix_loop(max_rounds=max_rounds, log_cb=log_cb)
+        except Exception as exc:
+            log_cb({"type": "error", "line": f"[FATAL] {exc}"})
+            log_cb({"type": "done", "success": False, "rounds": 0, "pdf_path": None})
+
+    async def generate():
+        async with _compile_lock:
+            t = threading.Thread(target=worker, daemon=True)
+            t.start()
+            while True:
+                msg = await queue.get()
+                yield f"data: {json.dumps(msg, ensure_ascii=False)}\n\n"
+                if msg.get("type") == "done":
+                    break
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.post("/api/cleanup-aux")
+async def cleanup_aux_endpoint():
+    """删除 paper/ 下所有 LaTeX 辅助文件（.aux .log .bbl 等），保留 .tex .bib .pdf。"""
+    from agents.latex_compiler import cleanup_aux_files
+    return cleanup_aux_files()
+
+
 # ─────────────────────────────────────────────────────── experience ──
 
 EXPERIENCE_LOG = KB_DIR / "experience_log.json"

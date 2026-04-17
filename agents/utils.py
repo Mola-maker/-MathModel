@@ -86,6 +86,9 @@ def container_name() -> str:
         if session_names:
             return session_names[0]
 
+        if "mathmodel-sandbox" in names:
+            return "mathmodel-sandbox"
+
         if "bay" in names:
             return "bay"
 

@@ -1,16 +1,16 @@
 {
-  "query": "B题",
+  "query": "A题",
   "source_status": {
     "cnki": {
       "status": "manual_export_supported",
       "reason": "无公开API；请手动导出BibTeX到 reference/manual/ 目录，AI会自动读取",
-      "manual_dir": "E:\\mathmodel\\reference\\manual",
+      "manual_dir": "/app/reference/manual",
       "files_found": 0
     },
     "web_of_science": {
       "status": "manual_export_supported",
       "reason": "需机构账号；请手动导出BibTeX到 reference/manual/ 目录，AI会自动读取",
-      "manual_dir": "E:\\mathmodel\\reference\\manual",
+      "manual_dir": "/app/reference/manual",
       "files_found": 0
     },
     "openalex": {
@@ -30,53 +30,77 @@
       "reason": "可通过GitHub REST API检索公开仓库"
     }
   },
-  "openalex_results": [],
-  "semantic_scholar_results": [],
-  "crossref_results": [
+  "openalex_results": [
     {
-      "title": "问题1",
-      "year": "2008",
+      "title": "The<b><i>p</i></b>-Regions Problem. p-区域问题",
+      "year": 2011,
+      "doi": "10.1111/j.1538-4632.2010.00810.x",
       "authors": [
-        "ctae ca"
+        "Juan C. Duque",
+        "Richard L. Church",
+        "Richard S. Middleton"
       ],
-      "doi": "10.3724/sp.j.1001.2008.00012",
-      "journal": "ACTA AGRONOMICA SINICA",
-      "cited_by": 0,
-      "source": "crossref"
+      "cited_by": 116,
+      "id": "https://openalex.org/W1952692938",
+      "source": "openalex"
     },
     {
-      "title": "基于母题的简单算术应用题出题系统",
-      "year": "2020",
+      "title": "对含砂低液限占土（CLS）最大干密度问题的探索",
+      "year": 2001,
+      "doi": "10.1038/87548",
       "authors": [
-        "培鑫 贺"
+        "Yigong Shi"
       ],
-      "doi": "10.36012/sde.v2i3.1645",
-      "journal": "教育科学发展",
-      "cited_by": 0,
-      "source": "crossref"
+      "cited_by": 308,
+      "id": "https://openalex.org/W1500271849",
+      "source": "openalex"
     },
     {
-      "title": "以高考真题为例评析命题蓝图的命题指引价值",
-      "year": "2025",
+      "title": "基于“框架”的物理问题设计",
+      "year": 2009,
+      "doi": "",
       "authors": [
-        "刘娴"
+        "黄晖"
       ],
-      "doi": "10.63887/etr.2025.1.3.10",
-      "journal": "教育理论与研究",
-      "cited_by": 1,
-      "source": "crossref"
+      "cited_by": 38,
+      "id": "https://openalex.org/W2397810516",
+      "source": "openalex"
     },
     {
-      "title": "致力于解决高分子科学中的关键问题 &amp;mdash;&amp;mdash;《10000个科学难题》化学卷读感",
-      "year": "2009",
+      "title": "Journal of Higher Education",
+      "year": 1975,
+      "doi": "10.1177/0038022919750111",
+      "authors": [],
+      "cited_by": 1940,
+      "id": "https://openalex.org/W2466577542",
+      "source": "openalex"
+    },
+    {
+      "title": "幼儿园体育教学中存在的问题及对策研究",
+      "year": 2020,
+      "doi": "10.32629/er.v3i5.2737",
       "authors": [
-        "佛松 王"
+        "纯 王"
       ],
-      "doi": "10.1360/zb2009-39-12-1674",
-      "journal": "Science in China Series B-Chemistry (in Chinese)",
-      "cited_by": 12,
-      "source": "crossref"
+      "cited_by": 37,
+      "id": "https://openalex.org/W4231593129",
+      "source": "openalex"
+    },
+    {
+      "title": "锂/硫电池的研究现状、问题及挑战",
+      "year": 2013,
+      "doi": "",
+      "authors": [
+        "胡菁菁",
+        "李国然",
+        "高学平"
+      ],
+      "cited_by": 23,
+      "id": "https://openalex.org/W2273938896",
+      "source": "openalex"
     }
   ],
+  "semantic_scholar_results": [],
+  "crossref_results": [],
   "manual_exports": []
 }

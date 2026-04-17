@@ -490,6 +490,267 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
   .hero{grid-template-columns:1fr}
   .page-tabs .page-tab{padding:5px 10px;font-size:.75rem}
 }
+
+/* ══ Hover lift + shadow — universal ══════════════════════════════ */
+:root {
+  --shadow-hover: 0 10px 32px rgba(0,0,0,.14);
+  --shadow-lift:  0 5px 18px rgba(0,0,0,.09);
+  --transition-lift: transform .22s cubic-bezier(.34,1.56,.64,1),
+                     box-shadow .22s ease;
+}
+
+/* Cards */
+.stat-card {
+  transition: var(--transition-lift);
+  cursor: pointer;
+}
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+}
+.stat-card:active { transform: translateY(-2px); }
+
+.detail-card {
+  transition: var(--transition-lift);
+  cursor: pointer;
+}
+.detail-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--ring-warm);
+}
+
+.figure-card {
+  transition: var(--transition-lift);
+  cursor: zoom-in;
+}
+.figure-card:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: var(--shadow-hover);
+}
+
+.kb-card {
+  transition: var(--transition-lift);
+  cursor: pointer;
+}
+.kb-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+.kb-card:hover .kb-count { color: var(--coral); }
+
+.exp-card {
+  transition: var(--transition-lift);
+}
+.exp-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lift);
+}
+
+.report-section {
+  transition: var(--transition-lift);
+}
+.report-section:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+
+.score-item {
+  transition: var(--transition-lift);
+  cursor: pointer;
+}
+.score-item:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: var(--shadow-lift);
+}
+
+/* Phase node bounce-lift */
+.phase-node {
+  transition: transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s ease;
+  position: relative;
+}
+.phase-card:hover .phase-node {
+  transform: scale(1.18);
+  box-shadow: 0 5px 16px rgba(0,0,0,.18);
+}
+.phase-card:active .phase-node { transform: scale(1.05); }
+
+/* Pulse ring on running node */
+.phase-card.running .phase-node::after {
+  content: '';
+  position: absolute; inset: -7px;
+  border-radius: 50%;
+  border: 2px solid var(--terracotta);
+  animation: ring 1.7s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes ring {
+  0%  { transform: scale(.82); opacity: .9; }
+  100%{ transform: scale(1.5);  opacity: 0; }
+}
+
+/* Buttons — press + lift */
+.btn {
+  transition: transform .14s ease, box-shadow .14s ease,
+              background .18s ease, color .18s ease, opacity .18s;
+  position: relative; overflow: hidden;
+}
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.14);
+}
+.btn:active:not(:disabled) { transform: translateY(0) scale(.97); box-shadow: none; }
+
+/* Ripple */
+.ripple {
+  position: absolute; border-radius: 50%;
+  background: rgba(255,255,255,.35);
+  transform: scale(0); animation: rippleAnim .5s linear;
+  pointer-events: none;
+}
+@keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }
+
+/* Suggestion chips */
+.suggestion-chip {
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1),
+              box-shadow .2s ease, background .18s;
+}
+.suggestion-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,.1);
+}
+.suggestion-chip:active { transform: scale(.96); }
+
+/* File table rows */
+.file-table tbody tr {
+  transition: background .14s;
+  cursor: pointer;
+}
+.file-table tbody tr:hover td { background: var(--sand); }
+.file-table tbody tr:active td { background: var(--ring-warm); }
+
+/* Log lines — click to copy */
+.log-line, .log-ok, .log-err, .log-warn, .log-phase {
+  cursor: pointer; border-radius: 3px; padding: 0 2px;
+  transition: background .12s;
+}
+.log-line:hover, .log-ok:hover, .log-err:hover,
+.log-warn:hover, .log-phase:hover {
+  background: rgba(255,255,255,.08);
+}
+
+/* Nav buttons */
+.nav-menu-btn {
+  transition: background .18s, transform .15s cubic-bezier(.34,1.56,.64,1);
+}
+.nav-menu-btn:hover { transform: scale(1.1); }
+.nav-menu-btn:active { transform: scale(.93); }
+
+.page-tab {
+  transition: all .18s cubic-bezier(.34,1.56,.64,1);
+}
+.page-tab:hover:not(.active) { transform: translateY(-1px); }
+.page-tab:active { transform: scale(.95); }
+
+.tab {
+  transition: all .18s cubic-bezier(.34,1.56,.64,1);
+}
+.tab:hover:not(.active) { transform: translateY(-1px); }
+.tab:active { transform: scale(.96); }
+
+/* Chat message bubbles */
+.msg-bubble {
+  transition: box-shadow .18s, transform .18s;
+}
+.msg.assistant .msg-bubble:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,.1);
+  transform: translateX(2px);
+}
+.msg.user .msg-bubble:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,.15);
+  transform: translateX(-2px);
+}
+
+/* Sidebar section hover */
+.sidebar-section {
+  transition: background .15s;
+}
+.sidebar-section:hover { background: rgba(0,0,0,.02); }
+
+/* KB cards */
+.kb-card {
+  transition: var(--transition-lift);
+}
+
+/* ══ Tooltip ══════════════════════════════════════════════════════ */
+[data-tooltip] { position: relative; }
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute; bottom: calc(100% + 7px); left: 50%;
+  transform: translateX(-50%) scale(.88) translateY(4px);
+  background: var(--near-black); color: var(--ivory);
+  font-size: .71rem; line-height: 1.4; padding: 5px 10px;
+  border-radius: var(--radius-sm); white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transition: opacity .15s, transform .15s;
+  z-index: 400; font-family: var(--font-sans);
+  box-shadow: 0 4px 14px rgba(0,0,0,.2);
+}
+[data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1) translateY(0);
+}
+
+/* ══ Lightbox ═════════════════════════════════════════════════════ */
+.lightbox {
+  display: none; position: fixed; inset: 0; z-index: 900;
+  background: rgba(0,0,0,.88); backdrop-filter: blur(6px);
+  align-items: center; justify-content: center;
+  cursor: zoom-out;
+}
+.lightbox.visible { display: flex; }
+.lightbox-img-wrap {
+  display: flex; align-items: center; justify-content: center;
+  max-width: 92vw; max-height: 88vh;
+  animation: lbIn .22s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes lbIn {
+  from { opacity: 0; transform: scale(.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.lightbox img {
+  max-width: 92vw; max-height: 88vh;
+  border-radius: var(--radius-md); cursor: default;
+  box-shadow: 0 24px 80px rgba(0,0,0,.5);
+}
+.lightbox-close {
+  position: absolute; top: 20px; right: 24px;
+  background: rgba(255,255,255,.13); border: none; color: #fff;
+  width: 38px; height: 38px; border-radius: 50%; font-size: 1.2rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .18s, transform .18s;
+  z-index: 10;
+}
+.lightbox-close:hover {
+  background: rgba(255,255,255,.26);
+  transform: scale(1.1);
+}
+.lightbox-caption {
+  position: absolute; bottom: 24px; left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,.75); font-size: .82rem;
+  background: rgba(0,0,0,.45); padding: 5px 16px;
+  border-radius: 20px; max-width: 80vw;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* ══ Copy flash on log line ═══════════════════════════════════════ */
+@keyframes copyFlash {
+  0%   { background: rgba(255,220,100,.35); }
+  100% { background: transparent; }
+}
+.copy-flash { animation: copyFlash .6s ease; }
 </style>
 </head>
 <body>
@@ -695,9 +956,15 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
 
     <div class="panel" id="panel-reports">
       <div id="reportContent"><p style="color:var(--stone)">Select a report below.</p></div>
+      <div id="compileLog" style="display:none;margin-top:10px;background:#1a1a2e;color:#e0e0e0;
+           border-radius:8px;padding:12px;font-family:monospace;font-size:12px;
+           max-height:340px;overflow-y:auto;white-space:pre-wrap;line-height:1.5"></div>
       <div class="controls" style="margin-top:12px">
         <button class="btn btn-secondary" onclick="loadReport('review')">Review Report</button>
         <button class="btn btn-secondary" onclick="loadReport('latex')">LaTeX Check</button>
+        <button class="btn btn-primary" id="btnCompile" onclick="compileLaTeX()">&#9654; 编译 PDF</button>
+        <button class="btn btn-secondary" id="btnCompileStop" onclick="stopCompile()" style="display:none">&#9632; 停止</button>
+        <button class="btn btn-secondary" id="btnCleanup" onclick="cleanupAux()">&#128465; 清理辅助文件</button>
       </div>
     </div>
 
@@ -786,6 +1053,15 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
   </div><!-- /page-experience -->
 
 </div><!-- /main -->
+
+<!-- ── Lightbox ── -->
+<div class="lightbox" id="lightbox" onclick="if(event.target===this||event.target.classList.contains('lightbox'))closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()" aria-label="关闭">×</button>
+  <div class="lightbox-img-wrap">
+    <img id="lightboxImg" src="" alt="">
+  </div>
+  <div class="lightbox-caption" id="lightboxCaption"></div>
+</div>
 
 <script>
 'use strict';
@@ -1038,6 +1314,98 @@ async function stopPipeline() {
 
 function showConsole() { document.getElementById('liveConsole').classList.add('visible'); }
 function clearConsole() { document.getElementById('consoleBody').textContent = ''; }
+
+let _compileES = null;
+
+function stopCompile() {
+  if (_compileES) { _compileES.close(); _compileES = null; }
+  document.getElementById('btnCompile').disabled = false;
+  document.getElementById('btnCompile').innerHTML = '&#9654; 编译 PDF';
+  document.getElementById('btnCompileStop').style.display = 'none';
+}
+
+function compileLaTeX(maxRounds = 5) {
+  if (_compileES) { _compileES.close(); }
+
+  const btn     = document.getElementById('btnCompile');
+  const btnStop = document.getElementById('btnCompileStop');
+  const logDiv  = document.getElementById('compileLog');
+  const resDiv  = document.getElementById('reportContent');
+
+  btn.disabled = true;
+  btn.innerHTML = '编译中…';
+  btnStop.style.display = '';
+  logDiv.style.display = '';
+  logDiv.textContent = '';
+  resDiv.innerHTML = '<p style="color:var(--stone)">编译进行中，实时日志见下方…</p>';
+
+  const colorMap = { phase: '#7ec8e3', success: '#4caf50', error: '#ef5350', log: '#e0e0e0' };
+
+  function appendLine(line, type) {
+    const color = colorMap[type] || colorMap.log;
+    const span = document.createElement('span');
+    span.style.color = color;
+    if (type === 'phase') span.style.fontWeight = 'bold';
+    span.textContent = line + '\n';
+    logDiv.appendChild(span);
+    logDiv.scrollTop = logDiv.scrollHeight;
+  }
+
+  _compileES = new EventSource(`/api/compile-stream?max_rounds=${maxRounds}`);
+
+  _compileES.onmessage = (e) => {
+    let msg;
+    try { msg = JSON.parse(e.data); } catch { return; }
+
+    const type = msg.type || 'log';
+
+    if (type === 'done') {
+      _compileES.close(); _compileES = null;
+      btn.disabled = false;
+      btn.innerHTML = '&#9654; 编译 PDF';
+      btnStop.style.display = 'none';
+
+      const ok = msg.success;
+      resDiv.innerHTML = `
+        <div style="padding:12px;border-radius:8px;background:${ok?'#e8f5e9':'#fce8e0'}">
+          <strong style="color:${ok?'var(--success)':'var(--terracotta)'}">
+            ${ok ? '✓ 编译成功（第 '+msg.rounds+' 轮）' : '✗ 编译失败（共尝试 '+msg.rounds+' 轮）'}
+          </strong>
+          ${ok && msg.pdf_path ? `<p style="margin:4px 0;font-size:13px">PDF → <code>${msg.pdf_path}</code></p>` : ''}
+        </div>`;
+      return;
+    }
+
+    if (msg.line !== undefined) appendLine(msg.line, type);
+  };
+
+  _compileES.onerror = () => {
+    appendLine('[连接中断]', 'error');
+    stopCompile();
+  };
+}
+
+async function cleanupAux() {
+  const btn = document.getElementById('btnCleanup');
+  const box = document.getElementById('reportContent');
+  btn.disabled = true;
+  btn.textContent = '清理中…';
+  try {
+    const r = await fetch('/api/cleanup-aux', { method: 'POST' });
+    const d = await r.json();
+    box.innerHTML = `
+      <div style="padding:12px;border-radius:8px;background:#e8f5e9">
+        <strong style="color:var(--success)">✓ 已清理 ${d.removed_count} 个辅助文件</strong>
+        ${d.removed?.length ? `<p style="font-size:12px;color:var(--stone);margin:4px 0">${d.removed.join('  ')}</p>` : ''}
+        ${d.errors?.length ? `<p style="color:var(--terracotta);font-size:12px">${d.errors.join('<br>')}</p>` : ''}
+      </div>`;
+  } catch(e) {
+    box.innerHTML = `<p style="color:var(--terracotta)">请求失败: ${e.message}</p>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🗑 清理辅助文件';
+  }
+}
 
 function streamOutput() {
   const body = document.getElementById('consoleBody');
@@ -1565,6 +1933,198 @@ function toggleExpDetail(id, btn) {
   el.style.display = open ? 'none' : 'block';
   btn.textContent = open ? '展开全部字段 ▾' : '收起 ▴';
 }
+
+/* ══════════════════════════════ Ripple ═════════════════════════ */
+function addRipple(e) {
+  const btn = e.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height) * 1.4;
+  const x = e.clientX - rect.left - size / 2;
+  const y = e.clientY - rect.top  - size / 2;
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px`;
+  btn.appendChild(ripple);
+  ripple.addEventListener('animationend', () => ripple.remove());
+}
+
+(function wireRipple() {
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.btn');
+    if (btn && !btn.disabled) addRipple({ currentTarget: btn, clientX: e.clientX, clientY: e.clientY });
+  });
+})();
+
+/* ══════════════════════════════ Lightbox ═══════════════════════ */
+function openLightbox(src, caption) {
+  const lb  = document.getElementById('lightbox');
+  const img = document.getElementById('lightboxImg');
+  const cap = document.getElementById('lightboxCaption');
+  img.src = src;
+  cap.textContent = caption || '';
+  cap.style.display = caption ? '' : 'none';
+  lb.classList.add('visible');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('visible');
+  document.body.style.overflow = '';
+  // Reset src after animation
+  setTimeout(() => { document.getElementById('lightboxImg').src = ''; }, 200);
+}
+
+// Keyboard: Escape closes lightbox
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeLightbox();
+});
+
+/* ══════════════════════════════ Copy to clipboard ══════════════ */
+function copyText(text) {
+  navigator.clipboard?.writeText(text).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+  });
+  showToast('已复制到剪贴板', 'success');
+}
+
+/* ══════════════════════════════ Stat card interactions ═════════ */
+(function wireStatCards() {
+  // Called after DOM is ready — we use event delegation via IDs
+  document.getElementById('statPhase').closest('.stat-card')
+    ?.addEventListener('click', () => {
+      switchTab(document.querySelector('[data-panel="phases"]'));
+      setTimeout(() => {
+        const phase = document.getElementById('statPhase').textContent.replace(/_.*/, '');
+        scrollToDetail(phase);
+      }, 80);
+    });
+
+  document.getElementById('statProblem').closest('.stat-card')
+    ?.addEventListener('click', () => {
+      const prob = document.getElementById('statProblem').textContent;
+      if (prob && prob !== '--') copyText(prob);
+    });
+
+  document.getElementById('statModel').closest('.stat-card')
+    ?.addEventListener('click', () => toggleSidebar());
+
+  document.getElementById('statScore').closest('.stat-card')
+    ?.addEventListener('click', () => {
+      switchTab(document.querySelector('[data-panel="reports"]'));
+      setTimeout(() => loadReport('review'), 80);
+    });
+})();
+
+/* Tooltip for stat cards */
+(function addStatTooltips() {
+  const tips = [
+    ['statPhase',   '点击跳转到阶段详情'],
+    ['statProblem', '点击复制题目名称'],
+    ['statModel',   '点击打开模型配置'],
+    ['statScore',   '点击查看审校报告'],
+  ];
+  tips.forEach(([id, tip]) => {
+    document.getElementById(id)?.closest('.stat-card')?.setAttribute('data-tooltip', tip);
+  });
+})();
+
+/* ══════════════════════════════ Figure lightbox wiring ═════════ */
+// Override loadFigures to add lightbox onclick
+const _origLoadFigures = loadFigures;
+loadFigures = async function() {
+  await _origLoadFigures();
+  document.querySelectorAll('.figure-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const img  = card.querySelector('img');
+      const cap  = card.querySelector('.figure-card-caption');
+      if (img) openLightbox(img.src, cap?.textContent || '');
+    });
+  });
+};
+
+/* ══════════════════════════════ Detail card interactions ═══════ */
+// Override renderPhaseDetails to wire click
+const _origRenderPhaseDetails = renderPhaseDetails;
+renderPhaseDetails = function(phases, ctx) {
+  _origRenderPhaseDetails(phases, ctx);
+  document.querySelectorAll('.detail-card').forEach(card => {
+    card.addEventListener('click', () => {
+      // Scroll the matching phase node into view
+      const phaseId = card.id.replace('detail-', '');
+      const node = document.querySelector(`.phase-card[data-phase="${phaseId}"] .phase-node`);
+      node?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Brief highlight
+      if (node) {
+        node.style.outline = '3px solid var(--terracotta)';
+        setTimeout(() => { node.style.outline = ''; }, 900);
+      }
+    });
+    card.setAttribute('data-tooltip', '点击高亮流水线节点');
+  });
+};
+
+/* ══════════════════════════════ File table row interactions ════ */
+const _origLoadFiles = loadFiles;
+loadFiles = async function() {
+  await _origLoadFiles();
+  document.querySelectorAll('#fileTable tbody tr').forEach(row => {
+    const nameCell = row.querySelector('td:first-child');
+    if (!nameCell) return;
+    row.setAttribute('data-tooltip', '点击复制文件名');
+    row.addEventListener('click', () => copyText(nameCell.textContent.trim()));
+  });
+};
+
+/* ══════════════════════════════ Log line copy ══════════════════ */
+(function wireLogCopy() {
+  // Log viewer — delegate clicks
+  document.getElementById('logViewer')?.addEventListener('click', e => {
+    const line = e.target.closest('[class^="log"]');
+    if (!line) return;
+    const text = line.textContent.trim();
+    if (!text) return;
+    navigator.clipboard?.writeText(text);
+    line.classList.add('copy-flash');
+    line.addEventListener('animationend', () => line.classList.remove('copy-flash'), { once: true });
+  });
+
+  // Compile log
+  document.getElementById('compileLog')?.addEventListener('click', e => {
+    const text = window.getSelection()?.toString() || e.target.textContent.trim();
+    if (text) {
+      navigator.clipboard?.writeText(text);
+      showToast('已复制', 'success');
+    }
+  });
+})();
+
+/* ══════════════════════════════ KB card — copy category name ═══ */
+const _origLoadKnowledge = loadKnowledge;
+loadKnowledge = async function() {
+  await _origLoadKnowledge();
+  document.querySelectorAll('.kb-card').forEach(card => {
+    const name = card.querySelector('.kb-name')?.textContent;
+    const count = card.querySelector('.kb-count')?.textContent;
+    card.setAttribute('data-tooltip', `${count} 条 · 点击复制类别名`);
+    card.addEventListener('click', () => name && copyText(name));
+  });
+};
+
+/* ══════════════════════════════ Phase node tooltips ════════════ */
+const _origRenderPipeline = renderPipeline;
+renderPipeline = function(phases) {
+  _origRenderPipeline(phases);
+  document.querySelectorAll('.phase-card').forEach(card => {
+    const node  = card.querySelector('.phase-node');
+    const label = card.querySelector('.phase-label');
+    if (node && label) {
+      node.setAttribute('data-tooltip', label.textContent.trim());
+    }
+  });
+};
 </script>
 </body>
 </html>
