@@ -239,6 +239,92 @@ def call_model(system: str, user: str, model: str | None = None, task: str | Non
     raise RuntimeError(f"Model call failed after retries and fallbacks: {last_err}")
 
 
+def _message_to_dict(msg: object) -> dict:
+    """Convert an OpenAI ChatCompletionMessage into a plain dict."""
+    result: dict = {"role": getattr(msg, "role", "assistant")}
+    content = getattr(msg, "content", None)
+    result["content"] = content if content is not None else ""
+    tool_calls = getattr(msg, "tool_calls", None) or []
+    if tool_calls:
+        result["tool_calls"] = []
+        for tc in tool_calls:
+            fn = getattr(tc, "function", None)
+            result["tool_calls"].append({
+                "id": getattr(tc, "id", None),
+                "type": "function",
+                "function": {
+                    "name": getattr(fn, "name", "") if fn else "",
+                    "arguments": getattr(fn, "arguments", "") if fn else "",
+                },
+            })
+    return result
+
+
+def call_with_tools(
+    messages: list[dict],
+    tools: list[dict],
+    model: str | None = None,
+    task: str | None = None,
+) -> dict:
+    """Call a model with OpenAI function-calling; return the assistant message as dict.
+
+    Falls back across the configured model list just like call_model().
+    The returned dict always has role='assistant' and may include a
+    'tool_calls' list. Caller decides whether to execute the calls and
+    loop again by appending tool results and calling this function once more.
+    """
+    effective_model = model or get_override(task) or get_override(None)
+    specs = get_route_models(task, effective_model)
+    if not specs:
+        raise RuntimeError(
+            f"No model route available for task={task}. Check config/model_routes.toml"
+        )
+
+    timeout_seconds = get_route_timeout(task)
+    budget_seconds = get_route_budget(task)
+    start = time.time()
+    last_err: Exception | None = None
+
+    for spec in specs:
+        if time.time() - start > budget_seconds:
+            break
+        provider, model_id = _parse_model_spec(spec)
+        if not _provider_available(provider):
+            continue
+        client = _get_client(provider, timeout_seconds=timeout_seconds)
+        try:
+            response = client.chat.completions.create(
+                model=model_id,
+                messages=messages,
+                tools=tools if tools else None,
+                tool_choice="auto" if tools else None,
+            )
+            choices = getattr(response, "choices", None) or []
+            if not choices:
+                raise RuntimeError("Model returned no choices")
+            msg_obj = choices[0].message
+            recorder = get_recorder()
+            try:
+                recorder.record_from_response(task or "default", response)
+            except Exception:
+                pass
+            print(f"  [LLM-tools] {task or 'default'} -> {provider}:{model_id}")
+            return _message_to_dict(msg_obj)
+        except BadRequestError as e:
+            last_err = e
+            if _should_continue_on_bad_request(e):
+                continue
+            raise
+        except (APITimeoutError, APIConnectionError, RateLimitError, APIError) as e:
+            last_err = e
+            continue
+        except Exception as e:
+            last_err = e
+            continue
+
+    raise RuntimeError(f"call_with_tools failed after retries: {last_err}")
+
+
 class Orchestrator:
     def __init__(self) -> None:
         self.ctx = load_context()

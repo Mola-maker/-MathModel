@@ -1,21 +1,13 @@
 {
-  "total_cost_usd": 0.018907,
+  "total_cost_usd": 0.005749,
   "agents": {
-    "extraction": {
-      "prompt_tokens": 7067,
-      "completion_tokens": 3436,
-      "total_tokens": 10503,
-      "chat_count": 11,
-      "cost": 0.0056876900000000005,
-      "model": "deepseek-chat"
-    },
-    "modeling": {
-      "prompt_tokens": 14166,
-      "completion_tokens": 8540,
-      "total_tokens": 22706,
-      "chat_count": 4,
-      "cost": 0.013218820000000001,
-      "model": "deepseek-chat"
+    "default": {
+      "prompt_tokens": 17388,
+      "completion_tokens": 2125,
+      "total_tokens": 19513,
+      "chat_count": 12,
+      "cost": 0.005749460000000001,
+      "model": "qwen/qwen-plus-2025-01-25"
     }
   }
 }

@@ -371,13 +371,30 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
 .msg.assistant .msg-bubble{background:var(--ivory);border:1px solid var(--border-cream);color:var(--near-black);border-bottom-left-radius:4px}
 .msg.system .msg-bubble{background:var(--sand);color:var(--olive);font-size:.8rem;border-radius:var(--radius-sm);padding:8px 14px}
 
-/* Action results in chat */
+/* Tool calls in chat (collapsible) */
 .action-results{
-  margin-top:10px;padding:10px 14px;
-  background:rgba(0,0,0,.04);border-radius:var(--radius-sm);
-  font-family:var(--font-mono);font-size:.76rem;color:var(--charcoal);
-  border-left:3px solid var(--terracotta);
+  margin-top:10px;display:flex;flex-direction:column;gap:6px;
 }
+.tool-call{
+  border:1px solid var(--border-warm);border-left:3px solid var(--terracotta);
+  border-radius:var(--radius-sm);background:var(--white);overflow:hidden;
+}
+.tool-call-head{
+  display:flex;align-items:center;gap:8px;padding:6px 10px;
+  cursor:pointer;user-select:none;font-family:var(--font-mono);
+  font-size:.76rem;color:var(--charcoal);
+}
+.tool-call-head:hover{background:rgba(0,0,0,.02)}
+.tool-call-icon{color:var(--terracotta);font-weight:700;transition:transform .18s}
+.tool-call.open .tool-call-icon{transform:rotate(90deg)}
+.tool-call-name{font-weight:600;color:var(--near-black)}
+.tool-call-args{color:var(--stone);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tool-call-body{
+  display:none;padding:8px 12px;border-top:1px solid var(--border-cream);
+  background:var(--parchment);font-family:var(--font-mono);font-size:.74rem;
+  color:var(--charcoal);white-space:pre-wrap;max-height:240px;overflow:auto;
+}
+.tool-call.open .tool-call-body{display:block}
 .action-result-line{display:flex;align-items:center;gap:6px;padding:2px 0}
 
 /* Typing indicator */
@@ -411,6 +428,21 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
   cursor:pointer;transition:all .18s;
 }
 .suggestion-chip:hover{background:var(--ring-warm);color:var(--near-black)}
+
+/* Persona chips — distinct from suggestion chips */
+.persona-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:999px;font-size:.78rem;
+  background:var(--white);color:var(--charcoal);
+  border:1px solid var(--border-warm);cursor:pointer;
+  transition:all .18s;font-family:var(--font-sans);
+}
+.persona-chip:hover{border-color:var(--ring-warm);color:var(--near-black)}
+.persona-chip.active{
+  background:var(--near-black);color:var(--ivory);
+  border-color:var(--near-black);
+}
+.persona-chip .persona-icon{font-size:.9rem;line-height:1}
 
 /* Footer */
 .footer{padding:24px;text-align:center;font-size:.72rem;color:var(--stone);border-top:1px solid var(--border-cream);margin-top:20px}
@@ -490,6 +522,141 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
   .hero{grid-template-columns:1fr}
   .page-tabs .page-tab{padding:5px 10px;font-size:.75rem}
 }
+
+/* ── Console Page ───────────────────────────────────────────────── */
+.console-full-page{display:flex;flex-direction:column;height:calc(100vh - var(--nav-h))}
+.console-toolbar{
+  display:flex;align-items:center;gap:12px;padding:10px 18px;
+  background:var(--ivory);border-bottom:1px solid var(--border-cream);
+  flex-shrink:0;flex-wrap:wrap;
+}
+.console-filter-chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{
+  padding:3px 11px;border-radius:20px;font-size:.73rem;font-weight:700;
+  border:1.5px solid currentColor;cursor:pointer;transition:all .18s;
+  background:transparent;letter-spacing:.03em;
+}
+.chip-all{color:var(--charcoal)}.chip-all.active{background:var(--charcoal);color:var(--ivory)}
+.chip-phase{color:var(--terracotta)}.chip-phase.active{background:var(--terracotta);color:#fff}
+.chip-ok{color:var(--success)}.chip-ok.active{background:var(--success);color:#fff}
+.chip-warn{color:var(--warning)}.chip-warn.active{background:var(--warning);color:#222}
+.chip-error{color:var(--error)}.chip-error.active{background:var(--error);color:#fff}
+.console-toolbar-right{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;align-items:center}
+.console-action-btn{
+  padding:4px 11px;border-radius:var(--radius-sm);border:1px solid var(--border-warm);
+  background:var(--ivory);color:var(--charcoal);font-size:.74rem;cursor:pointer;
+  transition:all .16s;white-space:nowrap;font-family:var(--font-sans);
+}
+.console-action-btn:hover{background:var(--sand);border-color:var(--ring-warm)}
+.console-action-btn.active{background:var(--terracotta);color:#fff;border-color:var(--terracotta)}
+.console-term{
+  flex:1;overflow-y:auto;background:#0d1117;padding:14px 18px;
+  font-family:var(--font-mono);font-size:.76rem;line-height:1.75;
+  color:#c9d1d9;white-space:pre-wrap;word-break:break-all;
+}
+.cl-line{cursor:pointer;border-radius:2px;padding:0 2px;transition:background .1s}
+.cl-line:hover{background:rgba(255,255,255,.06)}
+.cl-phase{color:#79c0ff;font-weight:700}.cl-ok{color:#56d364}
+.cl-warn{color:#e3b341}.cl-error{color:#f85149;font-weight:600}
+.cl-info{color:#c9d1d9}.cl-debug{color:#586069}
+.cl-hidden{display:none!important}
+/* structured log parts */
+.lp-ts{color:#444d56}.lp-mod{color:#79c0ff}.lp-lvl-warn{color:#e3b341;font-weight:700}
+.lp-lvl-error{color:#f85149;font-weight:700}.lp-lvl-info{color:#58a6ff}
+.lp-lvl-debug{color:#586069}.lp-lvl-ok{color:#56d364;font-weight:700}
+.lp-src{color:#8b949e;font-style:italic}.lp-msg-warn{color:#e3b341}
+.lp-msg-error{color:#ffa198;font-weight:600}.lp-msg-info{color:#c9d1d9}
+.lp-msg-debug{color:#586069}.lp-msg-phase{color:#79c0ff;font-weight:700}
+.console-full-page.fullscreen{position:fixed;inset:0;z-index:800}
+
+/* ── Trace Timeline ──────────────────────────────────────────────── */
+.trace-entry{
+  background:var(--ivory);border:1px solid var(--border-cream);
+  border-radius:var(--radius-md);margin-bottom:12px;overflow:hidden;
+  transition:var(--transition-lift);
+}
+.trace-entry:hover{box-shadow:var(--shadow-lift)}
+.trace-header{
+  display:flex;align-items:center;gap:10px;padding:13px 18px;cursor:pointer;
+  user-select:none;
+}
+.trace-phase-pill{
+  padding:2px 10px;border-radius:20px;font-size:.72rem;font-weight:700;
+  color:#fff;white-space:nowrap;flex-shrink:0;
+}
+.trace-entry-name{font-weight:600;font-size:.88rem}
+.trace-agent-name{font-size:.76rem;color:var(--stone);font-family:var(--font-mono);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trace-chevron{color:var(--stone);font-size:.9rem;transition:transform .2s;flex-shrink:0}
+.trace-entry.open .trace-chevron{transform:rotate(90deg)}
+.trace-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.trace-body{padding:0 18px 14px;border-top:1px solid var(--border-cream);display:none}
+.trace-body.open{display:block}
+.trace-kv{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.trace-kv-item{
+  background:var(--parchment);border-radius:var(--radius-sm);padding:3px 10px;
+  font-size:.74rem;
+}
+.trace-kv-item strong{color:var(--charcoal);margin-right:4px}
+
+/* ── Session Sidebar (Assistant) ─────────────────────────────────── */
+.assistant-with-sidebar{display:flex;height:calc(100vh - var(--nav-h))}
+.session-sidebar{
+  width:220px;flex-shrink:0;border-right:1px solid var(--border-cream);
+  background:var(--ivory);display:flex;flex-direction:column;
+  transition:width .22s cubic-bezier(.4,0,.2,1);overflow:hidden;
+}
+.session-sidebar.collapsed{width:48px}
+.session-sb-top{
+  padding:10px;border-bottom:1px solid var(--border-cream);
+  display:flex;align-items:center;gap:6px;flex-shrink:0;
+}
+.session-new-btn{
+  flex:1;padding:6px 10px;border-radius:var(--radius-sm);
+  background:var(--terracotta);color:#fff;border:none;
+  font-size:.78rem;cursor:pointer;transition:background .18s;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.session-new-btn:hover{background:var(--coral)}
+.session-sidebar.collapsed .session-new-btn{padding:6px;flex:none;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.session-toggle{
+  background:none;border:none;cursor:pointer;color:var(--stone);
+  font-size:.9rem;padding:4px;border-radius:4px;flex-shrink:0;
+}
+.session-toggle:hover{color:var(--near-black);background:var(--sand)}
+.session-list{flex:1;overflow-y:auto;padding:4px 0}
+.session-item{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;
+  cursor:pointer;border-radius:var(--radius-sm);margin:0 4px 2px;
+  transition:background .14s;
+}
+.session-item:hover{background:var(--sand)}
+.session-item.active{background:rgba(201,100,66,.1);border-left:2px solid var(--terracotta);padding-left:8px}
+.session-icon{font-size:.8rem;flex-shrink:0}
+.session-title{font-size:.76rem;color:var(--charcoal);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.session-del{
+  background:none;border:none;color:var(--stone);cursor:pointer;
+  font-size:.8rem;padding:1px 4px;border-radius:3px;opacity:0;flex-shrink:0;
+}
+.session-item:hover .session-del{opacity:1}
+.session-del:hover{color:var(--error);background:rgba(181,51,51,.08)}
+.session-sidebar.collapsed .session-title,
+.session-sidebar.collapsed .session-del{display:none}
+.session-sidebar.collapsed .session-item{justify-content:center;padding:7px}
+.assistant-main{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}
+
+/* ── Pip-install modal ───────────────────────────────────────────── */
+.pip-output{
+  background:var(--near-black);color:var(--silver);font-family:var(--font-mono);
+  font-size:.73rem;border-radius:var(--radius-sm);padding:10px 12px;
+  max-height:140px;overflow-y:auto;white-space:pre-wrap;margin-top:10px;display:none;
+}
+.pip-output.visible{display:block}
+.pip-input{
+  width:100%;padding:7px 12px;border:1px solid var(--border-warm);
+  border-radius:var(--radius-sm);font-size:.86rem;font-family:var(--font-mono);
+  color:var(--near-black);background:var(--white);
+}
+.pip-input:focus{outline:none;border-color:var(--terracotta)}
 
 /* ══ Hover lift + shadow — universal ══════════════════════════════ */
 :root {
@@ -854,6 +1021,8 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
     <div class="nav-brand">MCM <span>Pipeline</span></div>
     <div class="page-tabs">
       <button class="page-tab active" id="tabDashboard" onclick="switchPage('dashboard')">Dashboard</button>
+      <button class="page-tab" id="tabConsole" onclick="switchPage('console')">Console</button>
+      <button class="page-tab" id="tabTrace" onclick="switchPage('trace')">Trace</button>
       <button class="page-tab" id="tabAssistant" onclick="switchPage('assistant')">Assistant</button>
       <button class="page-tab" id="tabExperience" onclick="switchPage('experience')">Experience</button>
     </div>
@@ -910,7 +1079,7 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
       </select>
       <button class="btn btn-primary" id="btnRun" onclick="runPhase()">▶ Run from phase</button>
       <button class="btn btn-danger" id="btnStop" onclick="stopPipeline()" style="display:none">■ Stop</button>
-      <button class="btn btn-secondary" onclick="refreshAll()">↻ Refresh</button>
+      <button class="btn btn-secondary" id="btnRefresh" onclick="refreshWithFeedback(this)">↻ Refresh</button>
     </div>
 
     <!-- Live Console -->
@@ -978,13 +1147,78 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
   </div><!-- /page-dashboard -->
 
 
-  <!-- ═══════════════════════════ PAGE 2: Assistant ═══════════════════════════ -->
+  <!-- ═══════════════════════════ PAGE 2: Console ════════════════════════════ -->
+  <div class="page" id="page-console">
+  <div class="console-full-page" id="consolePage">
+
+    <!-- Toolbar -->
+    <div class="console-toolbar">
+      <div class="console-filter-chips">
+        <button class="chip chip-all active" onclick="toggleConsoleFilter('all')">ALL</button>
+        <button class="chip chip-phase" onclick="toggleConsoleFilter('phase')">PHASE</button>
+        <button class="chip chip-ok" onclick="toggleConsoleFilter('ok')">OK</button>
+        <button class="chip chip-warn" onclick="toggleConsoleFilter('warn')">WARN</button>
+        <button class="chip chip-error" onclick="toggleConsoleFilter('error')">ERROR</button>
+      </div>
+      <div class="console-toolbar-right">
+        <button class="console-action-btn active" id="btnAutoScroll" onclick="toggleConsoleAutoScroll()" title="自动滚动到底部">⬇ 自动滚动</button>
+        <button class="console-action-btn" onclick="downloadLog()" title="下载日志文件">⬇ 下载</button>
+        <button class="console-action-btn" onclick="openPipInstall()" title="在沙箱容器中安装 Python 包">+ pip install</button>
+        <button class="console-action-btn" onclick="clearConsoleTerm()" title="清除显示内容">⌫ 清除</button>
+        <button class="console-action-btn" id="btnConsoleFullscreen" onclick="toggleConsoleFullscreen()">⛶ 全屏</button>
+      </div>
+    </div>
+
+    <!-- Terminal display -->
+    <div id="consoleTerm" class="console-term"><span style="color:#586069"># 连接日志流中…</span></div>
+
+  </div>
+  </div><!-- /page-console -->
+
+
+  <!-- ═══════════════════════════ PAGE 3: Trace ════════════════════════════ -->
+  <div class="page" id="page-trace">
+  <div class="dashboard-content">
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+      <div>
+        <h2 style="font-family:var(--font-serif);font-size:1.4rem;color:var(--near-black);margin-bottom:4px">Agent 执行追踪</h2>
+        <p style="font-size:.82rem;color:var(--stone)">各阶段 Agent 调用详情，从 context 实时读取</p>
+      </div>
+      <button class="btn btn-secondary" onclick="loadTrace()">↻ 刷新追踪</button>
+    </div>
+
+    <div id="traceTimeline"></div>
+    <div id="traceEmpty" style="display:none;text-align:center;padding:60px 24px;color:var(--stone)">
+      <div style="font-size:2.5rem;margin-bottom:12px">🔍</div>
+      <div style="font-size:.9rem">暂无追踪数据。完成至少一个流水线阶段后，Agent 执行记录将显示在这里。</div>
+    </div>
+
+  </div>
+  </div><!-- /page-trace -->
+
+
+  <!-- ═══════════════════════════ PAGE 4: Assistant ═══════════════════════════ -->
   <div class="page" id="page-assistant">
-  <div class="assistant-layout">
+  <div class="assistant-with-sidebar">
+
+    <!-- Session Sidebar -->
+    <div class="session-sidebar" id="sessionSidebar">
+      <div class="session-sb-top">
+        <button class="session-new-btn" onclick="createSession()" title="新建对话">✎</button>
+        <button class="session-toggle" id="btnToggleSS" onclick="toggleSessionSidebar()" title="折叠">‹</button>
+      </div>
+      <div class="session-list" id="sessionList"></div>
+    </div>
+
+    <!-- Chat Main -->
+    <div class="assistant-main">
+    <div class="assistant-layout" style="height:100%;max-width:none">
 
     <div class="chat-header">
-      <div class="chat-header-title">MCM 流水线控制助手</div>
-      <div class="chat-header-sub">告诉我你的需求，我可以暂停流水线、修改配置、从指定阶段重启</div>
+      <div class="chat-header-title" id="chatHeaderTitle">MCM 流水线控制助手</div>
+      <div class="chat-header-sub" id="chatHeaderSub">告诉我你的需求，我可以暂停流水线、修改配置、从指定阶段重启</div>
+      <div class="chat-persona-row" id="chatPersonaRow" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"></div>
     </div>
 
     <div class="chat-status-bar" id="chatStatusBar">
@@ -1015,6 +1249,8 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
     </div>
 
   </div><!-- /assistant-layout -->
+  </div><!-- /assistant-main -->
+  </div><!-- /assistant-with-sidebar -->
   </div><!-- /page-assistant -->
 
 
@@ -1054,6 +1290,23 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
 
 </div><!-- /main -->
 
+<!-- ── Pip Install Modal ── -->
+<div class="modal-backdrop" id="pipModal" onclick="if(event.target===this)closePipInstall()">
+  <div class="modal pip-modal">
+    <div class="modal-title">⬇ pip install — 沙箱包管理</div>
+    <div class="modal-body" style="margin-bottom:12px">
+      在沙箱容器中安装 Python 包，安装后立即可用于代码求解。
+    </div>
+    <input class="pip-input" id="pipPackageInput" type="text" placeholder="package-name 或 package==1.2.3"
+           onkeydown="if(event.key==='Enter')doPipInstall()">
+    <div class="pip-output" id="pipOutput"></div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn btn-secondary" onclick="closePipInstall()">关闭</button>
+      <button class="btn btn-primary" id="btnPipInstall" onclick="doPipInstall()">安装</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Lightbox ── -->
 <div class="lightbox" id="lightbox" onclick="if(event.target===this||event.target.classList.contains('lightbox'))closeLightbox()">
   <button class="lightbox-close" onclick="closeLightbox()" aria-label="关闭">×</button>
@@ -1069,8 +1322,11 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
 /* ══════════════════════════════ State ══════════════════════════ */
 let currentStatus = null;
 let sseSource = null;
-let chatHistory = [];
+let sseBackoff = 1000;            // exponential backoff for /api/sse reconnect
+const SSE_BACKOFF_MAX = 30000;
 let chatWaiting = false;
+let _personas = [];
+let _currentPersona = 'controller';
 
 /* ══════════════════════════════ Sidebar ════════════════════════ */
 function toggleSidebar() {
@@ -1098,6 +1354,8 @@ function switchPage(name) {
   document.getElementById(`tab${name.charAt(0).toUpperCase()+name.slice(1)}`).classList.add('active');
   if (name === 'assistant') syncChatStatus();
   if (name === 'experience') loadExperience();
+  if (name === 'console' && !_consoleConnected) initConsole();
+  if (name === 'trace') loadTrace();
 }
 
 /* ══════════════════════════════ API helpers ════════════════════ */
@@ -1306,9 +1564,20 @@ async function runPhase() {
 }
 
 async function stopPipeline() {
-  try { await api('/api/stop', { method: 'POST' }); } catch(e) {}
+  const btn = document.getElementById('btnStop');
+  const origText = btn.innerHTML;
+  btn.innerHTML = '停止中…';
+  btn.disabled = true;
+  try {
+    await api('/api/stop', { method: 'POST' });
+    showToast('流水线已停止', 'success');
+  } catch(e) {
+    showToast('停止失败: ' + e.message, 'error');
+  }
   document.getElementById('btnRun').disabled = false;
-  document.getElementById('btnStop').style.display = 'none';
+  btn.innerHTML = origText;
+  btn.disabled = false;
+  btn.style.display = 'none';
   refreshAll();
 }
 
@@ -1410,12 +1679,18 @@ async function cleanupAux() {
 function streamOutput() {
   const body = document.getElementById('consoleBody');
   const es = new EventSource('/api/pipeline-output');
+  function _resetRunBtn() {
+    document.getElementById('btnRun').disabled = false;
+    document.getElementById('btnStop').style.display = 'none';
+    const stopBtn = document.getElementById('btnStop');
+    stopBtn.innerHTML = '■ Stop';
+    stopBtn.disabled = false;
+  }
   es.onmessage = e => {
     const data = JSON.parse(e.data);
     if (data.done) {
       es.close();
-      document.getElementById('btnRun').disabled = false;
-      document.getElementById('btnStop').style.display = 'none';
+      _resetRunBtn();
       refreshAll();
       return;
     }
@@ -1424,22 +1699,32 @@ function streamOutput() {
       body.scrollTop = body.scrollHeight;
     }
   };
-  es.onerror = () => es.close();
+  es.onerror = () => { es.close(); _resetRunBtn(); refreshAll(); };
 }
 
 /* ══════════════════════════════ SSE status ═════════════════════ */
 function startSSE() {
-  if (sseSource) { sseSource.close(); }
+  if (sseSource) { try { sseSource.close(); } catch(_){} }
   sseSource = new EventSource('/api/sse');
+  sseSource.onopen = () => { sseBackoff = 1000; };   // reset on success
   sseSource.onmessage = e => {
-    const data = JSON.parse(e.data);
-    updateRunningUI(data.running);
-    if (data.phase) {
-      document.getElementById('statPhase').textContent = data.phase;
-      document.getElementById('chatCurrentPhase').textContent = data.phase;
-    }
+    try {
+      const data = JSON.parse(e.data);
+      updateRunningUI(data.running);
+      if (data.phase) {
+        const ph = document.getElementById('statPhase');
+        const cp = document.getElementById('chatCurrentPhase');
+        if (ph) ph.textContent = data.phase;
+        if (cp) cp.textContent = data.phase;
+      }
+    } catch(err) { /* heartbeat comments aren't dispatched as messages */ }
   };
-  sseSource.onerror = () => { setTimeout(startSSE, 5000); };
+  sseSource.onerror = () => {
+    try { sseSource.close(); } catch(_){}
+    const wait = sseBackoff;
+    sseBackoff = Math.min(sseBackoff * 2, SSE_BACKOFF_MAX);
+    setTimeout(startSSE, wait);
+  };
 }
 
 /* ══════════════════════════════ RefreshAll ═════════════════════ */
@@ -1457,7 +1742,24 @@ async function refreshAll() {
     const ctx = await api('/api/context');
     renderPhaseDetails(data.phases, ctx);
     syncChatStatus();
-  } catch(e) { console.error('refreshAll:', e); }
+  } catch(e) {
+    console.error('refreshAll:', e);
+    showToast('刷新失败，请检查服务器是否在线', 'error');
+  }
+}
+
+async function refreshWithFeedback(btn) {
+  const orig = btn.innerHTML;
+  btn.innerHTML = '↻ 刷新中…';
+  btn.disabled = true;
+  try {
+    await refreshAll();
+    btn.innerHTML = '✓ 已刷新';
+    setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1200);
+  } catch(e) {
+    btn.innerHTML = orig;
+    btn.disabled = false;
+  }
 }
 
 function updateRunningUI(running) {
@@ -1659,8 +1961,7 @@ async function confirmClear() {
     // Flash notification
     showToast(msg, errs.length ? 'warning' : 'success');
 
-    // Reset chat history too
-    chatHistory = [];
+    // Reset chat display (server-side session history is not touched by /api/clear)
     document.getElementById('chatMessages').innerHTML = '';
     appendMsg('assistant', '工作区已清除。可以开始新题目了！\n\n上传新的竞赛题目到 questiontest/ 目录，然后从 P0b 运行流水线。');
 
@@ -1714,23 +2015,58 @@ function syncChatStatus() {
   document.getElementById('chatProblem').textContent = currentStatus.selected_problem || '--';
 }
 
-function appendMsg(role, content, actionResults) {
+function renderToolCallBlock(tc) {
+  // tc: {name, arguments, result} — any field may be missing
+  const name = escapeHtml(tc.name || 'tool');
+  let argsStr = tc.arguments;
+  if (typeof argsStr !== 'string') argsStr = JSON.stringify(argsStr || {});
+  try {
+    const parsed = typeof tc.arguments === 'string' ? JSON.parse(tc.arguments) : tc.arguments;
+    argsStr = JSON.stringify(parsed);
+  } catch(_) {}
+  const argsPreview = escapeHtml(argsStr.length > 80 ? argsStr.slice(0,80)+'…' : argsStr);
+  const body = escapeHtml(tc.result || tc.content || '(无输出)');
+  const argsFull = escapeHtml(argsStr);
+  return `<div class="tool-call" onclick="this.classList.toggle('open')">
+    <div class="tool-call-head">
+      <span class="tool-call-icon">▶</span>
+      <span class="tool-call-name">${name}</span>
+      <span class="tool-call-args">${argsPreview}</span>
+    </div>
+    <div class="tool-call-body"><strong>args:</strong> ${argsFull}
+
+<strong>result:</strong>
+${body}</div>
+  </div>`;
+}
+
+function appendMsg(role, content, toolCalls) {
   const container = document.getElementById('chatMessages');
   const div = document.createElement('div');
   div.className = `msg ${role}`;
 
   let avatarLabel = role === 'user' ? 'U' : role === 'assistant' ? 'AI' : '⚙';
-  let bubbleHTML = `<div class="msg-bubble">${escapeHtml(content).replace(/\n/g,'<br>')}</div>`;
+  const textHTML = content ? `<div class="msg-bubble">${escapeHtml(content).replace(/\n/g,'<br>')}</div>` : '';
 
-  if (actionResults && actionResults.length) {
-    bubbleHTML += `<div class="action-results">${actionResults.map(r =>
-      `<div class="action-result-line">${escapeHtml(r)}</div>`).join('')}</div>`;
+  let toolHTML = '';
+  if (toolCalls && toolCalls.length) {
+    const blocks = toolCalls.map(tc => {
+      if (typeof tc === 'string') {
+        // legacy plain-text tool result
+        return `<div class="tool-call open"><div class="tool-call-head">
+          <span class="tool-call-icon">▶</span><span class="tool-call-name">tool</span></div>
+          <div class="tool-call-body">${escapeHtml(tc)}</div></div>`;
+      }
+      return renderToolCallBlock(tc);
+    }).join('');
+    toolHTML = `<div class="action-results">${blocks}</div>`;
   }
 
+  const bubbleHTML = textHTML + toolHTML;
   if (role === 'system') {
     div.innerHTML = bubbleHTML;
   } else {
-    div.innerHTML = `<div class="msg-avatar">${avatarLabel}</div>${bubbleHTML}`;
+    div.innerHTML = `<div class="msg-avatar">${avatarLabel}</div><div style="flex:1;min-width:0">${bubbleHTML}</div>`;
   }
 
   container.appendChild(div);
@@ -1761,26 +2097,36 @@ async function sendChat() {
   input.value = '';
   autoResize(input);
   appendMsg('user', message);
-  chatHistory.push({ role: 'user', content: message });
 
   chatWaiting = true;
   document.getElementById('btnChatSend').disabled = true;
   showTyping();
 
   try {
+    // Ensure we have a server session
+    if (!_currentSession) await createSession(false);
+
     const result = await api('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, history: chatHistory.slice(-10) }),
+      body: JSON.stringify({
+        message,
+        session_id: _currentSession,
+        persona: _currentPersona,
+      }),
     });
 
     removeTyping();
-    appendMsg('assistant', result.reply, result.action_results);
-    chatHistory.push({ role: 'assistant', content: result.reply });
+    appendMsg('assistant', result.reply || '(空回复)', result.tool_calls || []);
 
-    // Refresh status if any actions were executed
-    if (result.actions && result.actions.length) {
-      setTimeout(refreshAll, 1000);
+    // Sync our session id and refresh left-rail titles from server
+    if (result.session_id && result.session_id !== _currentSession) {
+      _currentSession = result.session_id;
+    }
+    await loadSessionList();
+
+    if (result.tool_calls && result.tool_calls.length) {
+      setTimeout(refreshAll, 800);
     }
   } catch(e) {
     removeTyping();
@@ -1823,9 +2169,8 @@ function truncate(s, n) { return s.length > n ? s.slice(0,n) + '…' : s; }
 
 /* ══════════════════════════════ Init ═══════════════════════════ */
 (function init() {
-  // Greeting message in chat
-  appendMsg('assistant',
-    '你好！我是 MCM 流水线控制助手。\n\n我可以帮你：\n• 查看当前流水线状态\n• 暂停或重启流水线\n• 修改模型配置（切换 LLM）\n• 调整循环次数和 Token 限制\n\n有什么需要我做的？');
+  // Session management replaces the hardcoded greeting
+  initSessions();
 
   refreshAll();
   startSSE();
@@ -2112,6 +2457,488 @@ loadKnowledge = async function() {
     card.addEventListener('click', () => name && copyText(name));
   });
 };
+
+/* ══════════════════════════════ Console Page ═══════════════════ */
+let _consoleConnected = false;
+let _consoleLines = [];
+let _consoleAutoScroll = true;
+let _consoleFilters = new Set(['all']);
+let _consoleFullscreen = false;
+let _consoleRetryTimer = null;
+
+function initConsole() {
+  _consoleConnected = true;
+  // Load historical log first, then stream
+  _loadHistoricalLog();
+}
+
+let _logBackoff = 1000;
+function _loadHistoricalLog() {
+  const src = new EventSource('/api/logs/stream');
+  src.onopen = () => { _logBackoff = 1000; };
+  src.onmessage = e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (d.line) _appendConsoleLine(d.line);
+    } catch(_) { /* heartbeat comment, ignored */ }
+  };
+  src.onerror = () => {
+    src.close();
+    if (_consoleRetryTimer) clearTimeout(_consoleRetryTimer);
+    const wait = _logBackoff;
+    _logBackoff = Math.min(_logBackoff * 2, 30000);
+    _consoleRetryTimer = setTimeout(() => { _consoleConnected = false; initConsole(); }, wait);
+  };
+}
+
+// ─── Structured log parser ───────────────────────────────────────
+// Handles AstrBot format: [ts] [Module] [LEVEL] [v...] [src:line]: msg
+// Also handles plain MCM pipeline format: [P3-OK] / === / etc.
+const _LOG_RE = /^\[([^\]]+)\]\s+\[([^\]]+)\]\s+\[([^\]]+)\](?:\s+\[[^\]]*\])?\s+(?:\[[^\]]*\])?\s*:\s*(.*)/;
+
+function _parseLogLine(text) {
+  const m = text.match(_LOG_RE);
+  if (m) {
+    return { ts: m[1], module: m[2], level: m[3].toUpperCase(), msg: m[4].trim(), structured: true };
+  }
+  // Fallback: plain line
+  return { ts: null, module: null, level: _classifyLine(text), msg: text, structured: false };
+}
+
+function _classifyLine(line) {
+  // Bracket-enclosed level tag first (AstrBot / Python logging style)
+  const lvlMatch = line.match(/\[(WARN(?:ING)?|ERROR|CRITICAL|INFO|DEBUG|OK|DONE)\]/i);
+  if (lvlMatch) {
+    const l = lvlMatch[1].toUpperCase();
+    if (l === 'WARN' || l === 'WARNING') return 'warn';
+    if (l === 'ERROR' || l === 'CRITICAL') return 'error';
+    if (l === 'DEBUG') return 'debug';
+    if (l === 'OK' || l === 'DONE') return 'ok';
+    return 'info';
+  }
+  // MCM pipeline markers
+  if (/^={3,}|\[P\d/.test(line) || /开始 P[0-9]/.test(line)) return 'phase';
+  if (/\[.*OK\]|\[.*DONE\]|✓|successfully/i.test(line)) return 'ok';
+  if (/Traceback|raise |Exception:/i.test(line)) return 'error';
+  return 'info';
+}
+
+function _renderLogLine(parsed) {
+  const { ts, module, level, msg, structured } = parsed;
+  const lvl = level.toUpperCase();
+
+  if (!structured) {
+    // Plain line — return escaped text with class color
+    return `<span>${escapeHtml(msg)}</span>`;
+  }
+
+  const lvlClass = {
+    WARN: 'lp-lvl-warn', WARNING: 'lp-lvl-warn',
+    ERROR: 'lp-lvl-error', CRITICAL: 'lp-lvl-error',
+    INFO: 'lp-lvl-info', DEBUG: 'lp-lvl-debug',
+    OK: 'lp-lvl-ok', DONE: 'lp-lvl-ok',
+  }[lvl] || 'lp-lvl-info';
+
+  const msgClass = {
+    WARN: 'lp-msg-warn', WARNING: 'lp-msg-warn',
+    ERROR: 'lp-msg-error', CRITICAL: 'lp-msg-error',
+    DEBUG: 'lp-msg-debug',
+  }[lvl] || 'lp-msg-info';
+
+  return [
+    ts     ? `<span class="lp-ts">[${escapeHtml(ts)}]</span> ` : '',
+    module ? `<span class="lp-mod">[${escapeHtml(module)}]</span> ` : '',
+    `<span class="${lvlClass}">[${escapeHtml(lvl)}]</span> `,
+    `<span class="${msgClass}">${escapeHtml(msg)}</span>`,
+  ].join('');
+}
+
+function _levelToCls(level) {
+  const l = level.toUpperCase();
+  if (l === 'WARN' || l === 'WARNING') return 'warn';
+  if (l === 'ERROR' || l === 'CRITICAL') return 'error';
+  if (l === 'DEBUG') return 'debug';
+  if (l === 'OK' || l === 'DONE') return 'ok';
+  if (l === 'PHASE') return 'phase';
+  return 'info';
+}
+
+function _appendConsoleLine(text) {
+  const parsed = _parseLogLine(text);
+  const cls = parsed.structured ? _levelToCls(parsed.level) : parsed.level;
+  _consoleLines.push({ text, cls });
+  if (_consoleLines.length > 3000) _consoleLines.shift();
+
+  const term = document.getElementById('consoleTerm');
+  if (!term) return;
+  const visible = _lineVisible(cls);
+  const div = document.createElement('div');
+  div.className = `cl-line cl-${cls}${visible ? '' : ' cl-hidden'}`;
+  div.innerHTML = _renderLogLine(parsed);
+  div.title = '点击复制';
+  div.onclick = () => { navigator.clipboard?.writeText(text); showToast('已复制', 'success'); };
+  term.appendChild(div);
+  if (_consoleAutoScroll) term.scrollTop = term.scrollHeight;
+}
+
+function _lineVisible(cls) {
+  if (_consoleFilters.has('all')) return true;
+  return _consoleFilters.has(cls);
+}
+
+function toggleConsoleFilter(filter) {
+  if (filter === 'all') {
+    _consoleFilters = new Set(['all']);
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    document.querySelector('.chip-all').classList.add('active');
+  } else {
+    _consoleFilters.delete('all');
+    document.querySelector('.chip-all').classList.remove('active');
+    const chip = document.querySelector(`.chip-${filter}`);
+    if (_consoleFilters.has(filter)) { _consoleFilters.delete(filter); chip.classList.remove('active'); }
+    else { _consoleFilters.add(filter); chip.classList.add('active'); }
+    if (_consoleFilters.size === 0) {
+      _consoleFilters.add('all');
+      document.querySelector('.chip-all').classList.add('active');
+    }
+  }
+  // Re-apply visibility
+  const term = document.getElementById('consoleTerm');
+  if (!term) return;
+  term.querySelectorAll('.cl-line').forEach(el => {
+    const cls = [...el.classList].find(c => ['phase','ok','warn','error','info','debug'].includes(c)) || 'info';
+    el.classList.toggle('cl-hidden', !_lineVisible(cls));
+  });
+  if (_consoleAutoScroll && term) term.scrollTop = term.scrollHeight;
+}
+
+function toggleConsoleAutoScroll() {
+  _consoleAutoScroll = !_consoleAutoScroll;
+  const btn = document.getElementById('btnAutoScroll');
+  btn.classList.toggle('active', _consoleAutoScroll);
+  btn.textContent = _consoleAutoScroll ? '⬇ 自动滚动' : '⏸ 已暂停';
+  if (_consoleAutoScroll) {
+    const term = document.getElementById('consoleTerm');
+    if (term) term.scrollTop = term.scrollHeight;
+  }
+}
+
+function clearConsoleTerm() {
+  document.getElementById('consoleTerm').innerHTML = '';
+  _consoleLines = [];
+}
+
+function downloadLog() {
+  const text = _consoleLines.map(l => l.text).join('\n');
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `mcm_log_${Date.now()}.txt`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function toggleConsoleFullscreen() {
+  _consoleFullscreen = !_consoleFullscreen;
+  document.getElementById('consolePage').classList.toggle('fullscreen', _consoleFullscreen);
+  document.getElementById('btnConsoleFullscreen').textContent = _consoleFullscreen ? '✕ 退出全屏' : '⛶ 全屏';
+}
+
+/* Pip Install */
+function openPipInstall() {
+  document.getElementById('pipModal').classList.add('visible');
+  setTimeout(() => document.getElementById('pipPackageInput').focus(), 80);
+}
+function closePipInstall() {
+  document.getElementById('pipModal').classList.remove('visible');
+  const out = document.getElementById('pipOutput');
+  out.classList.remove('visible'); out.textContent = '';
+  document.getElementById('pipPackageInput').value = '';
+}
+async function doPipInstall() {
+  const pkg = document.getElementById('pipPackageInput').value.trim();
+  if (!pkg) return;
+  const btn = document.getElementById('btnPipInstall');
+  const out = document.getElementById('pipOutput');
+  btn.disabled = true; btn.textContent = '安装中…';
+  out.classList.add('visible'); out.textContent = `$ pip install ${pkg}\n`;
+  try {
+    const r = await fetch('/api/pip-install', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ package: pkg }),
+    });
+    const d = await r.json();
+    out.textContent += d.output || '(无输出)';
+    out.scrollTop = out.scrollHeight;
+    showToast(d.success ? `✓ 已安装 ${pkg}` : `✗ 安装失败`, d.success ? 'success' : 'error');
+  } catch(e) {
+    out.textContent += `\n错误: ${e.message}`;
+  } finally {
+    btn.disabled = false; btn.textContent = '安装';
+  }
+}
+
+/* ══════════════════════════════ Trace Page ═════════════════════ */
+const TRACE_COLORS = {
+  'P0b':'#6366f1','P1':'#8b5cf6','P1.5':'#a78bfa','P2':'#2563eb',
+  'P2.5':'#3b82f6','P3':'#059669','P3.5':'#10b981','P4':'#d97706',
+  'P4.5':'#f59e0b','P5':'#dc2626','P5.5':'#9f1239',
+};
+
+async function loadTrace() {
+  const el = document.getElementById('traceTimeline');
+  const empty = document.getElementById('traceEmpty');
+  if (!el) return;
+  try {
+    const [phases, ctx] = await Promise.all([api('/api/status'), api('/api/context')]);
+    const entries = phases.phases.filter(p => p.status === 'completed' || p.status === 'error');
+    if (!entries.length) {
+      el.innerHTML = ''; empty.style.display = 'block'; return;
+    }
+    empty.style.display = 'none';
+    el.innerHTML = entries.map((p, i) => _renderTraceEntry(p, ctx, i)).join('');
+  } catch(e) {
+    el.innerHTML = `<p style="color:var(--error);padding:16px">加载失败: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+function _renderTraceEntry(phase, ctx, idx) {
+  const color = TRACE_COLORS[phase.id] || 'var(--terracotta)';
+  const dotColor = phase.status === 'completed' ? 'var(--success)' : 'var(--error)';
+  const ctxKey = phase.id.toLowerCase().replace('.', '_');
+  const phaseCtx = ctx[ctxKey] || ctx[phase.id] || {};
+  const kvPairs = [];
+  if (phaseCtx.model_used || phaseCtx.model) kvPairs.push(['模型', phaseCtx.model_used || phaseCtx.model]);
+  if (phaseCtx.tokens_used || phaseCtx.total_tokens) kvPairs.push(['Tokens', phaseCtx.tokens_used || phaseCtx.total_tokens]);
+  if (phaseCtx.files_processed) kvPairs.push(['处理文件', phaseCtx.files_processed]);
+  if (phaseCtx.model_type) kvPairs.push(['模型类型', phaseCtx.model_type]);
+  if (phaseCtx.status) kvPairs.push(['状态', phaseCtx.status]);
+  const kvHtml = kvPairs.map(([k,v]) =>
+    `<div class="trace-kv-item"><strong>${k}: </strong>${escapeHtml(String(v))}</div>`
+  ).join('') || '<span style="color:var(--stone);font-size:.8rem">无额外元数据</span>';
+
+  return `<div class="trace-entry" id="trace-e-${idx}">
+    <div class="trace-header" onclick="toggleTrace(${idx})">
+      <div class="trace-status-dot" style="background:${dotColor}"></div>
+      <span class="trace-phase-pill" style="background:${color}">${phase.id}</span>
+      <span class="trace-entry-name">${phase.name}</span>
+      <span class="trace-agent-name">${phase.agent}</span>
+      <span class="trace-chevron">›</span>
+    </div>
+    <div class="trace-body" id="trace-b-${idx}">
+      <div class="trace-kv" style="padding-top:2px">${kvHtml}</div>
+    </div>
+  </div>`;
+}
+
+function toggleTrace(idx) {
+  const entry = document.getElementById(`trace-e-${idx}`);
+  const body = document.getElementById(`trace-b-${idx}`);
+  const open = body.classList.contains('open');
+  body.classList.toggle('open', !open);
+  entry.classList.toggle('open', !open);
+}
+
+/* ══════════════════════════════ Session Management (server-backed) ═ */
+let _sessionList = [];           // [{id, title, persona, message_count, updated_at}]
+let _currentSession = null;
+let _sidebarCollapsed = false;
+
+const GREET_MSG = '你好！我是 MCM 流水线控制助手。\n\n我可以帮你：\n• 查看当前流水线状态\n• 暂停或重启流水线\n• 修改模型配置（切换 LLM）\n• 运行沙箱脚本和安装 Python 包\n• 切换上方 Persona 可改变我的能力范围\n\n有什么需要我做的？';
+
+async function initSessions() {
+  await loadPersonas();
+  await loadSessionList();
+  if (!_sessionList.length) {
+    await createSession(false);
+  } else {
+    // Restore last-used id if still present
+    const lastId = localStorage.getItem('mcm_last_session') || '';
+    const exists = _sessionList.find(s => s.id === lastId);
+    _currentSession = exists ? lastId : _sessionList[0].id;
+    await switchSession(_currentSession, {silent: true});
+  }
+  renderSessionList();
+}
+
+async function loadPersonas() {
+  try {
+    const data = await api('/api/personas');
+    _personas = data.personas || [];
+    if (!_personas.find(p => p.id === _currentPersona)) {
+      _currentPersona = data.default || (_personas[0] && _personas[0].id) || 'controller';
+    }
+    renderPersonaRow();
+  } catch(e) {
+    console.error('loadPersonas:', e);
+    _personas = [{id:'controller', name:'流水线控制助手', description:''}];
+    renderPersonaRow();
+  }
+}
+
+const PERSONA_ICONS = {controller:'🎛', modeler:'📐', coder:'💻'};
+const PERSONA_SUGGESTIONS = {
+  controller: [
+    ['当前状态',   '当前流水线状态如何？'],
+    ['暂停流水线', '暂停当前流水线'],
+    ['换建模模型', '把建模模型改成 deepseek'],
+    ['从P3重启',   '从 P3 重新开始运行'],
+    ['改循环次数', '把最大循环次数改为 5'],
+  ],
+  modeler: [
+    ['读题目',     '读一下当前 competition 的题目与子问题'],
+    ['建模进展',   '当前 modeling 字段里已经有什么？缺什么？'],
+    ['方法对比',   '给这题列出 3 种可行建模方法并对比'],
+    ['假设检查',   '现有假设是否合理？哪里需要补强？'],
+  ],
+  coder: [
+    ['沙箱状态',   '沙箱当前状态'],
+    ['列脚本',     '列出 vol/scripts 下所有脚本'],
+    ['运行solver','在沙箱里运行 solver.py'],
+    ['装 xgboost', '在沙箱里安装 xgboost'],
+  ],
+};
+
+function renderPersonaRow() {
+  const row = document.getElementById('chatPersonaRow');
+  if (!row) return;
+  row.innerHTML = _personas.map(p => {
+    const active = p.id === _currentPersona ? ' active' : '';
+    const icon = PERSONA_ICONS[p.id] || '●';
+    return `<button class="persona-chip${active}" title="${escapeHtml(p.description||'')}"
+            onclick="setPersona('${p.id}')">
+              <span class="persona-icon">${icon}</span>${escapeHtml(p.name)}
+            </button>`;
+  }).join('');
+  const persona = _personas.find(p => p.id === _currentPersona);
+  if (persona) {
+    document.getElementById('chatHeaderTitle').textContent = persona.name;
+    document.getElementById('chatHeaderSub').textContent = persona.description || '';
+  }
+  renderPersonaSuggestions();
+}
+
+function renderPersonaSuggestions() {
+  const el = document.getElementById('chatSuggestions');
+  if (!el) return;
+  const list = PERSONA_SUGGESTIONS[_currentPersona] || PERSONA_SUGGESTIONS.controller;
+  el.innerHTML = list.map(([label, prompt]) =>
+    `<button class="suggestion-chip" onclick="fillChat(${JSON.stringify(prompt)})">${escapeHtml(label)}</button>`
+  ).join('');
+}
+
+async function setPersona(id) {
+  _currentPersona = id;
+  renderPersonaRow();
+  if (_currentSession) {
+    try {
+      await api(`/api/sessions/${_currentSession}`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({persona: id}),
+      });
+    } catch(e) { /* non-fatal */ }
+  }
+}
+
+async function loadSessionList() {
+  try {
+    const data = await api('/api/sessions');
+    _sessionList = data.sessions || [];
+    renderSessionList();
+  } catch(e) { console.error('loadSessionList:', e); }
+}
+
+async function createSession(focus = true) {
+  try {
+    const data = await api('/api/sessions', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({persona: _currentPersona, title: '新对话'}),
+    });
+    await loadSessionList();
+    if (focus) {
+      await switchSession(data.id);
+    } else {
+      _currentSession = data.id;
+      localStorage.setItem('mcm_last_session', _currentSession);
+    }
+  } catch(e) { console.error('createSession:', e); }
+}
+
+async function switchSession(id, opts = {}) {
+  if (!id) return;
+  _currentSession = id;
+  localStorage.setItem('mcm_last_session', id);
+  try {
+    const s = await api(`/api/sessions/${id}`);
+    if (s.persona) { _currentPersona = s.persona; renderPersonaRow(); }
+    const container = document.getElementById('chatMessages');
+    container.innerHTML = '';
+    if (!s.messages || !s.messages.length) {
+      appendMsg('assistant', GREET_MSG);
+    } else {
+      // Coalesce tool-calls with their results for pretty collapsible display
+      const msgs = s.messages.filter(m => m.role !== 'system');
+      for (let i = 0; i < msgs.length; i++) {
+        const m = msgs[i];
+        if (m.role === 'assistant' && m.tool_calls && m.tool_calls.length) {
+          const pending = m.tool_calls.map(tc => ({name: tc.name, arguments: tc.arguments, result: ''}));
+          let j = i + 1;
+          for (const tc of pending) {
+            while (j < msgs.length && msgs[j].role === 'tool') {
+              if (!tc.result) { tc.result = msgs[j].content || ''; j++; break; }
+              j++;
+            }
+          }
+          appendMsg('assistant', m.content || '', pending);
+          i = j - 1;
+        } else if (m.role === 'tool') {
+          appendMsg('assistant', '', [{name: m.tool_name || 'tool', arguments: '', result: m.content || ''}]);
+        } else {
+          appendMsg(m.role, m.content || '');
+        }
+      }
+    }
+  } catch(e) {
+    console.error('switchSession:', e);
+  }
+  renderSessionList();
+}
+
+async function deleteSession(id, e) {
+  e.stopPropagation();
+  if (!confirm('删除该会话？')) return;
+  try {
+    await api(`/api/sessions/${id}`, {method: 'DELETE'});
+    await loadSessionList();
+    if (_currentSession === id) {
+      const first = _sessionList[0];
+      if (first) await switchSession(first.id);
+      else await createSession(true);
+    }
+  } catch(e) { console.error('deleteSession:', e); }
+}
+
+function renderSessionList() {
+  const list = document.getElementById('sessionList');
+  if (!list) return;
+  list.innerHTML = _sessionList.map(s => {
+    const active = s.id === _currentSession ? ' active' : '';
+    return `<div class="session-item${active}" onclick="switchSession('${s.id}')">
+      <span class="session-icon">💬</span>
+      <span class="session-title" title="${escapeHtml(s.title)}">${escapeHtml(s.title)}</span>
+      <button class="session-del" onclick="deleteSession('${s.id}',event)" title="删除">×</button>
+    </div>`;
+  }).join('');
+}
+
+function toggleSessionSidebar() {
+  _sidebarCollapsed = !_sidebarCollapsed;
+  document.getElementById('sessionSidebar').classList.toggle('collapsed', _sidebarCollapsed);
+  const btn = document.getElementById('btnToggleSS');
+  btn.textContent = _sidebarCollapsed ? '›' : '‹';
+}
 
 /* ══════════════════════════════ Phase node tooltips ════════════ */
 const _origRenderPipeline = renderPipeline;

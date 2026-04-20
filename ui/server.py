@@ -67,6 +67,7 @@ PHASE_META = {
     "P1":   {"name": "题目解析",   "agent": "question_extractor.py", "icon": "search"},
     "P1.5": {"name": "数据清洗",   "agent": "data_cleaning_agent.py","icon": "data"},
     "P2":   {"name": "数学建模",   "agent": "modeling_agent.py",     "icon": "model"},
+    "P2.5": {"name": "数学可视化", "agent": "matlab_viz.py",         "icon": "model"},
     "P3":   {"name": "代码求解",   "agent": "code_agent.py",         "icon": "code"},
     "P3.5": {"name": "数据验证",   "agent": "data_validator.py",     "icon": "check"},
     "P4":   {"name": "论文撰写",   "agent": "writing_agent.py",      "icon": "write"},
@@ -75,7 +76,7 @@ PHASE_META = {
     "P5.5": {"name": "数据审计",   "agent": "data_validator.py",     "icon": "audit"},
 }
 
-PHASE_ORDER = ["P0b", "P1", "P1.5", "P2", "P3", "P3.5", "P4", "P4.5", "P5", "P5.5"]
+PHASE_ORDER = ["P0b", "P1", "P1.5", "P2", "P2.5", "P3", "P3.5", "P4", "P4.5", "P5", "P5.5"]
 
 PHASE_COMPLETE_MAP = {
     "init": set(),
@@ -84,12 +85,13 @@ PHASE_COMPLETE_MAP = {
     "P1.5_complete": {"P0b", "P1", "P1.5"},
     "P1.5_skipped": {"P0b", "P1", "P1.5"},
     "P2_complete": {"P0b", "P1", "P1.5", "P2"},
-    "P3_complete": {"P0b", "P1", "P1.5", "P2", "P3"},
-    "P3_logic_err": {"P0b", "P1", "P1.5", "P2"},
-    "P3.5_complete": {"P0b", "P1", "P1.5", "P2", "P3", "P3.5"},
-    "P4_complete": {"P0b", "P1", "P1.5", "P2", "P3", "P3.5", "P4"},
-    "P4.5_complete": {"P0b", "P1", "P1.5", "P2", "P3", "P3.5", "P4", "P4.5"},
-    "P5_complete": {"P0b", "P1", "P1.5", "P2", "P3", "P3.5", "P4", "P4.5", "P5"},
+    "P2.5_complete": {"P0b", "P1", "P1.5", "P2", "P2.5"},
+    "P3_complete": {"P0b", "P1", "P1.5", "P2", "P2.5", "P3"},
+    "P3_logic_err": {"P0b", "P1", "P1.5", "P2", "P2.5"},
+    "P3.5_complete": {"P0b", "P1", "P1.5", "P2", "P2.5", "P3", "P3.5"},
+    "P4_complete": {"P0b", "P1", "P1.5", "P2", "P2.5", "P3", "P3.5", "P4"},
+    "P4.5_complete": {"P0b", "P1", "P1.5", "P2", "P2.5", "P3", "P3.5", "P4", "P4.5"},
+    "P5_complete": {"P0b", "P1", "P1.5", "P2", "P2.5", "P3", "P3.5", "P4", "P4.5", "P5"},
     "P5.5_complete": set(PHASE_ORDER),
 }
 
@@ -97,6 +99,18 @@ app = FastAPI(title="MCM Pipeline Dashboard")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 _pipeline_proc: subprocess.Popen | None = None
+_sandbox_proc: subprocess.Popen | None = None
+_sandbox_output_buf: list[str] = []   # rolling buffer of last 200 lines
+
+# SSE heartbeat interval — prevents idle connections from being closed by
+# intermediate proxies/browsers. Format `: comment\n\n` is a no-op for the
+# EventSource parser but still a real TCP frame.
+SSE_HEARTBEAT_INTERVAL = 15.0
+SSE_HEADERS = {
+    "Cache-Control": "no-cache",
+    "X-Accel-Buffering": "no",
+    "Connection": "keep-alive",
+}
 
 
 # ─────────────────────────────────────────────────────── helpers ──
@@ -244,12 +258,15 @@ def _save_pipeline_cfg(cfg: dict) -> None:
 
 _CHAT_SYSTEM = """\
 你是 MCM 数学建模流水线的智能控制助手。你可以帮助用户：
-1. 了解当前流水线状态
+1. 了解当前流水线和沙箱状态
 2. 暂停 / 重启流水线
 3. 修改模型配置（切换LLM、调整超时）
 4. 修改流水线配置（循环次数、Token限制）
+5. 实时控制代码沙箱：运行脚本、执行任意代码、终止进程
 
 当你需要执行操作时，在回复中嵌入 JSON 行动块（每个单独一行）：
+
+【流水线控制】
 <action>{"type":"pause"}</action>
 <action>{"type":"restart","phase":"P3"}</action>
 <action>{"type":"set_model","task":"modeling","model":"ds:deepseek-chat"}</action>
@@ -258,17 +275,108 @@ _CHAT_SYSTEM = """\
 <action>{"type":"set_pipeline","key":"max_rollbacks","value":3}</action>
 <action>{"type":"set_tokens","task":"codegen","value":8192}</action>
 
+【沙箱控制】
+<action>{"type":"sandbox_run","script":"solver.py"}</action>
+<action>{"type":"sandbox_exec","code":"import pandas as pd\nprint(pd.__version__)"}</action>
+<action>{"type":"sandbox_kill"}</action>
+<action>{"type":"sandbox_status"}</action>
+
+沙箱说明：
+- sandbox_run: 在 Docker 沙箱中运行 vol/scripts/ 目录下指定脚本，输出实时流式推送到 /api/sandbox-output
+- sandbox_exec: 在沙箱中执行任意 Python 代码（写入 _assistant_exec.py 后运行）
+- sandbox_kill: 终止当前沙箱进程
+- sandbox_status: 查询沙箱当前状态和最近输出（已嵌入上下文，可直接询问）
+
 规则：
 - 默认用中文回复
 - 每次操作前先简短说明要做什么，再给出行动块
 - 行动块执行完毕后系统会反馈执行结果
 - 如果用户没有明确说暂停，在修改配置后问是否需要重启
+- 沙箱执行是异步的，用户可以通过 /api/sandbox-output SSE 或直接询问你来查看最新输出
 """
+
+
+def _start_sandbox_proc(script_host_path: str) -> None:
+    """docker cp + Popen docker exec; updates _sandbox_proc and _sandbox_output_buf."""
+    global _sandbox_proc, _sandbox_output_buf
+    from agents.utils import container_name, docker_cp
+
+    script_name = Path(script_host_path).name
+    container_path = f"/tmp/{script_name}"
+    docker_cp(script_host_path, container_name(), container_path)
+
+    _sandbox_output_buf = []
+    _sandbox_proc = subprocess.Popen(
+        ["docker", "exec", container_name(), "python3", container_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+
+
+# ─────────────────────────────────────────── tool dispatcher ──
+
+def _dispatch_tool(name: str, args: dict) -> str:
+    """Dispatch a single tool call (OpenAI function-calling) to its handler.
+
+    Reuses _execute_chat_actions by converting to the legacy action-dict shape
+    for the overlapping cases, and implements the new tools inline.
+    """
+    # New tools that don't map to legacy actions
+    if name == "list_scripts":
+        scripts_dir = VOL_DIR / "scripts"
+        if not scripts_dir.exists():
+            return "vol/scripts/ 不存在"
+        files = sorted(f.name for f in scripts_dir.iterdir()
+                       if f.is_file() and f.suffix == ".py")
+        if not files:
+            return "vol/scripts/ 为空"
+        return "可用脚本:\n" + "\n".join(f"  • {f}" for f in files)
+
+    if name == "read_context":
+        key = (args.get("key") or "").strip()
+        if not key:
+            return "✗ read_context 需要 key 参数"
+        ctx = _load_context()
+        if key not in ctx:
+            top = sorted(ctx.keys())
+            return f"✗ context 中无 '{key}'。可用 key: {top}"
+        val = ctx[key]
+        try:
+            rendered = json.dumps(val, ensure_ascii=False, indent=2)
+        except Exception:
+            rendered = str(val)
+        if len(rendered) > 4000:
+            rendered = rendered[:4000] + "\n… [truncated]"
+        return f"context.{key}:\n{rendered}"
+
+    # Map tool names → legacy action-dict types
+    legacy_map = {
+        "pipeline_pause": ("pause", {}),
+        "pipeline_restart": ("restart", {"phase": args.get("phase")}),
+        "set_model": ("set_model", {"task": args.get("task"), "model": args.get("model")}),
+        "set_timeout": ("set_timeout", {"task": args.get("task"), "value": args.get("value")}),
+        "set_budget": ("set_budget", {"task": args.get("task"), "value": args.get("value")}),
+        "set_tokens": ("set_tokens", {"task": args.get("task"), "value": args.get("value")}),
+        "set_pipeline_config": ("set_pipeline", {"key": args.get("key"), "value": args.get("value")}),
+        "sandbox_run": ("sandbox_run", {"script": args.get("script")}),
+        "sandbox_exec": ("sandbox_exec", {"code": args.get("code")}),
+        "sandbox_kill": ("sandbox_kill", {}),
+        "sandbox_status": ("sandbox_status", {}),
+    }
+    if name not in legacy_map:
+        return f"✗ 未知工具: {name}"
+    action_type, extra = legacy_map[name]
+    action: dict = {"type": action_type, **extra}
+    results = _execute_chat_actions([action])
+    return results[0] if results else ""
 
 
 def _execute_chat_actions(actions: list[dict]) -> list[str]:
     """Execute parsed actions and return human-readable results."""
-    global _pipeline_proc
+    global _pipeline_proc, _sandbox_proc, _sandbox_output_buf
     results: list[str] = []
 
     for act in actions:
@@ -356,6 +464,57 @@ def _execute_chat_actions(actions: list[dict]) -> list[str]:
                     pc.setdefault("max_tokens", {})[task] = int(val)
                     _save_pipeline_cfg(pc)
                     results.append(f"✓ max_tokens[{task}] 已设为 {val}")
+
+            # ── 沙箱控制 ──────────────────────────────────────────────
+            elif t == "sandbox_run":
+                script = act.get("script", "").strip()
+                if not script:
+                    results.append("✗ sandbox_run 需要 script 参数")
+                    continue
+                script_path = VOL_DIR / "scripts" / script
+                if not script_path.exists():
+                    results.append(f"✗ 脚本不存在: vol/scripts/{script}")
+                    continue
+                if _sandbox_proc and _sandbox_proc.poll() is None:
+                    _sandbox_proc.terminate()
+                _start_sandbox_proc(str(script_path))
+                results.append(f"✓ 沙箱已启动: {script} (pid={_sandbox_proc.pid}), 输出见 /api/sandbox-output")
+
+            elif t == "sandbox_exec":
+                code = act.get("code", "").strip()
+                if not code:
+                    results.append("✗ sandbox_exec 需要 code 参数")
+                    continue
+                exec_path = VOL_DIR / "scripts" / "_assistant_exec.py"
+                exec_path.parent.mkdir(parents=True, exist_ok=True)
+                exec_path.write_text(code, encoding="utf-8")
+                if _sandbox_proc and _sandbox_proc.poll() is None:
+                    _sandbox_proc.terminate()
+                _start_sandbox_proc(str(exec_path))
+                results.append(f"✓ 沙箱已执行代码片段 (pid={_sandbox_proc.pid}), 输出见 /api/sandbox-output")
+
+            elif t == "sandbox_kill":
+                if _sandbox_proc and _sandbox_proc.poll() is None:
+                    _sandbox_proc.terminate()
+                    _sandbox_proc = None
+                    results.append("✓ 沙箱进程已终止")
+                else:
+                    results.append("ℹ 沙箱当前没有运行中的进程")
+
+            elif t == "sandbox_status":
+                if _sandbox_proc and _sandbox_proc.poll() is None:
+                    recent = _sandbox_output_buf[-20:] if _sandbox_output_buf else []
+                    results.append(
+                        f"ℹ 沙箱运行中 (pid={_sandbox_proc.pid}), "
+                        f"最近输出 ({len(recent)} 行):\n" + "\n".join(recent)
+                    )
+                else:
+                    code = _sandbox_proc.returncode if _sandbox_proc else None
+                    recent = _sandbox_output_buf[-20:] if _sandbox_output_buf else []
+                    results.append(
+                        f"ℹ 沙箱空闲 (上次退出码={code}), "
+                        f"最近输出 ({len(recent)} 行):\n" + "\n".join(recent)
+                    )
 
         except Exception as e:
             results.append(f"✗ 执行 {t} 失败: {e}")
@@ -514,41 +673,96 @@ async def stop_pipeline():
 
 @app.get("/api/pipeline-output")
 async def pipeline_output():
-    """SSE: stream pipeline stdout."""
+    """SSE: stream pipeline stdout with periodic heartbeats."""
     async def generate():
         if not _pipeline_proc or _pipeline_proc.poll() is not None:
             yield 'data: {"done": true}\n\n'
             return
+        last_beat = time.time()
         while True:
             line = _pipeline_proc.stdout.readline()
             if not line:
                 if _pipeline_proc.poll() is not None:
                     yield 'data: {"done": true}\n\n'
                     break
+                # heartbeat while waiting for more output
+                if time.time() - last_beat > SSE_HEARTBEAT_INTERVAL:
+                    yield ": keepalive\n\n"
+                    last_beat = time.time()
                 await asyncio.sleep(0.1)
                 continue
             escaped = json.dumps(line.rstrip())
             yield f'data: {{"line": {escaped}}}\n\n'
-    return StreamingResponse(generate(), media_type="text/event-stream")
+            last_beat = time.time()
+    return StreamingResponse(generate(), media_type="text/event-stream", headers=SSE_HEADERS)
+
+
+@app.get("/api/sandbox-output")
+async def sandbox_output():
+    """SSE: stream sandbox (docker exec) stdout with heartbeats."""
+    async def generate():
+        global _sandbox_output_buf
+        if not _sandbox_proc or _sandbox_proc.poll() is not None:
+            yield 'data: {"done": true}\n\n'
+            return
+        last_beat = time.time()
+        while True:
+            line = _sandbox_proc.stdout.readline()
+            if not line:
+                if _sandbox_proc.poll() is not None:
+                    rc = _sandbox_proc.returncode
+                    yield f'data: {{"done": true, "exit_code": {rc}}}\n\n'
+                    break
+                if time.time() - last_beat > SSE_HEARTBEAT_INTERVAL:
+                    yield ": keepalive\n\n"
+                    last_beat = time.time()
+                await asyncio.sleep(0.05)
+                continue
+            stripped = line.rstrip()
+            _sandbox_output_buf.append(stripped)
+            if len(_sandbox_output_buf) > 200:
+                _sandbox_output_buf = _sandbox_output_buf[-200:]
+            escaped = json.dumps(stripped)
+            yield f'data: {{"line": {escaped}}}\n\n'
+            last_beat = time.time()
+    return StreamingResponse(generate(), media_type="text/event-stream", headers=SSE_HEADERS)
+
+
+@app.get("/api/sandbox-status")
+async def sandbox_status():
+    """Return sandbox running state and recent output buffer."""
+    running = _sandbox_proc is not None and _sandbox_proc.poll() is None
+    return {
+        "running": running,
+        "pid": _sandbox_proc.pid if _sandbox_proc else None,
+        "exit_code": _sandbox_proc.returncode if (_sandbox_proc and not running) else None,
+        "recent_lines": _sandbox_output_buf[-50:],
+    }
 
 
 @app.get("/api/sse")
 async def sse_status():
-    """SSE: emit phase change events every 2s."""
+    """SSE: emit phase/running changes, plus a heartbeat comment every 15s."""
     async def generate():
         last_phase = None
+        last_running = None
+        last_beat = time.time()
+        # prime with current state so clients render immediately
         while True:
             ctx = _load_context()
             phase = ctx.get("phase", "init")
-            if phase != last_phase:
+            running = _pipeline_proc is not None and _pipeline_proc.poll() is None
+            changed = phase != last_phase or running != last_running
+            if changed:
                 last_phase = phase
-                data = json.dumps({
-                    "phase": phase,
-                    "running": _pipeline_proc is not None and _pipeline_proc.poll() is None,
-                })
-                yield f"data: {data}\n\n"
+                last_running = running
+                yield f"data: {json.dumps({'phase': phase, 'running': running})}\n\n"
+                last_beat = time.time()
+            elif time.time() - last_beat > SSE_HEARTBEAT_INTERVAL:
+                yield ": keepalive\n\n"
+                last_beat = time.time()
             await asyncio.sleep(2)
-    return StreamingResponse(generate(), media_type="text/event-stream")
+    return StreamingResponse(generate(), media_type="text/event-stream", headers=SSE_HEADERS)
 
 
 # ─────────────────────────────────────────── config endpoints ──
@@ -573,33 +787,25 @@ async def save_config(request: Request):
 
 # ─────────────────────────────────────────────── chat endpoint ──
 
-@app.post("/api/chat")
-async def chat_endpoint(request: Request):
-    """
-    AI assistant chat.
-    Request: {"message": str, "history": [{"role":"user"|"assistant","content":str}]}
-    Response: {"reply": str, "actions": [...], "action_results": [...]}
-    """
-    body = await request.json()
-    message: str = body.get("message", "").strip()
-    history: list[dict] = body.get("history", [])
+_MAX_TOOL_ROUNDS = 5
 
-    if not message:
-        raise HTTPException(400, "message is required")
 
-    # Build context snapshot
+def _build_chat_system(persona_prompt: str) -> str:
+    """Combine persona prompt with a live status snapshot."""
     ctx = _load_context()
+    sandbox_running = _sandbox_proc is not None and _sandbox_proc.poll() is None
     status_data = {
         "current_phase": ctx.get("phase", "init"),
         "pipeline_running": _pipeline_proc is not None and _pipeline_proc.poll() is None,
         "selected_problem": ctx.get("competition", {}).get("selected_problem", ""),
         "model_type": ctx.get("modeling", {}).get("model_type", ""),
+        "sandbox_running": sandbox_running,
+        "sandbox_pid": _sandbox_proc.pid if sandbox_running else None,
+        "sandbox_recent_output": _sandbox_output_buf[-10:] if _sandbox_output_buf else [],
     }
     model_cfg = _parse_toml_config()
     pipeline_cfg = _load_pipeline_cfg()
-
-    # Build messages for LLM
-    system_content = _CHAT_SYSTEM + f"""
+    return persona_prompt + f"""
 
 当前状态：
 {json.dumps(status_data, ensure_ascii=False, indent=2)}
@@ -611,46 +817,164 @@ async def chat_endpoint(request: Request):
 {json.dumps(pipeline_cfg, ensure_ascii=False)}
 """
 
-    messages = [{"role": "system", "content": system_content}]
-    for h in history[-10:]:  # limit history window
-        messages.append({"role": h["role"], "content": h["content"]})
-    messages.append({"role": "user", "content": message})
 
-    # Call LLM (run in thread to avoid blocking event loop)
-    import asyncio
+@app.get("/api/personas")
+async def get_personas():
+    from agents.persona_mgr import list_personas, default_persona_id
+    return {"personas": list_personas(), "default": default_persona_id()}
+
+
+@app.get("/api/sessions")
+async def list_chat_sessions():
+    from agents.conversation_mgr import list_sessions
+    return {"sessions": list_sessions()}
+
+
+@app.post("/api/sessions")
+async def create_chat_session(request: Request):
+    from agents.conversation_mgr import create_session
+    body = await request.json() if request.headers.get("content-type", "").startswith("application/json") else {}
+    persona = (body.get("persona") or "").strip() or None
+    title = (body.get("title") or "新对话").strip()
+    s = create_session(persona=persona, title=title)
+    return {"id": s["id"], "persona": s["persona"], "title": s["title"]}
+
+
+@app.get("/api/sessions/{session_id}")
+async def get_chat_session(session_id: str):
+    from agents.conversation_mgr import get_session, sanitize_for_display
+    s = get_session(session_id)
+    if not s:
+        raise HTTPException(404, f"session not found: {session_id}")
+    return {
+        "id": s["id"],
+        "title": s.get("title", "新对话"),
+        "persona": s.get("persona", "controller"),
+        "messages": sanitize_for_display(s.get("messages", [])),
+        "created_at": s.get("created_at", 0),
+        "updated_at": s.get("updated_at", 0),
+    }
+
+
+@app.delete("/api/sessions/{session_id}")
+async def delete_chat_session(session_id: str):
+    from agents.conversation_mgr import delete_session
+    return {"deleted": delete_session(session_id)}
+
+
+@app.patch("/api/sessions/{session_id}")
+async def patch_chat_session(session_id: str, request: Request):
+    from agents.conversation_mgr import rename_session, set_persona, get_session
+    body = await request.json()
+    updated = False
+    if "title" in body:
+        updated = rename_session(session_id, body["title"]) or updated
+    if "persona" in body:
+        updated = set_persona(session_id, body["persona"]) or updated
+    if not updated:
+        raise HTTPException(400, "no valid fields to update")
+    return {"ok": True, "session": get_session(session_id)}
+
+
+@app.post("/api/chat")
+async def chat_endpoint(request: Request):
+    """
+    Tool-calling chat. Request: {session_id, message, persona?}
+    Returns {reply, tool_calls[], display_messages[]}.
+
+    If session_id is missing or unknown, a new session is created with the
+    requested persona (or the default).
+    """
+    from agents.conversation_mgr import (
+        append_messages, create_session, get_session, sanitize_for_display,
+    )
+    from agents.persona_mgr import get_persona
+    from agents.tool_registry import tools_for
+
+    body = await request.json()
+    message: str = (body.get("message") or "").strip()
+    session_id: str = (body.get("session_id") or "").strip()
+    persona_override: str | None = (body.get("persona") or "").strip() or None
+
+    if not message:
+        raise HTTPException(400, "message is required")
+
+    # Resolve / create session
+    session = get_session(session_id) if session_id else None
+    if not session:
+        session = create_session(persona=persona_override)
+        session_id = session["id"]
+    persona = get_persona(persona_override or session.get("persona", "controller"))
+
+    system_content = _build_chat_system(persona.system_prompt)
+    tools = tools_for(list(persona.allowed_tools))
+
+    # Build messages: system + prior history + new user message
+    messages: list[dict] = [{"role": "system", "content": system_content}]
+    messages.extend(session.get("messages", []))
+    user_msg = {"role": "user", "content": message}
+    messages.append(user_msg)
+
+    new_messages_to_persist: list[dict] = [user_msg]
+    tool_call_log: list[dict] = []
+
     loop = asyncio.get_event_loop()
 
-    def _call_llm() -> str:
-        try:
-            # Import here to avoid circular import at module load
-            sys.path.insert(0, str(BASE))
-            from agents.orchestrator import call_model
-            return call_model(system_content, message, task="default")
-        except Exception as e:
-            return f"[LLM 调用失败: {e}]"
+    def _call(msgs: list[dict]) -> dict:
+        sys.path.insert(0, str(BASE))
+        from agents.orchestrator import call_with_tools
+        return call_with_tools(msgs, tools=tools, task="default")
 
-    reply_text: str = await loop.run_in_executor(None, _call_llm)
+    final_reply: str = ""
+    try:
+        for _ in range(_MAX_TOOL_ROUNDS):
+            assistant_msg = await loop.run_in_executor(None, _call, messages)
+            messages.append(assistant_msg)
+            new_messages_to_persist.append(assistant_msg)
 
-    # Parse <action>...</action> blocks
-    action_pattern = re.compile(r"<action>(.*?)</action>", re.DOTALL)
-    raw_actions = action_pattern.findall(reply_text)
-    parsed_actions: list[dict] = []
-    for raw in raw_actions:
-        try:
-            parsed_actions.append(json.loads(raw.strip()))
-        except Exception:
-            pass
+            tool_calls = assistant_msg.get("tool_calls") or []
+            if not tool_calls:
+                final_reply = assistant_msg.get("content", "") or ""
+                break
 
-    # Execute actions
-    action_results = _execute_chat_actions(parsed_actions)
+            # Execute each tool, append tool-result messages, loop
+            for tc in tool_calls:
+                fn = tc.get("function", {})
+                name = fn.get("name", "")
+                raw_args = fn.get("arguments", "") or "{}"
+                try:
+                    parsed_args = json.loads(raw_args) if isinstance(raw_args, str) else (raw_args or {})
+                except Exception:
+                    parsed_args = {}
+                result = _dispatch_tool(name, parsed_args)
+                tool_call_log.append({"name": name, "arguments": parsed_args, "result": result})
+                tool_msg = {
+                    "role": "tool",
+                    "tool_call_id": tc.get("id") or f"call_{name}",
+                    "name": name,
+                    "content": result,
+                }
+                messages.append(tool_msg)
+                new_messages_to_persist.append(tool_msg)
+        else:
+            final_reply = (
+                "（达到最大工具调用轮数限制，仍未收敛，请检查工具或重新表述问题）"
+            )
+    except Exception as e:
+        final_reply = f"[LLM 调用失败: {e}]"
+        new_messages_to_persist.append({"role": "assistant", "content": final_reply})
 
-    # Strip action tags from reply shown to user
-    clean_reply = action_pattern.sub("", reply_text).strip()
+    # Persist all new messages to the session
+    append_messages(session_id, new_messages_to_persist)
 
+    # Refresh session to get sanitized view
+    refreshed = get_session(session_id) or {}
     return {
-        "reply": clean_reply,
-        "actions": parsed_actions,
-        "action_results": action_results,
+        "session_id": session_id,
+        "persona": persona.id,
+        "reply": final_reply,
+        "tool_calls": tool_call_log,
+        "display_messages": sanitize_for_display(refreshed.get("messages", [])),
     }
 
 
@@ -816,6 +1140,87 @@ async def cleanup_aux_endpoint():
     """删除 paper/ 下所有 LaTeX 辅助文件（.aux .log .bbl 等），保留 .tex .bib .pdf。"""
     from agents.latex_compiler import cleanup_aux_files
     return cleanup_aux_files()
+
+
+# ─────────────────────────────────────────── logs stream (SSE) ──
+
+@app.get("/api/logs/stream")
+async def logs_stream():
+    """SSE: tail run.log in real time, first emitting historical lines."""
+    log_path = LOGS_DIR / "run.log"
+
+    async def generate():
+        # 1. Emit last 300 historical lines
+        if log_path.exists():
+            content = log_path.read_text(encoding="utf-8", errors="replace")
+            for line in content.splitlines()[-300:]:
+                escaped = json.dumps(line)
+                yield f'data: {{"line": {escaped}, "historical": true}}\n\n'
+
+        # 2. Tail for new content
+        last_size = log_path.stat().st_size if log_path.exists() else 0
+        last_beat = time.time()
+        buf = ""
+        while True:
+            await asyncio.sleep(0.5)
+            if not log_path.exists():
+                if time.time() - last_beat > SSE_HEARTBEAT_INTERVAL:
+                    yield ": keepalive\n\n"
+                    last_beat = time.time()
+                continue
+            size = log_path.stat().st_size
+            if size <= last_size:
+                if time.time() - last_beat > SSE_HEARTBEAT_INTERVAL:
+                    yield ": keepalive\n\n"
+                    last_beat = time.time()
+                continue
+            with log_path.open(encoding="utf-8", errors="replace") as f:
+                f.seek(last_size)
+                new_data = f.read(size - last_size)
+            last_size = size
+            buf += new_data
+            lines = buf.split("\n")
+            buf = lines[-1]          # keep incomplete line in buffer
+            for line in lines[:-1]:
+                if line:
+                    escaped = json.dumps(line)
+                    yield f'data: {{"line": {escaped}}}\n\n'
+            last_beat = time.time()
+
+    return StreamingResponse(generate(), media_type="text/event-stream", headers=SSE_HEADERS)
+
+
+# ─────────────────────────────────────── pip install in sandbox ──
+
+@app.post("/api/pip-install")
+async def pip_install_endpoint(request: Request):
+    """Install a Python package inside the sandbox container (or locally)."""
+    body = await request.json()
+    package: str = body.get("package", "").strip()
+    if not package or any(c in package for c in [";", "&", "|", "`", "$"]):
+        raise HTTPException(400, "Invalid package name")
+
+    loop = asyncio.get_event_loop()
+
+    def _run_pip():
+        try:
+            from sandbox.runner import docker_exec, container_name
+            exit_code, stdout, stderr = docker_exec(
+                container_name(),
+                f"pip install {package} --quiet",
+                timeout=120,
+            )
+            return {"success": exit_code == 0, "output": (stdout + stderr).strip()}
+        except Exception:
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install", package, "--quiet"],
+                capture_output=True, text=True, encoding="utf-8", timeout=120,
+            )
+            out = (result.stdout + result.stderr).strip()
+            return {"success": result.returncode == 0, "output": out}
+
+    result = await loop.run_in_executor(None, _run_pip)
+    return result
 
 
 # ─────────────────────────────────────────────────────── experience ──

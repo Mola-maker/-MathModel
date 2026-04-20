@@ -154,16 +154,22 @@ class ColumnSpec(BaseModel):
         "fill_zero", "interpolate", "drop_rows", "drop_col", "keep"
     ]
     outlier_action: Literal["clip_iqr", "keep", "drop_rows"]
+    meaning: str = ""  # semantic meaning in the context of the competition problem
+    importance: Literal["key", "secondary", "noise"] = "secondary"
 
 
 class CleaningSpec(BaseModel):
     read_func: Literal["pd.read_excel", "pd.read_csv"]
     columns: list[ColumnSpec]
     plot_cols: list[str]  # numeric column names to include in EDA plots (≤ 6)
+    time_col: str | None = None  # time/date column name if this is a time-series dataset
+    log_transform_cols: list[str] = []  # columns that benefit from log1p transform
+    insight: str = ""  # one-sentence key finding for downstream agents (P2/P3)
 
 
 SYSTEM_SPEC = """\
-你是数据清洗专家。根据数据文件预览信息，输出一份清洗规格 JSON。
+你是数据清洗专家，为数学建模竞赛分析数据文件。
+根据竞赛题目信息和数据文件预览，输出一份清洗规格 JSON。
 严格输出 JSON，不要包含任何解释或 markdown 代码块。
 
 格式（字段必须完全匹配，不能添加额外字段）:
@@ -174,25 +180,50 @@ SYSTEM_SPEC = """\
       "name": "列名",
       "dtype": "numeric | datetime | categorical | id | drop",
       "missing_action": "fill_mean | fill_median | fill_mode | fill_zero | interpolate | drop_rows | drop_col | keep",
-      "outlier_action": "clip_iqr | keep | drop_rows"
+      "outlier_action": "clip_iqr | keep | drop_rows",
+      "meaning": "该列在竞赛题目中的实际含义（如：销售量、时间戳、城市编号）",
+      "importance": "key | secondary | noise"
     }
   ],
-  "plot_cols": ["数值列名1", "数值列名2"]
+  "plot_cols": ["数值列名1", "数值列名2"],
+  "time_col": null,
+  "log_transform_cols": [],
+  "insight": "一句话总结该数据集的关键发现和对建模的提示"
 }
 
 规则:
 - dtype=id 或 dtype=drop 时 missing_action="keep", outlier_action="keep"
-- 缺失率 > 80% 时 dtype="drop"
-- plot_cols 只填数值列名，最多 6 个
-- read_func 根据文件扩展名选择
+- 缺失率 > 80% 时 dtype="drop", importance="noise"
+- plot_cols 只填数值列名，最多 6 个，优先选 importance=key 的列
+- time_col: 若存在时间/日期列，填写该列名（字符串），否则填 null
+- log_transform_cols: 正偏态或跨数量级的数值列，填列名
+- importance=key: 与竞赛核心问题直接相关的列（如预测目标、关键指标）
+- importance=noise: 无关列或高重复列
+- meaning: 结合题目关键词推断每列含义，不要写"未知"
+- insight: 需对建模有指导意义，如"数据以城市为单位，月度粒度，目标变量高度右偏"
 """
 
 
-def _request_cleaning_spec(preview: dict) -> "CleaningSpec | None":
+def _request_cleaning_spec(preview: dict, problem_ctx: dict | None = None) -> "CleaningSpec | None":
     """Ask LLM for a structured spec; validate with Pydantic. Retry up to 3×."""
+    # Build problem context block if available
+    prob_block = ""
+    if problem_ctx:
+        tasks = problem_ctx.get("tasks", [])
+        keywords = problem_ctx.get("keywords", [])
+        problem_text = problem_ctx.get("problem_text", "")
+        if tasks or keywords:
+            prob_block = "\n\n竞赛题目信息:\n"
+            if tasks:
+                prob_block += "问题要求:\n" + "\n".join(f"  - {t}" for t in tasks[:5]) + "\n"
+            if keywords:
+                prob_block += "关键词: " + "、".join(keywords[:10]) + "\n"
+            if problem_text and len(problem_text) < 1000:
+                prob_block += f"题目摘要: {problem_text[:800]}\n"
+
     user_prompt = (
-        f"数据文件预览:\n{json.dumps(preview, ensure_ascii=False, indent=2)}\n\n"
-        "请输出清洗规格 JSON："
+        f"数据文件预览:\n{json.dumps(preview, ensure_ascii=False, indent=2)}"
+        f"{prob_block}\n\n请输出清洗规格 JSON："
     )
     for attempt in range(3):
         try:
@@ -238,9 +269,9 @@ def _build_script_from_spec(
         "import numpy as np",
         "import json, os, sys",
         "",
-        "plt.rcParams.update({'font.family': 'Arial', 'font.size': 10,",
-        "                      'savefig.dpi': 150, 'savefig.bbox': 'tight'})",
-        "plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'DejaVu Sans']",
+        "# Prefer Noto Sans CJK SC (installed in sandbox) for Chinese column names",
+        "plt.rcParams.update({'font.size': 10, 'savefig.dpi': 300, 'savefig.bbox': 'tight'})",
+        "plt.rcParams['font.sans-serif'] = ['Noto Sans CJK SC', 'Noto CJK SC', 'Arial Unicode MS', 'SimHei', 'DejaVu Sans']",
         "plt.rcParams['axes.unicode_minus'] = False",
         "sns.set_theme(style='ticks')",
         f"os.makedirs({repr(fig_dir)}, exist_ok=True)",
@@ -357,20 +388,65 @@ def _build_script_from_spec(
 
     c += ["", f"print('After cleaning:', df.shape)", ""]
 
+    # ── Log transforms ───────────────────────────────────────────────────
+    log_cols = [cn for cn in spec.log_transform_cols if cn]
+    if log_cols:
+        c += ["# Log transforms for skewed columns"]
+        for lcn in log_cols:
+            lrepr = repr(lcn)
+            log_col_name = repr(f"{lcn}_log1p")
+            c += [
+                f"if {lrepr} in df.columns and pd.api.types.is_numeric_dtype(df[{lrepr}]):",
+                f"    df[{log_col_name}] = np.log1p(df[{lrepr}].clip(lower=0))",
+                f"    _report['ops'].append({{'col': {lrepr}, 'action': 'log1p_added'}})",
+            ]
+        c.append("")
+
+    # ── Time-series features ─────────────────────────────────────────────
+    if spec.time_col and spec.time_col.strip():
+        tcn = repr(spec.time_col)
+        c += [
+            f"if {tcn} in df.columns:",
+            f"    try:",
+            f"        df[{tcn}] = pd.to_datetime(df[{tcn}], errors='coerce')",
+            f"        df = df.sort_values({tcn})",
+            f"        df['_year']  = df[{tcn}].dt.year",
+            f"        df['_month'] = df[{tcn}].dt.month",
+            f"        df['_dow']   = df[{tcn}].dt.dayofweek",
+            f"        _report['ops'].append({{'col': {tcn}, 'action': 'time_features_added'}})",
+            f"    except Exception as _te:",
+            f"        print('Time feature extraction failed:', _te)",
+            "",
+        ]
+
     # ── EDA plots ────────────────────────────────────────────────────────
-    # Only plot columns that exist and are numeric in the spec
+    # Build a map of column name → display label (meaning or name)
+    col_labels: dict[str, str] = {}
+    for col in spec.columns:
+        label = f"{col.name}\n({col.meaning})" if col.meaning else col.name
+        col_labels[col.name] = label
+
     valid_plot = [
         col.name for col in spec.columns
         if col.name in spec.plot_cols and col.dtype == "numeric"
     ]
+    # Also include key columns not already in plot_cols
+    key_cols = [
+        col.name for col in spec.columns
+        if col.importance == "key" and col.dtype == "numeric"
+        and col.name not in valid_plot
+    ]
+    all_plot = (valid_plot + key_cols)[:6]
+
     c.append(
-        f"_plot_cols = [c for c in {repr(valid_plot)} "
+        f"_plot_cols = [c for c in {repr(all_plot)} "
         f"if c in df.columns and pd.api.types.is_numeric_dtype(df[c])]"
     )
+    c.append(f"_col_labels = {repr(col_labels)}")
     c.append("_figs = []")
     c.append("")
 
-    # Distribution histograms
+    # Distribution histograms — titles include semantic meaning
     c += [
         "if _plot_cols:",
         "    _n = min(len(_plot_cols), 6)",
@@ -382,22 +458,27 @@ def _build_script_from_spec(
         "        _vals = df[_col].dropna()",
         "        if len(_vals) > 0:",
         "            _ax.hist(_vals, bins=30, color='#c96442', alpha=0.75, edgecolor='white')",
-        "        _ax.set_title(str(_col))",
+        "        _lbl = _col_labels.get(_col, _col)",
+        "        _ax.set_title(_lbl, fontsize=9)",
         "    for _ax in _ax_list[_n:]: _ax.set_visible(False)",
         f"    _fp = os.path.join({repr(fig_dir)}, 'distribution_{stem}.png')",
         "    plt.tight_layout(); plt.savefig(_fp); plt.close(); _figs.append(_fp)",
         "",
     ]
 
-    # Correlation heatmap
+    # Correlation heatmap — use display labels on axes
     c += [
         "if len(_plot_cols) >= 2:",
         "    _num = df[[c for c in _plot_cols if c in df.columns]].select_dtypes(include='number')",
         "    if len(_num.columns) >= 2:",
-        "        _fig, _ax = plt.subplots(figsize=(max(6, len(_num.columns)), max(5, len(_num.columns))))",
-        "        sns.heatmap(_num.corr(), ax=_ax, annot=True, fmt='.2f',",
+        "        _disp = {c: _col_labels.get(c, c).split('\\n')[0] for c in _num.columns}",
+        "        _num2 = _num.rename(columns=_disp)",
+        "        _fig, _ax = plt.subplots(figsize=(max(6, len(_num2.columns)), max(5, len(_num2.columns))))",
+        "        sns.heatmap(_num2.corr(), ax=_ax, annot=True, fmt='.2f',",
         "                    cmap='RdBu_r', center=0, square=True, linewidths=.5)",
-        "        _ax.set_title('Correlation')",
+        "        _ax.set_title('Correlation Matrix')",
+        "        plt.xticks(rotation=30, ha='right', fontsize=8)",
+        "        plt.yticks(rotation=0, fontsize=8)",
         f"        _fp = os.path.join({repr(fig_dir)}, 'correlation_{stem}.png')",
         "        plt.tight_layout(); plt.savefig(_fp); plt.close(); _figs.append(_fp)",
         "",
@@ -410,14 +491,14 @@ def _build_script_from_spec(
         "if len(_miss) > 0:",
         "    _fig, _ax = plt.subplots(figsize=(max(6, len(_miss)), 3))",
         "    _miss.plot.bar(ax=_ax, color='#c96442', alpha=0.8)",
-        "    _ax.set_title('Missing Values'); _ax.set_ylabel('Count')",
+        "    _ax.set_title('Missing Values After Cleaning'); _ax.set_ylabel('Count')",
         "    plt.xticks(rotation=45, ha='right')",
         f"    _fp = os.path.join({repr(fig_dir)}, 'missing_{stem}.png')",
         "    plt.tight_layout(); plt.savefig(_fp); plt.close(); _figs.append(_fp)",
         "",
     ]
 
-    # Boxplots
+    # Boxplots — titles include semantic meaning
     c += [
         "if _plot_cols:",
         "    _n = min(len(_plot_cols), 6)",
@@ -430,14 +511,137 @@ def _build_script_from_spec(
         "        if len(_vals) > 0:",
         "            _ax.boxplot(_vals, patch_artist=True,",
         "                        boxprops=dict(facecolor='#c96442', alpha=0.6))",
-        "        _ax.set_title(str(_col))",
+        "        _lbl = _col_labels.get(_col, _col)",
+        "        _ax.set_title(_lbl, fontsize=9)",
         "    for _ax in _ax_list[_n:]: _ax.set_visible(False)",
         f"    _fp = os.path.join({repr(fig_dir)}, 'boxplot_{stem}.png')",
         "    plt.tight_layout(); plt.savefig(_fp); plt.close(); _figs.append(_fp)",
         "",
     ]
 
+    # Violin plots — full distribution shape (complement to boxplot)
+    c += [
+        "if _plot_cols:",
+        "    _n = min(len(_plot_cols), 6)",
+        "    _nc = min(_n, 3); _nr = (_n + _nc - 1) // _nc",
+        "    _fig, _axes = plt.subplots(_nr, _nc, figsize=(_nc*4, _nr*3.5))",
+        "    _ax_list = list(_axes.flat) if hasattr(_axes, 'flat') else [_axes]",
+        "    for _i, _col in enumerate(_plot_cols[:_n]):",
+        "        _ax = _ax_list[_i]",
+        "        _vals = df[_col].dropna()",
+        "        if len(_vals) > 1:",
+        "            try:",
+        "                _vp = _ax.violinplot([_vals.tolist()], positions=[0],",
+        "                                     showmeans=True, showmedians=True, showextrema=True)",
+        "                for _pc in _vp['bodies']:",
+        "                    _pc.set_facecolor('#c96442'); _pc.set_alpha(0.55)",
+        "                for _part in ['cmeans','cmedians','cbars','cmins','cmaxes']:",
+        "                    if _part in _vp: _vp[_part].set_color('#7F3B1F')",
+        "            except Exception:",
+        "                _ax.boxplot(_vals, patch_artist=True,",
+        "                            boxprops=dict(facecolor='#c96442', alpha=0.6))",
+        "        _lbl = _col_labels.get(_col, _col)",
+        "        _ax.set_title(_lbl, fontsize=9); _ax.set_xticks([])",
+        "    for _ax in _ax_list[_n:]: _ax.set_visible(False)",
+        f"    _fp = os.path.join({repr(fig_dir)}, 'violin_{stem}.png')",
+        "    plt.tight_layout(); plt.savefig(_fp); plt.close(); _figs.append(_fp)",
+        "",
+    ]
+
+    # Time-series trend plot (only when a time column is identified)
+    if spec.time_col and spec.time_col.strip():
+        tcn_r = repr(spec.time_col)
+        ts_plot_cols = [
+            col.name for col in spec.columns
+            if col.dtype == "numeric" and col.name in spec.plot_cols
+        ][:3]
+        c += [
+            f"_tc_ = {tcn_r}",
+            f"_ts_cols_ = [c for c in {repr(ts_plot_cols)} if c in df.columns"
+            " and pd.api.types.is_numeric_dtype(df[c])]",
+            "if _tc_ in df.columns and _ts_cols_:",
+            "    try:",
+            "        _ts_df = df.copy()",
+            "        _ts_df[_tc_] = pd.to_datetime(_ts_df[_tc_], errors='coerce')",
+            "        _ts_df = _ts_df.dropna(subset=[_tc_]).sort_values(_tc_)",
+            "        _fig, _axes_ = plt.subplots(len(_ts_cols_), 1,",
+            "                                     figsize=(11, 3*len(_ts_cols_)), squeeze=False)",
+            "        for _i, _col in enumerate(_ts_cols_):",
+            "            _ax = _axes_[_i][0]",
+            "            _ax.plot(_ts_df[_tc_], _ts_df[_col],",
+            "                     color='#2E5B88', alpha=0.7, linewidth=1.2, label='原始值')",
+            "            _win = max(3, len(_ts_df)//20)",
+            "            _roll = _ts_df[_col].rolling(_win, center=True, min_periods=1).mean()",
+            "            _ax.plot(_ts_df[_tc_], _roll,",
+            "                     color='#E85D4C', linewidth=2,",
+            "                     label=f'滚动均值(窗口={_win})')",
+            "            _ax.fill_between(_ts_df[_tc_],",
+            "                             _ts_df[_col].rolling(_win, center=True, min_periods=1).min(),",
+            "                             _ts_df[_col].rolling(_win, center=True, min_periods=1).max(),",
+            "                             alpha=0.12, color='#2E5B88')",
+            "            _ax.set_ylabel(_col_labels.get(_col, _col), fontsize=9)",
+            "            _ax.legend(fontsize=8, frameon=False)",
+            "        _axes_[-1][0].set_xlabel(_tc_, fontsize=9)",
+            "        plt.suptitle('时间序列趋势分析', fontsize=11, y=1.01)",
+            f"        _fp = os.path.join({repr(fig_dir)}, 'timeseries_{stem}.png')",
+            "        plt.tight_layout(); plt.savefig(_fp); plt.close(); _figs.append(_fp)",
+            "    except Exception as _te_:",
+            "        print('时间序列图生成失败:', _te_)",
+            "",
+        ]
+
+    # Pairplot — scatter matrix for top correlated key columns
+    key_pair = [
+        col.name for col in spec.columns
+        if col.importance == "key" and col.dtype == "numeric"
+           and col.name in (spec.plot_cols + [c.name for c in spec.columns])
+    ][:4]
+    if len(key_pair) < 2:
+        key_pair = [
+            col.name for col in spec.columns
+            if col.dtype == "numeric" and col.name in spec.plot_cols
+        ][:4]
+    if len(key_pair) >= 2:
+        c += [
+            f"_pair_cols_ = [c for c in {repr(key_pair)}"
+            " if c in df.columns and pd.api.types.is_numeric_dtype(df[c])]",
+            "if len(_pair_cols_) >= 2:",
+            "    try:",
+            "        _kdf_ = df[_pair_cols_].dropna()",
+            "        _np_ = len(_pair_cols_)",
+            "        _fig, _axes_ = plt.subplots(_np_, _np_, figsize=(_np_*3, _np_*3))",
+            "        if _np_ == 1: _axes_ = [[_axes_]]",
+            "        elif _np_ == 2: _axes_ = [[_axes_[0][0],_axes_[0][1]],[_axes_[1][0],_axes_[1][1]]]",
+            "        for _i, _ci in enumerate(_pair_cols_):",
+            "            for _j, _cj in enumerate(_pair_cols_):",
+            "                _ax = _axes_[_i][_j]",
+            "                if _i == _j:",
+            "                    _ax.hist(_kdf_[_ci].dropna(), bins=20,",
+            "                             color='#2E5B88', alpha=0.75, edgecolor='white')",
+            "                    _ax.set_xlabel('')",
+            "                else:",
+            "                    _xi = _kdf_[_cj]; _yi = _kdf_[_ci]",
+            "                    _ok = _xi.notna() & _yi.notna()",
+            "                    _ax.scatter(_xi[_ok], _yi[_ok], alpha=0.4, s=8, color='#c96442')",
+            "                    if _ok.sum() > 3:",
+            "                        _m, _b = np.polyfit(_xi[_ok], _yi[_ok], 1)",
+            "                        _xr = np.linspace(_xi.min(), _xi.max(), 50)",
+            "                        _ax.plot(_xr, _m*_xr+_b, color='#4A9B7F', lw=1.5, alpha=0.9)",
+            "                        _r = np.corrcoef(_xi[_ok], _yi[_ok])[0,1]",
+            "                        _ax.set_title(f'r={_r:.2f}', fontsize=8, pad=2)",
+            "                if _j == 0: _ax.set_ylabel(_col_labels.get(_ci,_ci), fontsize=7)",
+            "                if _i == _np_-1: _ax.set_xlabel(_col_labels.get(_cj,_cj), fontsize=7)",
+            "                _ax.tick_params(labelsize=6)",
+            "        plt.suptitle('关键变量散点矩阵', fontsize=11, y=1.01)",
+            f"        _fp = os.path.join({repr(fig_dir)}, 'pairplot_{stem}.png')",
+            "        plt.tight_layout(); plt.savefig(_fp); plt.close(); _figs.append(_fp)",
+            "    except Exception as _pe_:",
+            "        print('散点矩阵生成失败:', _pe_)",
+            "",
+        ]
+
     # ── Save outputs ─────────────────────────────────────────────────────
+    insight_str = repr(spec.insight) if spec.insight else repr("")
     c += [
         f"_out = os.path.join({repr(output_dir)}, 'cleaned_{stem}.csv')",
         "df.to_csv(_out, index=False, encoding='utf-8')",
@@ -445,11 +649,13 @@ def _build_script_from_spec(
         "_report['cleaned_shape'] = list(df.shape)",
         "_report['rows_removed'] = _orig_len - len(df)",
         "_report['figures'] = _figs",
+        f"_report['insight'] = {insight_str}",
         f"_rpt = os.path.join({repr(output_dir)}, 'cleaning_report_{stem}.json')",
         "with open(_rpt, 'w', encoding='utf-8') as _f:",
         "    json.dump(_report, _f, ensure_ascii=False, indent=2)",
         "print('Report:', _rpt)",
         "print('Figures:', _figs)",
+        f"print('Insight:', {insight_str})",
         "print('DONE')",
     ]
 
@@ -625,7 +831,10 @@ class DataCleaningAgent:
         except json.JSONDecodeError:
             return {"file": file_path.name, "error": "JSON parse failed", "raw": stdout[:500]}
 
-    def generate_cleaning_script(self, file_path: Path, preview: dict, analysis: dict) -> str:
+    def generate_cleaning_script(
+        self, file_path: Path, preview: dict, analysis: dict,
+        problem_ctx: dict | None = None,
+    ) -> str:
         """Generate a cleaning + EDA script for one data file.
 
         Strategy:
@@ -643,7 +852,7 @@ class DataCleaningAgent:
         stem       = file_path.stem
 
         # ── Path 1: spec-based (preferred, no LLM code gen) ──────────────
-        spec = _request_cleaning_spec(preview)
+        spec = _request_cleaning_spec(preview, problem_ctx=problem_ctx)
         if spec is not None:
             print("  [P1.5] 使用结构化规格生成清洗脚本（无 LLM 代码生成）")
             return _build_script_from_spec(spec, data_path, output_dir, fig_dir, stem)
@@ -778,6 +987,22 @@ class DataCleaningAgent:
         all_previews: dict[str, dict] = {}
         all_figures: list[str] = []
 
+        # Extract competition context from previous phases (P0b / P1)
+        competition_ctx = ctx.get("competition", {})
+        problem_ctx: dict | None = None
+        if competition_ctx:
+            tasks = competition_ctx.get("tasks", [])
+            keywords = competition_ctx.get("keywords", [])
+            problem_text = competition_ctx.get("problem_text", "")
+            if tasks or keywords:
+                problem_ctx = {
+                    "tasks": tasks,
+                    "keywords": keywords,
+                    "problem_text": problem_text,
+                }
+                kw_preview = "、".join(keywords[:5]) if keywords else "（无）"
+                print(f"[P1.5] 注入竞赛上下文: 关键词={kw_preview}, 任务数={len(tasks)}")
+
         for file_path in data_files:
             fname = file_path.name
             print(f"\n[P1.5] ── {fname} ──")
@@ -799,9 +1024,11 @@ class DataCleaningAgent:
             print(f"  [P1.5] 分析数据特征...")
             analysis = self.analyze_preview(preview)
 
-            # Step 3: Generate cleaning script
+            # Step 3: Generate cleaning script (with competition context)
             print(f"  [P1.5] 生成清洗脚本...")
-            code = self.generate_cleaning_script(file_path, preview, analysis)
+            code = self.generate_cleaning_script(
+                file_path, preview, analysis, problem_ctx=problem_ctx
+            )
             script_path = str(SCRIPTS_DIR / f"clean_{file_path.stem}.py")
             Path(script_path).write_text(code, encoding="utf-8")
 
@@ -849,12 +1076,29 @@ class DataCleaningAgent:
             "all_figures": all_figures,
         })
 
-        # Store stdout summaries for downstream agents (modeling/coding)
+        # Store stdout summaries and cleaning insights for downstream agents (P2/P3)
         stdout_summaries = {}
+        cleaning_insights = {}
         for fname, r in all_results.items():
-            if r.get("status") == "success" and r.get("stdout"):
-                stdout_summaries[fname] = r["stdout"][-2000:]
+            if r.get("status") == "success":
+                if r.get("stdout"):
+                    stdout_summaries[fname] = r["stdout"][-2000:]
+                # Extract insight from cleaning report JSON if present
+                report_path = r.get("report_file")
+                if report_path and Path(report_path).exists():
+                    try:
+                        rpt = json.loads(Path(report_path).read_text(encoding="utf-8"))
+                        insight = rpt.get("insight", "")
+                        if insight:
+                            cleaning_insights[fname] = insight
+                    except Exception:
+                        pass
         ctx["data_cleaning"]["stdout_summaries"] = stdout_summaries
+        if cleaning_insights:
+            ctx["data_cleaning"]["insights"] = cleaning_insights
+            print(f"[P1.5] 数据洞察:")
+            for fname, insight in cleaning_insights.items():
+                print(f"  {fname}: {insight}")
 
         save_context(ctx)
 

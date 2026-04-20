@@ -284,4 +284,150 @@ print(f"  Z = {{sum(w*x for w,x in zip(weights,values)):.4f}}")
 - 优先矢量化操作而非循环
 - 高效数据结构（稀疏数据用 csr_matrix）
 - 及时释放未使用资源
+
+---
+
+# MATLAB → Python 等效工具对照（数学建模核心）
+
+## ODE 求解器
+| MATLAB | Python (scipy) | 说明 |
+|--------|---------------|------|
+| `ode45` | `scipy.integrate.solve_ivp(..., method='RK45')` | 自适应 4/5 阶 Runge-Kutta |
+| `ode23s` | `solve_ivp(..., method='Radau')` | 刚性 ODE |
+| `ode15s` | `solve_ivp(..., method='BDF')` | 刚性多步法 |
+| `dsolve` | `sympy.dsolve()` | 符号解析解 |
+
+```python
+from scipy.integrate import solve_ivp
+import numpy as np
+
+def model(t, y, alpha=0.5, beta=0.02, gamma=0.2, delta=0.01):
+    S, I, R = y
+    N = S + I + R
+    return [
+        -beta * S * I / N,
+         beta * S * I / N - gamma * I,
+         gamma * I
+    ]
+
+sol = solve_ivp(
+    model, t_span=(0, 200), y0=[990, 10, 0],
+    t_eval=np.linspace(0, 200, 2000),
+    method='RK45', rtol=1e-7, atol=1e-10
+)
+# sol.t → 时间点, sol.y → [S, I, R] 解向量
+```
+
+## 优化
+| MATLAB | Python | 说明 |
+|--------|--------|------|
+| `fmincon` | `scipy.optimize.minimize(..., method='SLSQP', constraints=...)` | 带约束非线性优化 |
+| `linprog` | `scipy.optimize.linprog` 或 `pulp.LpProblem` | 线性规划 |
+| `ga` | `scipy.optimize.differential_evolution` | 遗传/差分演化 |
+| `fsolve` | `scipy.optimize.fsolve` | 非线性方程组求根 |
+| `quadprog` | `scipy.optimize.minimize(..., method='trust-constr')` | 二次规划 |
+
+```python
+from scipy.optimize import minimize
+
+result = minimize(
+    fun=lambda x: (x[0]-1)**2 + (x[1]-2.5)**2,
+    x0=[0, 0],
+    method='SLSQP',
+    constraints=[{{'type': 'ineq', 'fun': lambda x: x[0] + x[1] - 1}}],
+    bounds=[(0, None), (0, None)]
+)
+print(f"最优解: x={{result.x}}, f(x*)={{result.fun:.6f}}")
+```
+
+## 线性代数
+| MATLAB | Python | 说明 |
+|--------|--------|------|
+| `eig(A)` | `scipy.linalg.eig(A)` 或 `np.linalg.eigh(A)` | 特征值/特征向量 |
+| `svd(A)` | `np.linalg.svd(A)` | 奇异值分解 |
+| `inv(A)` | `np.linalg.inv(A)` | 矩阵求逆（避免使用，改用 `solve`）|
+| `A\b` | `np.linalg.solve(A, b)` | 线性方程组求解 |
+| `null(A)` | `scipy.linalg.null_space(A)` | 零空间 |
+
+## 数学建模可视化（MATLAB 风格）
+
+### 相平面图 / 方向场
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.integrate import solve_ivp
+
+fig, ax = plt.subplots(figsize=(7, 6))
+
+# 方向场 (流线图)
+X, Y = np.meshgrid(np.linspace(-3, 3, 22), np.linspace(-3, 3, 22))
+DX = -X + X*Y      # ← dx/dt
+DY =  Y - X*Y      # ← dy/dt
+ax.streamplot(np.linspace(-3,3,22), np.linspace(-3,3,22),
+              DX, DY, color=np.sqrt(DX**2+DY**2),
+              cmap='Blues', linewidth=0.9, density=1.3)
+
+# 多条初值轨迹
+for x0, y0 in [[1,0.5],[0.5,1.5],[2,1],[1.5,0.3]]:
+    sol = solve_ivp(lambda t,s: [-s[0]+s[0]*s[1], s[1]-s[0]*s[1]],
+                    (0,20), [x0,y0], t_eval=np.linspace(0,20,2000))
+    ax.plot(sol.y[0], sol.y[1], lw=1.3, alpha=0.8)
+
+ax.set_xlabel('x'); ax.set_ylabel('y')
+ax.set_title('Phase Portrait')
+plt.savefig('/workspace/vol/outputs/figures/phase_portrait.png', dpi=300)
+```
+
+### 3D 曲面 + 等高线 (MATLAB surf/contour 等效)
+```python
+from mpl_toolkits.mplot3d import Axes3D
+
+fig = plt.figure(figsize=(12, 5))
+ax1 = fig.add_subplot(121, projection='3d')
+X, Y = np.meshgrid(np.linspace(-4, 4, 100), np.linspace(-4, 4, 100))
+Z = np.sin(np.sqrt(X**2 + Y**2))
+
+ax1.plot_surface(X, Y, Z, cmap='viridis', alpha=0.85, linewidth=0)
+ax1.contourf(X, Y, Z, zdir='z', offset=Z.min()-0.3, cmap='viridis', alpha=0.4)
+ax1.set_title('3D Surface (MATLAB surf 等效)')
+
+ax2 = fig.add_subplot(122)
+cs = ax2.contourf(X, Y, Z, levels=20, cmap='viridis')
+ax2.contour(X, Y, Z, levels=20, colors='w', linewidths=0.4)
+plt.colorbar(cs, ax=ax2)
+ax2.set_title('Contour Map (MATLAB contourf 等效)')
+plt.savefig('/workspace/vol/outputs/figures/surface_3d.png', dpi=300)
+```
+
+### 参数敏感性热力图
+```python
+n = 30
+a_vals = np.linspace(0.1, 2.0, n)
+b_vals = np.linspace(0.5, 4.0, n)
+Z = np.array([[model_output(a, b) for b in b_vals] for a in a_vals])
+
+fig, ax = plt.subplots(figsize=(7, 5))
+im = ax.imshow(Z, origin='lower', aspect='auto', cmap='RdYlBu_r',
+               extent=[b_vals[0], b_vals[-1], a_vals[0], a_vals[-1]])
+ax.contour(np.linspace(b_vals[0],b_vals[-1],n),
+           np.linspace(a_vals[0],a_vals[-1],n),
+           Z, levels=12, colors='white', linewidths=0.5, alpha=0.6)
+plt.colorbar(im, label='模型输出')
+ax.set_xlabel('β'); ax.set_ylabel('α')
+ax.set_title('参数敏感性热力图')
+plt.savefig('/workspace/vol/outputs/figures/sensitivity.png', dpi=300)
+```
+
+## 调用 MATLAB 可视化模块
+如果需要生成标准数学建模可视化图，可在代码末尾添加：
+```python
+# 在 solver.py 末尾调用 matlab_viz（可选，不影响主流程）
+import sys, os
+sys.path.insert(0, '/workspace' if os.path.exists('/workspace') else '.')
+try:
+    # 保存关键结果到 context 供 matlab_viz 使用
+    print('[MODEL_TYPE] ode')          # 告知 matlab_viz 模型类型
+    print('[EQUATIONS] dx/dt=...')     # 方程摘要
+except Exception: pass
+```
 """

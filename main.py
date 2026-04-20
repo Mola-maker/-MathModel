@@ -11,6 +11,8 @@ from agents.pdf_agent import PdfAgent
 from agents.question_extractor import QuestionExtractor
 from agents.data_cleaning_agent import DataCleaningAgent
 from agents.modeling_agent import ModelingAgent
+from agents.matlab_viz import MatlabVizAgent
+from agents.viz3d import Viz3DAgent
 from agents.code_agent import CodeAgent
 from agents.writing_agent import WritingAgent
 from agents.latex_check_agent import LatexCheckAgent
@@ -59,7 +61,7 @@ def run_pipeline(start_phase: str = "P0b", selected_problem: str | None = None) 
     """Run full MCM workflow from a chosen phase, with rollback on data integrity failure."""
     run_startup_check()
     ctx = load_context()
-    phase_order = ["P0b", "P1", "P1.5", "P2", "P3", "P3.5", "P4", "P4.5", "P5", "P5.5"]
+    phase_order = ["P0b", "P1", "P1.5", "P2", "P2.5", "P2.7", "P3", "P3.5", "P4", "P4.5", "P5", "P5.5"]
     start_idx = phase_order.index(start_phase) if start_phase in phase_order else 0
     rollback_count = 0
 
@@ -107,6 +109,29 @@ def run_pipeline(start_phase: str = "P0b", selected_problem: str | None = None) 
             validation = ctx["modeling"].get("validation", {})
             print(f"[P2-OK] 验证: {validation.get('overall', '未知')}")
             record_experience("P2")
+
+        elif phase == "P2.5":
+            # ── MATLAB-style mathematical visualization ──
+            try:
+                viz_agent = MatlabVizAgent()
+                viz_result = viz_agent.run(ctx=ctx)
+                n_viz = len(viz_result.get("figures", []))
+                print(f"[P2.5-OK] 数学可视化图片: {n_viz} 张")
+                ctx = load_context()  # reload after matlab_viz saves context
+            except Exception as e:
+                print(f"[P2.5-SKIP] 数学可视化失败 (非阻断): {e}")
+
+        elif phase == "P2.7":
+            # ── 3D modeling (PyVista + Plotly + optional Octave) ──
+            try:
+                viz3d = Viz3DAgent()
+                r3 = viz3d.run(ctx=ctx)
+                n_png = len(r3.get("figures", []))
+                n_html = len(r3.get("html", []))
+                print(f"[P2.7-OK] 3D 图片: {n_png} 张, 交互 HTML: {n_html} 份")
+                ctx = load_context()
+            except Exception as e:
+                print(f"[P2.7-SKIP] 3D 可视化失败 (非阻断): {e}")
 
         elif phase == "P3":
             try:
@@ -230,7 +255,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--start",
         default="P0b",
-        choices=["P0b", "P1", "P1.5", "P2", "P3", "P3.5", "P4", "P4.5", "P5", "P5.5"],
+        choices=["P0b", "P1", "P1.5", "P2", "P2.5", "P2.7", "P3", "P3.5", "P4", "P4.5", "P5", "P5.5"],
         help="起始阶段，默认 P0b（即从 PDF 转换开始）",
     )
     parser.add_argument(
