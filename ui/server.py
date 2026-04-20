@@ -67,6 +67,7 @@ PHASE_META = {
     "P0b":  {"name": "PDF 转译",   "agent": "pdf_agent.py",          "icon": "doc"},
     "P1":   {"name": "题目解析",   "agent": "question_extractor.py", "icon": "search"},
     "P1.5": {"name": "数据清洗",   "agent": "data_cleaning_agent.py","icon": "data"},
+    "P1.7": {"name": "数据仿真",   "agent": "data_simulation.py",    "icon": "data"},
     "P2":   {"name": "数学建模",   "agent": "modeling_agent.py",     "icon": "model"},
     "P2.5": {"name": "数学可视化", "agent": "matlab_viz.py",         "icon": "model"},
     "P3":   {"name": "代码求解",   "agent": "code_agent.py",         "icon": "code"},
@@ -77,7 +78,7 @@ PHASE_META = {
     "P5.5": {"name": "数据审计",   "agent": "data_validator.py",     "icon": "audit"},
 }
 
-PHASE_ORDER = ["P0b", "P1", "P1.5", "P2", "P2.5", "P3", "P3.5", "P4", "P4.5", "P5", "P5.5"]
+PHASE_ORDER = ["P0b", "P1", "P1.5", "P1.7", "P2", "P2.5", "P3", "P3.5", "P4", "P4.5", "P5", "P5.5"]
 
 PHASE_COMPLETE_MAP = {
     "init": set(),
@@ -85,14 +86,15 @@ PHASE_COMPLETE_MAP = {
     "P1_extraction_complete": {"P0b", "P1"},
     "P1.5_complete": {"P0b", "P1", "P1.5"},
     "P1.5_skipped": {"P0b", "P1", "P1.5"},
-    "P2_complete": {"P0b", "P1", "P1.5", "P2"},
-    "P2.5_complete": {"P0b", "P1", "P1.5", "P2", "P2.5"},
-    "P3_complete": {"P0b", "P1", "P1.5", "P2", "P2.5", "P3"},
-    "P3_logic_err": {"P0b", "P1", "P1.5", "P2", "P2.5"},
-    "P3.5_complete": {"P0b", "P1", "P1.5", "P2", "P2.5", "P3", "P3.5"},
-    "P4_complete": {"P0b", "P1", "P1.5", "P2", "P2.5", "P3", "P3.5", "P4"},
-    "P4.5_complete": {"P0b", "P1", "P1.5", "P2", "P2.5", "P3", "P3.5", "P4", "P4.5"},
-    "P5_complete": {"P0b", "P1", "P1.5", "P2", "P2.5", "P3", "P3.5", "P4", "P4.5", "P5"},
+    "P1.7_complete": {"P0b", "P1", "P1.5", "P1.7"},
+    "P2_complete": {"P0b", "P1", "P1.5", "P1.7", "P2"},
+    "P2.5_complete": {"P0b", "P1", "P1.5", "P1.7", "P2", "P2.5"},
+    "P3_complete": {"P0b", "P1", "P1.5", "P1.7", "P2", "P2.5", "P3"},
+    "P3_logic_err": {"P0b", "P1", "P1.5", "P1.7", "P2", "P2.5"},
+    "P3.5_complete": {"P0b", "P1", "P1.5", "P1.7", "P2", "P2.5", "P3", "P3.5"},
+    "P4_complete": {"P0b", "P1", "P1.5", "P1.7", "P2", "P2.5", "P3", "P3.5", "P4"},
+    "P4.5_complete": {"P0b", "P1", "P1.5", "P1.7", "P2", "P2.5", "P3", "P3.5", "P4", "P4.5"},
+    "P5_complete": {"P0b", "P1", "P1.5", "P1.7", "P2", "P2.5", "P3", "P3.5", "P4", "P4.5", "P5"},
     "P5.5_complete": set(PHASE_ORDER),
 }
 
