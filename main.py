@@ -11,6 +11,7 @@ from agents.pdf_agent import PdfAgent
 from agents.question_extractor import QuestionExtractor
 from agents.data_cleaning_agent import DataCleaningAgent
 from agents.modeling_agent import ModelingAgent
+from agents.model_compare import ModelCompareAgent
 from agents.matlab_viz import MatlabVizAgent
 from agents.viz3d import Viz3DAgent
 from agents.code_agent import CodeAgent
@@ -94,6 +95,15 @@ def _build_registry(selected_problem: str | None) -> list[PhaseSpec]:
         )
         return PhaseOutcome(ctx=new_ctx, note=note)
 
+    def p2_8(ctx: dict) -> PhaseOutcome:
+        new_ctx = ModelCompareAgent().run()
+        cmp = new_ctx.get("modeling", {}).get("comparison_v2", {})
+        n = len(cmp.get("candidates", []))
+        winner = cmp.get("winner_id", "?")
+        method = cmp.get("method", "?")
+        note = f"候选 {n} 个, winner={winner} ({method})" if n else "无候选模型，跳过"
+        return PhaseOutcome(ctx=new_ctx, note=note)
+
     def p2_5(ctx: dict) -> PhaseOutcome:
         viz_result = MatlabVizAgent().run(ctx=ctx)
         n_viz = len(viz_result.get("figures", []))
@@ -161,6 +171,7 @@ def _build_registry(selected_problem: str | None) -> list[PhaseSpec]:
         PhaseSpec(name="P1", run=p1, record_experience=True, description="题目解析 + 三手分发"),
         PhaseSpec(name="P1.5", run=p1_5, record_experience=True, description="数据清洗 + EDA"),
         PhaseSpec(name="P2", run=p2, record_experience=True, description="数学建模"),
+        PhaseSpec(name="P2.8", run=p2_8, on_error="skip", description="多模型对比（LLM + 指标）"),
         PhaseSpec(name="P2.5", run=p2_5, on_error="skip", description="MATLAB 风格可视化"),
         PhaseSpec(name="P2.7", run=p2_7, on_error="skip", description="3D 建模（PyVista + Plotly + Octave）"),
         PhaseSpec(name="P3", run=p3, record_experience=True, description="代码求解"),
@@ -246,7 +257,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--start",
         default="P0b",
-        choices=["P0b", "P1", "P1.5", "P2", "P2.5", "P2.7", "P3", "P3.5", "P4", "P4.5", "P5", "P5.5"],
+        choices=["P0b", "P1", "P1.5", "P2", "P2.8", "P2.5", "P2.7", "P3", "P3.5", "P4", "P4.5", "P5", "P5.5"],
         help="起始阶段，默认 P0b",
     )
     parser.add_argument(
