@@ -13,6 +13,7 @@ from agents.data_cleaning_agent import DataCleaningAgent
 from agents.modeling_agent import ModelingAgent
 from agents.model_compare import ModelCompareAgent
 from agents.paper_figures import PaperFiguresAgent
+from agents.data_simulation import DataSimulationAgent
 from agents.matlab_viz import MatlabVizAgent
 from agents.viz3d import Viz3DAgent
 from agents.code_agent import CodeAgent
@@ -83,6 +84,14 @@ def _build_registry(selected_problem: str | None) -> list[PhaseSpec]:
         success = sum(1 for r in results.values() if r.get("status") == "success")
         figs = dc.get("all_figures", [])
         note = f"数据清洗: {success}/{len(results)} 文件成功" + (f"，EDA 图片 {len(figs)} 张" if figs else "")
+        return PhaseOutcome(ctx=new_ctx, note=note)
+
+    def p1_7(ctx: dict) -> PhaseOutcome:
+        new_ctx = DataSimulationAgent().run()
+        sim = new_ctx.get("data_simulation", {})
+        added = sim.get("total_rows_added", 0)
+        n_files = len(sim.get("files", []))
+        note = f"数据仿真: {n_files} 文件, +{added} 行" if added else "无需仿真（样本充足或无输入）"
         return PhaseOutcome(ctx=new_ctx, note=note)
 
     def p2(ctx: dict) -> PhaseOutcome:
@@ -179,6 +188,7 @@ def _build_registry(selected_problem: str | None) -> list[PhaseSpec]:
         PhaseSpec(name="P0b", run=p0b, on_error="skip", description="PDF → Markdown"),
         PhaseSpec(name="P1", run=p1, record_experience=True, description="题目解析 + 三手分发"),
         PhaseSpec(name="P1.5", run=p1_5, record_experience=True, description="数据清洗 + EDA"),
+        PhaseSpec(name="P1.7", run=p1_7, on_error="skip", record_experience=True, description="小样本数据仿真增强"),
         PhaseSpec(name="P2", run=p2, record_experience=True, description="数学建模"),
         PhaseSpec(name="P2.8", run=p2_8, on_error="skip", description="多模型对比（LLM + 指标）"),
         PhaseSpec(name="P2.5", run=p2_5, on_error="skip", description="MATLAB 风格可视化"),
@@ -267,7 +277,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--start",
         default="P0b",
-        choices=["P0b", "P1", "P1.5", "P2", "P2.8", "P2.5", "P2.7", "P3", "P3.5", "P3.7", "P4", "P4.5", "P5", "P5.5"],
+        choices=["P0b", "P1", "P1.5", "P1.7", "P2", "P2.8", "P2.5", "P2.7", "P3", "P3.5", "P3.7", "P4", "P4.5", "P5", "P5.5"],
         help="起始阶段，默认 P0b",
     )
     parser.add_argument(

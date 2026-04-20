@@ -63,6 +63,20 @@ _PHASE_PROMPTS: dict[str, str] = {
 }
 """,
 
+"P1.7": """你是数据增强专家。根据数据仿真结果，提炼供"下次处理小样本数据"时参考的经验。
+
+输出严格 JSON（不含 markdown 代码块），结构：
+{
+  "augmentation_triggered": true/false,
+  "small_sample_signals": ["触发仿真的信号1（例：原始<30行）", "信号2"],
+  "numeric_vs_categorical_ratio": "数值/非数值列比例说明",
+  "ks_quality": "KS统计量整体质量（<0.1优 / 0.1-0.3可接受 / >0.3需警惕）",
+  "warnings_encountered": ["出现的告警1", "告警2"],
+  "pitfalls": ["踩坑记录1（例：扰动 sigma 过大破坏相关结构）"],
+  "reuse_tips": ["复用建议1（例：对时序数据宜改用 block bootstrap）"]
+}
+""",
+
 "P2": """你是数学建模专家。根据建模过程，提炼供"下次遇到相似建模任务"时参考的经验。
 
 输出严格 JSON（不含 markdown 代码块），结构：
@@ -171,6 +185,17 @@ def _extract_phase_context(ctx: dict, phase: str) -> str:
         }
         summaries = dc.get("stdout_summaries", {})
         snippets["stdout_summary_sample"] = list(summaries.values())[:2]
+
+    elif phase == "P1.7":
+        sim = ctx.get("data_simulation", {})
+        snippets["trigger_threshold"] = sim.get("trigger_threshold")
+        snippets["target_rows"] = sim.get("target_rows")
+        snippets["total_rows_added"] = sim.get("total_rows_added", 0)
+        snippets["files"] = [
+            {k: v for k, v in f.items() if k in ("source", "original_rows", "simulated_rows", "method", "ks_stats", "warnings")}
+            for f in sim.get("files", [])
+        ][:4]
+        snippets["skipped"] = sim.get("skipped", [])[:4]
 
     elif phase == "P2":
         m = ctx.get("modeling", {})
@@ -313,6 +338,7 @@ def record_experience(phase: str) -> dict | None:
 _PHASE_NAME = {
     "P1": "题目解析",
     "P1.5": "数据清洗",
+    "P1.7": "数据仿真",
     "P2": "数学建模",
     "P3": "代码求解",
     "P4": "论文撰写",
