@@ -557,6 +557,24 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
   margin-top:12px;font-size:.78rem;color:var(--terracotta);cursor:pointer;
   background:none;border:none;padding:0;text-decoration:underline;
 }
+.exp-rate-row{
+  display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;
+  border-top:1px dashed var(--border);
+}
+.exp-star-btn{
+  background:none;border:none;cursor:pointer;font-size:1.1rem;color:#d1d5db;
+  padding:0 2px;line-height:1;transition:color .15s,transform .1s;
+}
+.exp-star-btn:hover{transform:scale(1.2)}
+.exp-star-btn.on{color:#f59e0b}
+.exp-fav-btn{
+  background:none;border:1px solid var(--border);border-radius:12px;
+  padding:2px 10px;font-size:.72rem;cursor:pointer;color:var(--ink-light);
+  margin-left:auto;transition:all .15s;
+}
+.exp-fav-btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
+.exp-fav-btn.on{background:#fef3c7;border-color:#f59e0b;color:#92400e;font-weight:600}
+.exp-rate-status{font-size:.72rem;color:var(--ink-light);margin-left:4px}
 @media(max-width:480px){
   .hero{grid-template-columns:1fr}
   .page-tabs .page-tab{padding:5px 10px;font-size:.75rem}
@@ -2441,6 +2459,24 @@ function renderExperienceCards(entries, total) {
         }).join('')}</div>
       </div>` : '';
 
+    const entryId = e.id || '';
+    const rating = Number.isInteger(e.rating) ? e.rating : 0;
+    const starred = !!e.starred;
+    const stars = [1,2,3,4,5].map(n =>
+      `<button class="exp-star-btn ${n<=rating?'on':''}" title="评 ${n} 星"
+        onclick="rateExperience('${entryId}', ${n===rating?0:n}, null, this)">★</button>`
+    ).join('');
+    const rateHtml = entryId ? `
+      <div class="exp-rate-row">
+        <span style="font-size:.72rem;color:var(--ink-light)">评分</span>
+        ${stars}
+        <span class="exp-rate-status" id="rate-status-${idx}"></span>
+        <button class="exp-fav-btn ${starred?'on':''}"
+          onclick="rateExperience('${entryId}', null, ${!starred}, this)">
+          ${starred?'★ 已收藏':'☆ 收藏'}
+        </button>
+      </div>` : '';
+
     return `
       <div class="exp-card" id="${id}">
         <div class="exp-card-header">
@@ -2451,8 +2487,30 @@ function renderExperienceCards(entries, total) {
         ${tipsHtml}
         <div class="exp-fields" style="margin-top:${tips.length?'12px':'0'}">${fieldHtml}</div>
         ${moreHtml}
+        ${rateHtml}
       </div>`;
   }).join('');
+}
+
+async function rateExperience(id, rating, starred, btnEl) {
+  if (!id) return;
+  const body = {id};
+  if (rating !== null) body.rating = rating;
+  if (starred !== null) body.starred = starred;
+  try {
+    const r = await fetch('/api/experience/rate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!r.ok || !d.ok) throw new Error(d.error || r.statusText);
+    // Refresh the view so star/fav state reflects the server
+    const activePhase = document.querySelector('.exp-filter-btn.active')?.dataset.phase || '';
+    loadExperience(activePhase);
+  } catch (err) {
+    console.error('rate failed', err);
+    if (btnEl) btnEl.title = '保存失败：' + err.message;
+  }
 }
 
 function toggleExpDetail(id, btn) {
