@@ -200,6 +200,45 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
 }
 .phase-card.completed + .phase-connector{background:var(--near-black)}
 
+/* Pipeline live-event overlays */
+.pipeline-wrap{position:relative;margin-bottom:28px}
+.pipeline-summary{
+  display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+  padding:10px 14px;margin-bottom:14px;
+  background:var(--ivory);border:1px solid var(--border-warm);
+  border-radius:var(--radius-sm);font-size:.78rem;color:var(--charcoal);
+}
+.pipeline-summary .sum-item{display:inline-flex;gap:6px;align-items:center}
+.pipeline-summary .sum-label{color:var(--stone)}
+.pipeline-summary .sum-value{font-weight:600;color:var(--near-black);font-family:var(--font-mono)}
+.pipeline-summary .sum-value.warn{color:var(--terracotta)}
+.pipeline-summary .sum-value.err{color:var(--error)}
+.pipeline-summary .sum-tick{
+  display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--stone);
+}
+.pipeline-summary.running .sum-tick{background:var(--terracotta);animation:pulse 1.4s ease-in-out infinite}
+
+.phase-duration{
+  margin-top:4px;font-family:var(--font-mono);font-size:.64rem;
+  color:var(--stone);letter-spacing:.02em;min-height:.9rem;
+}
+.phase-card.running .phase-duration{color:var(--terracotta);font-weight:600}
+.phase-card.completed .phase-duration{color:var(--near-black)}
+.phase-card.error .phase-duration{color:var(--error)}
+
+.rollback-overlay{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;overflow:visible;
+}
+.rollback-overlay path{
+  fill:none;stroke:var(--terracotta);stroke-width:1.5;
+  stroke-dasharray:4 3;opacity:.85;
+}
+.rollback-overlay .rb-label{
+  font-family:var(--font-mono);font-size:9px;fill:var(--terracotta);
+}
+
 /* Controls */
 .controls{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
 .controls select{
@@ -1061,7 +1100,18 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
 
     <!-- Pipeline Visualization -->
     <h2 class="section-title">Pipeline Progress</h2>
-    <div class="pipeline" id="pipeline"></div>
+    <div class="pipeline-wrap">
+      <div class="pipeline-summary" id="pipelineSummary">
+        <span class="sum-item"><span class="sum-tick" id="sumTick"></span><span class="sum-label">状态</span> <span class="sum-value" id="sumStatus">idle</span></span>
+        <span class="sum-item"><span class="sum-label">已完成</span> <span class="sum-value" id="sumCompleted">0</span></span>
+        <span class="sum-item"><span class="sum-label">累计耗时</span> <span class="sum-value" id="sumElapsed">0s</span></span>
+        <span class="sum-item"><span class="sum-label">回滚</span> <span class="sum-value" id="sumRollbacks">0</span></span>
+        <span class="sum-item"><span class="sum-label">错误</span> <span class="sum-value" id="sumErrors">0</span></span>
+        <span class="sum-item" id="sumCurrentWrap" style="display:none"><span class="sum-label">当前</span> <span class="sum-value" id="sumCurrent">--</span></span>
+      </div>
+      <div class="pipeline" id="pipeline"></div>
+      <svg class="rollback-overlay" id="rollbackOverlay" aria-hidden="true"></svg>
+    </div>
 
     <!-- Controls -->
     <div class="controls">
@@ -2950,8 +3000,246 @@ renderPipeline = function(phases) {
     if (node && label) {
       node.setAttribute('data-tooltip', label.textContent.trim());
     }
+    // Inject duration slot if missing
+    if (!card.querySelector('.phase-duration')) {
+      const dur = document.createElement('div');
+      dur.className = 'phase-duration';
+      dur.textContent = '';
+      card.appendChild(dur);
+    }
   });
+  applyPipelineEventState();
 };
+
+/* ══════════════════════════ Pipeline event stream ═══════════════
+ * Subscribe to /api/pipeline-events (structured JSONL bus), track
+ * per-phase durations + rollbacks + errors, and decorate the existing
+ * phase cards with a live duration pill and overlay arcs for rollbacks.
+ * Resumable via `last_seq` query param so reconnects don't double-count.
+ */
+const pipelineEventState = {
+  timings: {},          // phase -> seconds (final)
+  startedAt: {},        // phase -> ts (for running phase live ticker)
+  currentPhase: null,
+  completed: 0,
+  rollbacks: [],        // [{from, to, index}]
+  errors: [],           // [{phase, message}]
+  pipelineStart: null,
+  pipelineEnd: null,
+  lastSeq: 0,
+  running: false,
+};
+let pipelineEventsES = null;
+let pipelineEventsBackoff = 1000;
+
+function fmtDuration(sec) {
+  if (sec == null || !isFinite(sec)) return '';
+  if (sec < 1) return `${(sec * 1000).toFixed(0)}ms`;
+  if (sec < 60) return `${sec.toFixed(1)}s`;
+  const m = Math.floor(sec / 60), s = Math.round(sec % 60);
+  return `${m}m${s.toString().padStart(2,'0')}s`;
+}
+
+function applyPipelineEventState() {
+  const st = pipelineEventState;
+  // 1. Per-phase duration + running class boost
+  document.querySelectorAll('.phase-card').forEach(card => {
+    const pid = card.getAttribute('data-phase');
+    const durEl = card.querySelector('.phase-duration');
+    if (!durEl) return;
+    if (st.timings[pid] != null) {
+      durEl.textContent = fmtDuration(st.timings[pid]);
+    } else if (st.startedAt[pid] && pid === st.currentPhase) {
+      const live = (Date.now() / 1000) - st.startedAt[pid];
+      durEl.textContent = fmtDuration(live);
+    } else {
+      durEl.textContent = '';
+    }
+  });
+
+  // 2. Summary bar
+  const sumStatus = document.getElementById('sumStatus');
+  const sumTick = document.getElementById('sumTick')?.parentElement?.parentElement;
+  const summaryEl = document.getElementById('pipelineSummary');
+  if (sumStatus && summaryEl) {
+    const running = st.running || (st.pipelineStart && !st.pipelineEnd);
+    sumStatus.textContent = running ? 'running' : (st.pipelineEnd ? 'done' : 'idle');
+    summaryEl.classList.toggle('running', !!running);
+  }
+  const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setTxt('sumCompleted', st.completed);
+
+  // Elapsed: sum of known timings, plus live delta for current running phase
+  let elapsed = 0;
+  for (const k in st.timings) elapsed += st.timings[k] || 0;
+  if (st.currentPhase && st.startedAt[st.currentPhase] && st.timings[st.currentPhase] == null) {
+    elapsed += (Date.now() / 1000) - st.startedAt[st.currentPhase];
+  }
+  setTxt('sumElapsed', fmtDuration(elapsed) || '0s');
+
+  const rbEl = document.getElementById('sumRollbacks');
+  if (rbEl) {
+    rbEl.textContent = st.rollbacks.length;
+    rbEl.classList.toggle('warn', st.rollbacks.length > 0);
+  }
+  const errEl = document.getElementById('sumErrors');
+  if (errEl) {
+    errEl.textContent = st.errors.length;
+    errEl.classList.toggle('err', st.errors.length > 0);
+  }
+  const curWrap = document.getElementById('sumCurrentWrap');
+  if (curWrap) {
+    if (st.currentPhase && !st.pipelineEnd) {
+      curWrap.style.display = '';
+      setTxt('sumCurrent', st.currentPhase);
+    } else {
+      curWrap.style.display = 'none';
+    }
+  }
+
+  drawRollbackArcs();
+}
+
+function drawRollbackArcs() {
+  const svg = document.getElementById('rollbackOverlay');
+  const wrap = svg?.parentElement;
+  if (!svg || !wrap) return;
+  const st = pipelineEventState;
+  const wrapRect = wrap.getBoundingClientRect();
+  svg.setAttribute('width', wrapRect.width);
+  svg.setAttribute('height', wrapRect.height);
+  svg.innerHTML = '';
+  if (!st.rollbacks.length) return;
+
+  st.rollbacks.forEach((rb, idx) => {
+    const fromCard = document.querySelector(`.phase-card[data-phase="${rb.from}"]`);
+    const toCard = document.querySelector(`.phase-card[data-phase="${rb.to}"]`);
+    if (!fromCard || !toCard) return;
+    const fromNode = fromCard.querySelector('.phase-node');
+    const toNode = toCard.querySelector('.phase-node');
+    if (!fromNode || !toNode) return;
+    const fr = fromNode.getBoundingClientRect();
+    const tr = toNode.getBoundingClientRect();
+    const x1 = fr.left + fr.width / 2 - wrapRect.left;
+    const y1 = fr.top - wrapRect.top;
+    const x2 = tr.left + tr.width / 2 - wrapRect.left;
+    const y2 = tr.top - wrapRect.top;
+    // Arc above the nodes
+    const lift = 22 + idx * 14;
+    const midX = (x1 + x2) / 2;
+    const midY = Math.min(y1, y2) - lift;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${x1} ${y1} Q ${midX} ${midY}, ${x2} ${y2}`);
+    svg.appendChild(path);
+    // Arrow head
+    const head = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const angle = Math.atan2(y2 - midY, x2 - midX);
+    const ah = 5;
+    head.setAttribute('d',
+      `M ${x2} ${y2} L ${x2 - ah * Math.cos(angle - 0.5)} ${y2 - ah * Math.sin(angle - 0.5)} ` +
+      `L ${x2 - ah * Math.cos(angle + 0.5)} ${y2 - ah * Math.sin(angle + 0.5)} Z`);
+    head.setAttribute('fill', 'var(--terracotta)');
+    head.setAttribute('stroke', 'none');
+    svg.appendChild(head);
+    // Label
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', midX);
+    label.setAttribute('y', midY - 2);
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('class', 'rb-label');
+    label.textContent = `↺ #${rb.index}`;
+    svg.appendChild(label);
+  });
+}
+
+function handlePipelineEvent(ev) {
+  const st = pipelineEventState;
+  if (typeof ev.seq === 'number') st.lastSeq = Math.max(st.lastSeq, ev.seq);
+  switch (ev.kind) {
+    case 'pipeline_start':
+      // Full reset on new run
+      st.timings = {};
+      st.startedAt = {};
+      st.currentPhase = null;
+      st.completed = 0;
+      st.rollbacks = [];
+      st.errors = [];
+      st.pipelineStart = ev.ts;
+      st.pipelineEnd = null;
+      st.running = true;
+      break;
+    case 'phase_start':
+      st.currentPhase = ev.phase;
+      st.startedAt[ev.phase] = ev.ts;
+      // Re-running a phase after rollback — clear its prior timing
+      delete st.timings[ev.phase];
+      break;
+    case 'phase_end':
+      if (typeof ev.duration === 'number') {
+        st.timings[ev.phase] = ev.duration;
+      } else if (st.startedAt[ev.phase]) {
+        st.timings[ev.phase] = ev.ts - st.startedAt[ev.phase];
+      }
+      st.completed += 1;
+      if (st.currentPhase === ev.phase) st.currentPhase = null;
+      break;
+    case 'rollback':
+      st.rollbacks.push({ from: ev.from_phase, to: ev.to_phase, index: ev.index });
+      break;
+    case 'phase_error':
+      st.errors.push({ phase: ev.phase, message: ev.message || '' });
+      break;
+    case 'pipeline_end':
+      st.pipelineEnd = ev.ts;
+      st.running = false;
+      st.currentPhase = null;
+      if (Array.isArray(ev.errors)) {
+        ev.errors.forEach(p => {
+          if (!st.errors.some(e => e.phase === p)) st.errors.push({ phase: p, message: '' });
+        });
+      }
+      if (ev.timings && typeof ev.timings === 'object') {
+        for (const k in ev.timings) {
+          if (st.timings[k] == null) st.timings[k] = ev.timings[k];
+        }
+      }
+      break;
+  }
+  applyPipelineEventState();
+}
+
+function startPipelineEvents() {
+  if (pipelineEventsES) { try { pipelineEventsES.close(); } catch(_){} }
+  const url = `/api/pipeline-events?last_seq=${pipelineEventState.lastSeq}`;
+  pipelineEventsES = new EventSource(url);
+  pipelineEventsES.onopen = () => { pipelineEventsBackoff = 1000; };
+  pipelineEventsES.onmessage = e => {
+    try { handlePipelineEvent(JSON.parse(e.data)); }
+    catch (_) { /* heartbeat */ }
+  };
+  pipelineEventsES.onerror = () => {
+    try { pipelineEventsES.close(); } catch(_){}
+    const wait = pipelineEventsBackoff;
+    pipelineEventsBackoff = Math.min(pipelineEventsBackoff * 2, 30000);
+    setTimeout(startPipelineEvents, wait);
+  };
+}
+
+// Live ticker for currently-running phase (updates duration pill each second)
+setInterval(() => {
+  const st = pipelineEventState;
+  if (st.currentPhase || st.running) applyPipelineEventState();
+}, 1000);
+
+// Redraw arcs on resize (phase cards may shift)
+window.addEventListener('resize', () => drawRollbackArcs());
+
+// Kick off on load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startPipelineEvents);
+} else {
+  startPipelineEvents();
+}
 </script>
 </body>
 </html>

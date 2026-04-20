@@ -1,0 +1,12 @@
+# Plugin configuration.
+#
+# `enabled` is an allow-list of plugin directory names under plugins/. Omit
+# it to auto-enable every plugin directory (except those prefixed with `_`).
+#
+# Per-plugin config goes under [plugin.<name>] and is passed to the plugin's
+# initialize() method at load time.
+
+enabled = []
+
+# [plugin.example]
+# greeting = "hi"

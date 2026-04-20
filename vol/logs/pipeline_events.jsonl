@@ -1,0 +1,3 @@
+{"seq": 1, "ts": 1776670856.6219895, "kind": "phase_end", "phase": "P1", "duration": 2.5}
+{"seq": 2, "ts": 1776670856.6221495, "kind": "phase_end", "phase": "P2", "duration": 5.1}
+{"seq": 3, "ts": 1776670856.6222892, "kind": "pipeline_end", "rollbacks": 0, "errors": [], "timings": {"P1": 2.5, "P2": 5.1}}

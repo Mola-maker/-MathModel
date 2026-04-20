@@ -12,6 +12,7 @@ Endpoints:
   POST /api/run/{phase}           → start pipeline from phase
   POST /api/stop                  → terminate pipeline
   GET  /api/pipeline-output       → SSE: pipeline stdout
+  GET  /api/pipeline-events       → SSE: structured phase events (JSONL bus)
   GET  /api/sse                   → SSE: phase change events
   GET  /api/config                → get model_routes + pipeline settings
   POST /api/config                → save model_routes + pipeline settings
@@ -97,6 +98,25 @@ PHASE_COMPLETE_MAP = {
 
 app = FastAPI(title="MCM Pipeline Dashboard")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+@app.on_event("startup")
+async def _load_extensions_on_startup() -> None:
+    """Bootstrap plugins / MCP / skills once the FastAPI worker is up."""
+    try:
+        from agents.extensions import load_all as _load
+        _load()
+    except Exception as exc:  # noqa: BLE001
+        print(f"  [ext] 启动加载失败: {exc}")
+
+
+@app.on_event("shutdown")
+async def _shutdown_extensions() -> None:
+    try:
+        from agents.extensions.registry import shutdown as _shutdown
+        _shutdown()
+    except Exception:
+        pass
 
 _pipeline_proc: subprocess.Popen | None = None
 _sandbox_proc: subprocess.Popen | None = None
@@ -367,6 +387,23 @@ def _dispatch_tool(name: str, args: dict) -> str:
         "sandbox_status": ("sandbox_status", {}),
     }
     if name not in legacy_map:
+        # Try extension registry (plugin tools + MCP tools)
+        try:
+            from agents.tool_registry import extension_handler
+            handler = extension_handler(name)
+        except Exception:
+            handler = None
+        if handler is not None:
+            try:
+                result = handler(**(args or {}))
+            except Exception as exc:  # noqa: BLE001
+                return f"✗ 工具 {name} 执行异常: {type(exc).__name__}: {exc}"
+            if isinstance(result, (dict, list)):
+                try:
+                    return json.dumps(result, ensure_ascii=False)[:4000]
+                except Exception:
+                    return str(result)[:4000]
+            return str(result)[:4000]
         return f"✗ 未知工具: {name}"
     action_type, extra = legacy_map[name]
     action: dict = {"type": action_type, **extra}
@@ -907,6 +944,16 @@ async def chat_endpoint(request: Request):
     persona = get_persona(persona_override or session.get("persona", "controller"))
 
     system_content = _build_chat_system(persona.system_prompt)
+    # Inject any skills whose triggers match the user message
+    try:
+        from agents.extensions import get_registry
+        from agents.extensions.skills import render_skills_block
+        matched = get_registry().match_skills(message, limit=3)
+        skills_block = render_skills_block(matched)
+        if skills_block:
+            system_content = system_content + skills_block
+    except Exception:
+        pass
     tools = tools_for(list(persona.allowed_tools))
 
     # Build messages: system + prior history + new user message
@@ -1140,6 +1187,63 @@ async def cleanup_aux_endpoint():
     """删除 paper/ 下所有 LaTeX 辅助文件（.aux .log .bbl 等），保留 .tex .bib .pdf。"""
     from agents.latex_compiler import cleanup_aux_files
     return cleanup_aux_files()
+
+
+# ────────────────────────────────────── pipeline events (SSE) ──
+
+@app.get("/api/pipeline-events")
+async def pipeline_events(last_seq: int = 0):
+    """SSE: tail structured pipeline events (phase_start/end, rollback, ...).
+
+    Clients pass `?last_seq=N` to resume after a reconnect without re-reading
+    events they already saw. Each SSE `data:` frame is a full event JSON with
+    a monotonic `seq`.
+    """
+    events_path = LOGS_DIR / "pipeline_events.jsonl"
+
+    def _read_from(seq: int) -> tuple[list[dict], int]:
+        if not events_path.exists():
+            return [], seq
+        out: list[dict] = []
+        max_seq = seq
+        with events_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    ev = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                ev_seq = int(ev.get("seq", 0))
+                if ev_seq > seq:
+                    out.append(ev)
+                    if ev_seq > max_seq:
+                        max_seq = ev_seq
+        return out, max_seq
+
+    async def generate():
+        seen = last_seq
+        last_beat = time.time()
+        # Prime with historical events past `last_seq`
+        historical, seen = _read_from(seen)
+        for ev in historical:
+            yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
+        if historical:
+            last_beat = time.time()
+
+        while True:
+            await asyncio.sleep(0.5)
+            new_events, seen = _read_from(seen)
+            if new_events:
+                for ev in new_events:
+                    yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
+                last_beat = time.time()
+            elif time.time() - last_beat > SSE_HEARTBEAT_INTERVAL:
+                yield ": keepalive\n\n"
+                last_beat = time.time()
+
+    return StreamingResponse(generate(), media_type="text/event-stream", headers=SSE_HEADERS)
 
 
 # ─────────────────────────────────────────── logs stream (SSE) ──

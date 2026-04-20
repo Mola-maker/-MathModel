@@ -1,0 +1,4 @@
+{
+  "_comment": "Declare external MCP servers (stdio transport). Their tools auto-merge into the assistant's tool registry with prefix mcp__<server>__<tool>. Empty servers object disables MCP.",
+  "servers": {}
+}

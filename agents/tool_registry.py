@@ -199,9 +199,18 @@ _TOOLS: list[dict] = [
 ]
 
 
+def _extension_tools() -> list[dict]:
+    """Pull in tools registered by plugins / MCP. Safe if ext system unused."""
+    try:
+        from agents.extensions import get_registry
+        return get_registry().tool_schemas()
+    except Exception:
+        return []
+
+
 def all_tools() -> list[dict]:
-    """Return every registered tool schema (OpenAI-compatible)."""
-    return [dict(t) for t in _TOOLS]
+    """Return every registered tool schema (built-in + extension, OpenAI-compatible)."""
+    return [dict(t) for t in _TOOLS] + _extension_tools()
 
 
 def tools_for(names: list[str] | None) -> list[dict]:
@@ -209,8 +218,18 @@ def tools_for(names: list[str] | None) -> list[dict]:
     if names is None:
         return all_tools()
     allow = set(names)
-    return [dict(t) for t in _TOOLS if t["function"]["name"] in allow]
+    return [dict(t) for t in all_tools() if t["function"]["name"] in allow]
 
 
 def tool_names() -> list[str]:
-    return [t["function"]["name"] for t in _TOOLS]
+    return [t["function"]["name"] for t in all_tools()]
+
+
+def extension_handler(name: str):
+    """Return the callable handler for a plugin/MCP tool, or None."""
+    try:
+        from agents.extensions import get_registry
+        entry = get_registry().tools.get(name)
+        return entry.handler if entry else None
+    except Exception:
+        return None

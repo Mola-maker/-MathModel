@@ -95,17 +95,54 @@ _PERSONAS: dict[str, Persona] = {
 }
 
 
+def _ext_persona(persona_id: str) -> Persona | None:
+    """Materialize a plugin-registered persona by id, or None."""
+    try:
+        from agents.extensions import get_registry
+        entry = get_registry().personas.get(persona_id)
+        if entry is None:
+            return None
+        spec = entry.factory() or {}
+        tools = tuple(spec.get("allowed_tools") or entry.meta.allowed_tools)
+        return Persona(
+            id=entry.meta.id,
+            name=entry.meta.name,
+            description=entry.meta.description,
+            system_prompt=str(spec.get("system_prompt", "")),
+            allowed_tools=tools,
+        )
+    except Exception:
+        return None
+
+
 def get_persona(persona_id: str) -> Persona:
-    """Return persona by id. Falls back to controller if unknown."""
-    return _PERSONAS.get(persona_id, _PERSONAS["controller"])
+    """Return persona by id. Checks built-in first, then plugin registry."""
+    if persona_id in _PERSONAS:
+        return _PERSONAS[persona_id]
+    ext = _ext_persona(persona_id)
+    if ext is not None:
+        return ext
+    return _PERSONAS["controller"]
 
 
 def list_personas() -> list[dict]:
-    """Return lightweight persona metadata for the UI."""
-    return [
-        {"id": p.id, "name": p.name, "description": p.description}
-        for p in _PERSONAS.values()
-    ]
+    """Return built-in + plugin personas for the UI."""
+    out = [{"id": p.id, "name": p.name, "description": p.description, "source": "builtin"}
+           for p in _PERSONAS.values()]
+    try:
+        from agents.extensions import get_registry
+        for entry in get_registry().personas.values():
+            if entry.meta.id in _PERSONAS:
+                continue
+            out.append({
+                "id": entry.meta.id,
+                "name": entry.meta.name,
+                "description": entry.meta.description,
+                "source": entry.source,
+            })
+    except Exception:
+        pass
+    return out
 
 
 def default_persona_id() -> str:
