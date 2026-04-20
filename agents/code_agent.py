@@ -13,6 +13,7 @@ from agents.orchestrator import call_model, load_context, save_context
 from agents.utils import container_name, docker_cp, docker_exec
 from agents.prompts import CODER_PROMPT
 from agents.flows import Flows
+from agents.experience_recorder import get_relevant_experience
 BASE_DIR = Path(__file__).resolve().parent.parent
 VOL_HOST = Path(os.getenv("VOL_HOST", BASE_DIR / "vol"))
 
@@ -62,9 +63,12 @@ class CodeAgent:
 
     def generate_script(self, step_key: str, coder_prompt: str, ctx: dict) -> str:
         """Generate a Python script for any step using the unified CODER_PROMPT."""
+        past_exp = get_relevant_experience("P3", max_entries=2, max_chars=1800)
+        exp_section = f"\n\n{past_exp}\n" if past_exp else ""
         user_prompt = (
             f"{coder_prompt}\n\n"
             f"Problem snippet:\n{self._safe_problem_text(ctx)}"
+            f"{exp_section}"
         )
         try:
             code = _extract_code(call_model(SYSTEM_CODEGEN, user_prompt, task="codegen"))
