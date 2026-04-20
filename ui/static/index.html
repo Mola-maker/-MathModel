@@ -562,6 +562,36 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
   .page-tabs .page-tab{padding:5px 10px;font-size:.75rem}
 }
 
+/* Extensions page */
+.ext-group{margin-bottom:28px}
+.ext-group-title{
+  font-family:var(--font-serif);font-size:1.1rem;color:var(--ink);
+  margin:0 0 12px 0;padding-bottom:6px;border-bottom:1px solid var(--border);
+}
+.ext-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.ext-card{
+  background:var(--parchment);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;display:flex;flex-direction:column;gap:8px;
+}
+.ext-card-head{display:flex;align-items:center;gap:8px}
+.ext-card-name{font-weight:600;color:var(--ink);font-size:.92rem;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ext-card-ver{font-size:.72rem;color:var(--ink-light);font-family:ui-monospace,monospace}
+.ext-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ext-dot.on{background:#4a8c4a}
+.ext-dot.off{background:#c94a4a}
+.ext-tags{display:flex;flex-wrap:wrap;gap:4px}
+.ext-tag{
+  font-size:.7rem;padding:2px 8px;border-radius:10px;
+  background:rgba(180,120,80,.1);color:var(--terracotta);
+  font-family:ui-monospace,monospace;
+}
+.ext-tag.muted{background:var(--sand);color:var(--ink-light)}
+.ext-row{font-size:.76rem;color:var(--ink-light);display:flex;gap:6px}
+.ext-row strong{color:var(--ink);min-width:52px}
+.ext-empty-note{font-size:.8rem;color:var(--ink-light);padding:12px;text-align:center;
+  background:var(--sand);border-radius:var(--radius-sm)}
+
 /* ── Console Page ───────────────────────────────────────────────── */
 .console-full-page{display:flex;flex-direction:column;height:calc(100vh - var(--nav-h))}
 .console-toolbar{
@@ -1064,6 +1094,7 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
       <button class="page-tab" id="tabTrace" onclick="switchPage('trace')">Trace</button>
       <button class="page-tab" id="tabAssistant" onclick="switchPage('assistant')">Assistant</button>
       <button class="page-tab" id="tabExperience" onclick="switchPage('experience')">Experience</button>
+      <button class="page-tab" id="tabExtensions" onclick="switchPage('extensions')">Extensions</button>
     </div>
     <button class="btn btn-danger btn-sm" onclick="openClearModal()" title="清除题目数据，切换新题目" style="margin-left:8px">
       &#x1F5D1; 清除数据
@@ -1338,6 +1369,43 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
   </div>
   </div><!-- /page-experience -->
 
+  <!-- ═══════════════════════════ PAGE: Extensions ═══════════════════════════ -->
+  <div class="page" id="page-extensions">
+  <div class="dashboard-content">
+
+    <div class="section-title" style="margin-bottom:16px">
+      <h2 style="font-family:var(--font-serif);font-size:1.5rem;color:var(--ink)">扩展管理</h2>
+      <p style="color:var(--ink-light);font-size:.875rem;margin-top:4px">已加载的插件 / MCP 服务器 / Skills（只读视图；enable 开关写入 <code>config/plugins.toml</code>）</p>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:20px;align-items:center;flex-wrap:wrap">
+      <div id="ext-summary" style="font-size:.82rem;color:var(--ink-light)"></div>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="loadExtensions()">↻ 刷新</button>
+    </div>
+
+    <div class="ext-group">
+      <h3 class="ext-group-title">Plugins</h3>
+      <div id="ext-plugins" class="ext-grid"></div>
+    </div>
+
+    <div class="ext-group">
+      <h3 class="ext-group-title">MCP Servers</h3>
+      <div id="ext-mcp" class="ext-grid"></div>
+    </div>
+
+    <div class="ext-group">
+      <h3 class="ext-group-title">Skills</h3>
+      <div id="ext-skills" class="ext-grid"></div>
+    </div>
+
+    <div id="ext-empty" style="display:none;text-align:center;padding:48px;color:var(--ink-light)">
+      <div style="font-size:2rem;margin-bottom:8px">🧩</div>
+      <div>尚未加载任何扩展。在 <code>config/plugins.toml</code> 中启用插件、在 <code>config/mcp_servers.json</code> 中声明 MCP 服务器，或在 <code>config/skills/</code> 中放置 markdown 技能文件。</div>
+    </div>
+
+  </div>
+  </div><!-- /page-extensions -->
+
 </div><!-- /main -->
 
 <!-- ── Pip Install Modal ── -->
@@ -1404,8 +1472,73 @@ function switchPage(name) {
   document.getElementById(`tab${name.charAt(0).toUpperCase()+name.slice(1)}`).classList.add('active');
   if (name === 'assistant') syncChatStatus();
   if (name === 'experience') loadExperience();
+  if (name === 'extensions') loadExtensions();
   if (name === 'console' && !_consoleConnected) initConsole();
   if (name === 'trace') loadTrace();
+}
+
+/* ══════════════════════════════ Extensions page ═════════════════ */
+function _escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function _tagsHtml(items, muted){
+  if(!items || !items.length) return '<span class="ext-row" style="font-style:italic">—</span>';
+  return items.map(t=>`<span class="ext-tag${muted?' muted':''}">${_escapeHtml(t)}</span>`).join('');
+}
+async function loadExtensions(){
+  const summary = document.getElementById('ext-summary');
+  const plugEl = document.getElementById('ext-plugins');
+  const mcpEl  = document.getElementById('ext-mcp');
+  const skEl   = document.getElementById('ext-skills');
+  const empty  = document.getElementById('ext-empty');
+  summary.textContent = '加载中…';
+  try{
+    const d = await api('/api/extensions');
+    const total = (d.plugins||[]).length + (d.mcp_servers||[]).length + (d.skills||[]).length;
+    summary.innerHTML = `Plugins <strong>${(d.plugins||[]).length}</strong> · MCP <strong>${(d.mcp_servers||[]).length}</strong> · Skills <strong>${(d.skills||[]).length}</strong> · 工具 <strong>${d.tool_count||0}</strong> · 人格 <strong>${d.persona_count||0}</strong>`;
+    empty.style.display = total === 0 ? '' : 'none';
+
+    plugEl.innerHTML = (d.plugins||[]).length
+      ? d.plugins.map(p => `
+        <div class="ext-card">
+          <div class="ext-card-head">
+            <span class="ext-dot on" title="已加载"></span>
+            <span class="ext-card-name">${_escapeHtml(p.name)}</span>
+            <span class="ext-card-ver">v${_escapeHtml(p.version)}</span>
+          </div>
+          <div class="ext-row"><strong>工具</strong><div class="ext-tags">${_tagsHtml(p.tools)}</div></div>
+          <div class="ext-row"><strong>人格</strong><div class="ext-tags">${_tagsHtml(p.personas)}</div></div>
+          <div class="ext-row"><strong>技能</strong><div class="ext-tags">${_tagsHtml(p.skills)}</div></div>
+          <div class="ext-row"><strong>事件</strong><div class="ext-tags">${_tagsHtml(p.events, true)}</div></div>
+        </div>`).join('')
+      : '<div class="ext-empty-note">未启用任何插件。编辑 <code>config/plugins.toml</code> 中的 <code>enabled</code> 列表或在 <code>plugins/</code> 下放置非下划线开头的包。</div>';
+
+    mcpEl.innerHTML = (d.mcp_servers||[]).length
+      ? d.mcp_servers.map(s => `
+        <div class="ext-card">
+          <div class="ext-card-head">
+            <span class="ext-dot ${s.alive?'on':'off'}" title="${s.alive?'运行中':'已停止'}"></span>
+            <span class="ext-card-name">${_escapeHtml(s.name)}</span>
+          </div>
+          <div class="ext-row"><strong>工具</strong><div class="ext-tags">${_tagsHtml(s.tools)}</div></div>
+        </div>`).join('')
+      : '<div class="ext-empty-note">未声明 MCP 服务器。编辑 <code>config/mcp_servers.json</code> 添加 stdio 服务器。</div>';
+
+    skEl.innerHTML = (d.skills||[]).length
+      ? d.skills.map(s => `
+        <div class="ext-card">
+          <div class="ext-card-head">
+            <span class="ext-dot on"></span>
+            <span class="ext-card-name">${_escapeHtml(s.name)}</span>
+            <span class="ext-card-ver">${_escapeHtml(s.source||'')}</span>
+          </div>
+          <div class="ext-row" style="color:var(--ink)">${_escapeHtml(s.description||'')}</div>
+          <div class="ext-row"><strong>触发词</strong><div class="ext-tags">${_tagsHtml(s.triggers, true)}</div></div>
+        </div>`).join('')
+      : '<div class="ext-empty-note">未加载技能。在 <code>config/skills/*.md</code> 放置带 frontmatter 的 markdown 文件，或通过插件 <code>@skill</code> 注册。</div>';
+
+  }catch(err){
+    summary.textContent = '加载失败：' + (err.message || err);
+    plugEl.innerHTML = mcpEl.innerHTML = skEl.innerHTML = '';
+  }
 }
 
 /* ══════════════════════════════ API helpers ════════════════════ */

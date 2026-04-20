@@ -861,6 +861,54 @@ async def get_personas():
     return {"personas": list_personas(), "default": default_persona_id()}
 
 
+@app.get("/api/extensions")
+async def get_extensions():
+    """Return loaded plugins / MCP servers / skills for the UI ext panel."""
+    from agents.extensions import get_registry
+    reg = get_registry()
+
+    plugins = [
+        {
+            "name": p.name,
+            "version": p.version,
+            "tools": [t.meta.name for t in reg.tools.values() if t.source == f"plugin:{p.name}"],
+            "personas": [pe.meta.id for pe in reg.personas.values() if pe.source == f"plugin:{p.name}"],
+            "skills": [s.skill.name for s in reg.skills if s.skill.source == f"plugin:{p.name}"],
+            "events": sorted({e.kind for e in reg.event_handlers if e.source == f"plugin:{p.name}"}),
+        }
+        for p in reg.plugins
+    ]
+
+    mcp_servers = []
+    if reg.mcp is not None:
+        for name, srv in reg.mcp.servers.items():
+            mcp_servers.append({
+                "name": name,
+                "tools": [t.get("name", "") for t in srv.tools],
+                "alive": srv.proc is not None and srv.proc.poll() is None,
+            })
+
+    skills = [
+        {"name": s.skill.name, "description": s.skill.description,
+         "triggers": list(s.skill.triggers), "source": s.skill.source}
+        for s in reg.skills
+    ]
+
+    # Enabled list from config (separate from what actually loaded)
+    from agents.extensions.registry import PLUGINS_CONFIG, _load_toml
+    cfg = _load_toml(PLUGINS_CONFIG)
+    enabled_cfg = cfg.get("enabled")
+
+    return {
+        "plugins": plugins,
+        "mcp_servers": mcp_servers,
+        "skills": skills,
+        "enabled_config": enabled_cfg,
+        "tool_count": len(reg.tools),
+        "persona_count": len(reg.personas),
+    }
+
+
 @app.get("/api/sessions")
 async def list_chat_sessions():
     from agents.conversation_mgr import list_sessions
