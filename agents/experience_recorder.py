@@ -323,10 +323,82 @@ _PHASE_NAME = {
 
 # ─────────────────────────────────── knowledge injection helper ──
 
-def get_relevant_experience(phase: str, max_entries: int = 3, max_chars: int = 4000) -> str:
+_TOKEN_RE = re.compile(r"[\w\u4e00-\u9fff]+", re.UNICODE)
+
+
+def _tokenize(text: str) -> list[str]:
+    """Split on word chars + CJK; keep tokens of length >= 2 to skip stopword-ish noise."""
+    if not text:
+        return []
+    return [t for t in _TOKEN_RE.findall(text.lower()) if len(t) >= 2]
+
+
+def _score_entry(entry: dict, query_tokens: list[str]) -> int:
+    """Count how many query tokens appear in the serialized entry (substring match).
+
+    Each token contributes 1, regardless of repetition — avoids a single noisy
+    field dominating the score. Problem/model_type matches are weighted 2x.
     """
-    Return formatted experience entries relevant to the given phase
-    for injection into LLM prompts.
+    if not query_tokens:
+        return 0
+    body = json.dumps(
+        {k: v for k, v in entry.items() if k not in ("id", "timestamp")},
+        ensure_ascii=False,
+    ).lower()
+    headline = " ".join(
+        str(entry.get(k, "")) for k in ("problem", "model_type", "problem_type")
+    ).lower()
+    score = 0
+    for tok in set(query_tokens):
+        if tok in headline:
+            score += 2
+        elif tok in body:
+            score += 1
+    return score
+
+
+def _derive_query_from_context() -> str:
+    """Pull keywords from the current competition context if the caller didn't pass one."""
+    try:
+        ctx = load_context()
+    except Exception:
+        return ""
+    comp = ctx.get("competition", {}) if isinstance(ctx, dict) else {}
+    parts: list[str] = []
+    kws = comp.get("keywords") or []
+    if isinstance(kws, list):
+        parts.extend(str(k) for k in kws)
+    for key in ("selected_problem", "problem_type"):
+        v = comp.get(key)
+        if v:
+            parts.append(str(v))
+    # Modeling hints also useful for P3/P4 scoring
+    model = ctx.get("modeling", {}) if isinstance(ctx, dict) else {}
+    if isinstance(model, dict):
+        mt = model.get("model_type") or model.get("primary_model", {}).get("model_name")
+        if mt:
+            parts.append(str(mt))
+    return " ".join(parts)
+
+
+def get_relevant_experience(
+    phase: str,
+    max_entries: int = 3,
+    max_chars: int = 4000,
+    query: str | None = None,
+) -> str:
+    """Return formatted experience entries relevant to the given phase.
+
+    Ranking:
+      1. Filter by phase-relevance map.
+      2. If `query` (or derivable from context) yields tokens, rank by
+         keyword-match score (desc) then by recency (desc). Ties broken by
+         recency so fresher entries win when scores are equal.
+      3. Otherwise fall back to the previous behavior: take the most recent N.
+
+    Backward-compatible: existing callers that don't pass `query` still get
+    meaningful results because keywords are auto-derived from context.json.
+    Empty log → empty string (unchanged).
     """
     if not EXPERIENCE_LOG.exists():
         return ""
@@ -337,8 +409,9 @@ def get_relevant_experience(phase: str, max_entries: int = 3, max_chars: int = 4
         return ""
 
     entries = log.get("entries", [])
+    if not entries:
+        return ""
 
-    # Phase relevance mapping: which past phases are useful for current phase
     relevance = {
         "P2": ["P1", "P2"],
         "P3": ["P2", "P3"],
@@ -346,17 +419,34 @@ def get_relevant_experience(phase: str, max_entries: int = 3, max_chars: int = 4
         "P5": ["P4", "P5"],
     }
     relevant_phases = relevance.get(phase, [phase])
-
-    # Filter and take most recent N
     filtered = [e for e in entries if e.get("phase") in relevant_phases]
-    filtered = filtered[-max_entries:]
-
     if not filtered:
         return ""
 
-    lines = [f"# 历次运行经验（{len(filtered)} 条，供参考）"]
+    # Build query: explicit > context-derived > none
+    q_text = query if query is not None else _derive_query_from_context()
+    query_tokens = _tokenize(q_text)
+
+    if query_tokens:
+        # Attach recency index so we can break ties deterministically.
+        scored = [
+            (_score_entry(e, query_tokens), idx, e)
+            for idx, e in enumerate(filtered)
+        ]
+        # Keep only positive scores when at least one entry matches; otherwise
+        # fall back to recency so we don't suppress all history on a bad query.
+        if any(s > 0 for s, _, _ in scored):
+            scored.sort(key=lambda t: (-t[0], -t[1]))
+            chosen = [e for _, _, e in scored[:max_entries]]
+        else:
+            chosen = filtered[-max_entries:][::-1]
+    else:
+        # No query → original "most recent N, newest first" behavior.
+        chosen = filtered[-max_entries:][::-1]
+
+    lines = [f"# 历次运行经验（{len(chosen)} 条，供参考）"]
     total = 0
-    for e in reversed(filtered):   # newest first
+    for e in chosen:
         entry_text = (
             f"\n## [{e['phase']}] {e.get('problem', '')}  "
             f"({e.get('timestamp', '')[:10]})\n"
