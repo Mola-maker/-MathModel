@@ -338,6 +338,14 @@ def _score_entry(entry: dict, query_tokens: list[str]) -> int:
 
     Each token contributes 1, regardless of repetition — avoids a single noisy
     field dominating the score. Problem/model_type matches are weighted 2x.
+
+    User annotations add a small boost on top of keyword score so highly-rated
+    or starred entries surface first when scores are close:
+      - rating (0-5):    +rating
+      - starred (bool):  +3
+    The boost is additive rather than multiplicative so a 5-star entry with
+    zero keyword hits still can't outrank a direct-match entry — user ratings
+    guide, not override, relevance.
     """
     if not query_tokens:
         return 0
@@ -354,6 +362,16 @@ def _score_entry(entry: dict, query_tokens: list[str]) -> int:
             score += 2
         elif tok in body:
             score += 1
+
+    # User-annotation boost
+    try:
+        rating = int(entry.get("rating") or 0)
+        if 0 <= rating <= 5:
+            score += rating
+    except (TypeError, ValueError):
+        pass
+    if entry.get("starred"):
+        score += 3
     return score
 
 

@@ -42,7 +42,7 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 
 try:
     from fastapi import FastAPI, HTTPException, Request
-    from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+    from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
     from fastapi.staticfiles import StaticFiles
     import uvicorn
 except ImportError:
@@ -1397,6 +1397,54 @@ async def get_experience(phase: str = "", limit: int = 20):
         "total": len(entries),
         "phases": sorted({e.get("phase", "") for e in data.get("entries", [])}),
     }
+
+
+@app.post("/api/experience/rate")
+async def rate_experience(request: Request):
+    """Update an experience entry's user rating / star flag.
+
+    Body: {"id": "<entry_id>", "rating": 0-5, "starred": bool}
+    Both rating and starred are optional — only provided fields are updated.
+    High-rated / starred entries get a ranking boost in get_relevant_experience.
+    """
+    if not EXPERIENCE_LOG.exists():
+        return JSONResponse({"ok": False, "error": "experience log missing"}, status_code=404)
+
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"ok": False, "error": "invalid JSON body"}, status_code=400)
+
+    entry_id = str(body.get("id") or "").strip()
+    if not entry_id:
+        return JSONResponse({"ok": False, "error": "missing id"}, status_code=400)
+
+    try:
+        data = json.loads(EXPERIENCE_LOG.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return JSONResponse({"ok": False, "error": f"corrupted log: {exc}"}, status_code=500)
+
+    entries = data.get("entries", [])
+    target = next((e for e in entries if str(e.get("id")) == entry_id), None)
+    if target is None:
+        return JSONResponse({"ok": False, "error": f"no entry with id={entry_id}"}, status_code=404)
+
+    if "rating" in body:
+        try:
+            r = int(body["rating"])
+        except (TypeError, ValueError):
+            return JSONResponse({"ok": False, "error": "rating must be int 0-5"}, status_code=400)
+        if not 0 <= r <= 5:
+            return JSONResponse({"ok": False, "error": "rating out of range"}, status_code=400)
+        target["rating"] = r
+    if "starred" in body:
+        target["starred"] = bool(body["starred"])
+
+    EXPERIENCE_LOG.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8",
+    )
+    return {"ok": True, "id": entry_id,
+            "rating": target.get("rating"), "starred": target.get("starred", False)}
 
 
 # ─────────────────────────────────────────────────────── entry ──
