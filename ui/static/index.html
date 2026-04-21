@@ -1005,6 +1005,245 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
   100% { background: transparent; }
 }
 .copy-flash { animation: copyFlash .6s ease; }
+
+/* ════════════════════════════════════════════════════════════════════
+   ═══════════════  UI UPGRADE — PR-1 (theme, blocks, fx)  ═══════════
+   ════════════════════════════════════════════════════════════════════ */
+
+/* 5 themes via [data-theme] on <html>. The default (no attr) stays parchment. */
+html[data-theme="dark"] {
+  --parchment: #1a1a1b; --ivory: #232324; --white: #2a2a2c; --sand: #33322f;
+  --near-black: #ece9e0; --dark-surface: #0f0f10;
+  --terracotta: #e08a66; --coral: #f09878;
+  --charcoal: #d6d3cb; --olive: #b5b1a6; --stone: #8e8a80; --silver: #65625b;
+  --border-cream: #2a2a2c; --border-warm: #36352f; --border-dark: #0b0b0c;
+  --ring-warm: #3c3b36;
+}
+html[data-theme="forest"] {
+  --parchment: #edf2ec; --ivory: #f6f9f4; --white: #ffffff; --sand: #d8e0d4;
+  --near-black: #14211c; --dark-surface: #223028;
+  --terracotta: #5f8d6a; --coral: #7aa882;
+  --charcoal: #304038; --olive: #4f6056; --stone: #778478; --silver: #a7b5a6;
+  --border-cream: #dbe2d7; --border-warm: #c7d1c1; --border-dark: #2a3a32;
+  --ring-warm: #bccbbb; --success: #3e7c4a; --warning: #a2722b;
+}
+html[data-theme="ocean"] {
+  --parchment: #eaf1f6; --ivory: #f4f8fb; --white: #ffffff; --sand: #d7e2ec;
+  --near-black: #0f1c2a; --dark-surface: #1b2c40;
+  --terracotta: #3d7fa8; --coral: #5a97bd;
+  --charcoal: #2d4762; --olive: #4e6882; --stone: #78879a; --silver: #aab6c4;
+  --border-cream: #d9e3ec; --border-warm: #c4d2de; --border-dark: #203449;
+  --ring-warm: #b9c7d4;
+}
+html[data-theme="sunset"] {
+  --parchment: #fbefe4; --ivory: #fff6ec; --white: #ffffff; --sand: #f2dec7;
+  --near-black: #2d1a12; --dark-surface: #4a2a1c;
+  --terracotta: #d94e3d; --coral: #ef7950;
+  --charcoal: #5e3725; --olive: #8b5234; --stone: #a57a5f; --silver: #c9a992;
+  --border-cream: #f1dcc3; --border-warm: #e4c8a8; --border-dark: #5a2e1a;
+  --ring-warm: #debfa1;
+}
+
+/* Smooth theme transition on color-ish properties */
+html, body, .sidebar, .nav, .page, .phase-card, .kb-card, .exp-card, .ext-card, .modal,
+.btn, .cfg-input, .cfg-select, .sidebar-section, .sidebar-logs {
+  transition: background-color .35s ease, color .35s ease, border-color .35s ease;
+}
+
+/* Custom background layer (body::before so content stays crisp) */
+body {
+  position: relative;
+  --bg-image: none;
+  --bg-blur: 0px;
+  --bg-opacity: 0.35;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: -1;
+  background-image: var(--bg-image);
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+  filter: blur(var(--bg-blur));
+  opacity: var(--bg-opacity);
+  pointer-events: none;
+  transform: scale(1.05);  /* avoid blurred edges */
+  transition: opacity .3s, filter .3s;
+}
+body.has-bg { background-color: transparent; }
+body.has-bg .nav, body.has-bg .sidebar,
+body.has-bg .phase-card, body.has-bg .modal, body.has-bg .exp-card,
+body.has-bg .kb-card, body.has-bg .ext-card {
+  backdrop-filter: saturate(1.15) blur(8px);
+  background-color: color-mix(in srgb, var(--ivory) 85%, transparent);
+}
+
+/* ── Collapsible sidebar blocks ───────────────────────────────────── */
+.sidebar-section.collapsible { padding: 0; cursor: default; }
+.sidebar-section.collapsible > .sbs-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px; cursor: pointer; user-select: none;
+  border-bottom: 1px solid transparent;
+  transition: background .15s, border-color .2s;
+}
+.sidebar-section.collapsible > .sbs-head:hover { background: rgba(0,0,0,.025); }
+.sidebar-section.collapsible > .sbs-head .sbs-title {
+  font-size: .72rem; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--stone);
+  display: flex; align-items: center; gap: 8px;
+}
+.sidebar-section.collapsible > .sbs-head .sbs-icon { font-size: .9rem; opacity: .85; }
+.sidebar-section.collapsible > .sbs-head .sbs-chev {
+  color: var(--stone); font-size: .75rem;
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+}
+.sidebar-section.collapsible.open > .sbs-head .sbs-chev { transform: rotate(90deg); }
+.sidebar-section.collapsible > .sbs-body {
+  overflow: hidden; max-height: 0;
+  transition: max-height .3s cubic-bezier(.4,0,.2,1);
+}
+.sidebar-section.collapsible.open > .sbs-body { max-height: 2000px; }
+.sidebar-section.collapsible > .sbs-body > .sbs-inner { padding: 4px 20px 18px; }
+.sidebar-section.collapsible.open > .sbs-head {
+  border-bottom-color: var(--border-cream);
+  background: color-mix(in srgb, var(--terracotta) 6%, transparent);
+}
+
+/* Theme swatches */
+.theme-swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 4px; }
+.theme-swatch {
+  aspect-ratio: 1; border-radius: 10px; cursor: pointer; border: 2px solid transparent;
+  position: relative; transition: transform .18s, border-color .18s, box-shadow .18s;
+}
+.theme-swatch:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+.theme-swatch.active { border-color: var(--terracotta); box-shadow: 0 0 0 2px color-mix(in srgb, var(--terracotta) 30%, transparent); }
+.theme-swatch .label {
+  position: absolute; bottom: -18px; left: 0; right: 0; text-align: center;
+  font-size: .65rem; color: var(--stone); font-weight: 600;
+}
+.theme-swatch[data-theme="parchment"] { background: linear-gradient(135deg, #f5f4ed 50%, #c96442 50%); }
+.theme-swatch[data-theme="dark"]      { background: linear-gradient(135deg, #1a1a1b 50%, #e08a66 50%); }
+.theme-swatch[data-theme="forest"]    { background: linear-gradient(135deg, #edf2ec 50%, #5f8d6a 50%); }
+.theme-swatch[data-theme="ocean"]     { background: linear-gradient(135deg, #eaf1f6 50%, #3d7fa8 50%); }
+.theme-swatch[data-theme="sunset"]    { background: linear-gradient(135deg, #fbefe4 50%, #d94e3d 50%); }
+.theme-swatches { padding-bottom: 22px; }
+
+/* Background controls */
+.bg-controls { display: flex; flex-direction: column; gap: 10px; }
+.bg-controls .row { display: flex; align-items: center; gap: 8px; font-size: .74rem; color: var(--ink-light); }
+.bg-controls input[type="range"] {
+  flex: 1; accent-color: var(--terracotta); height: 4px;
+}
+.bg-drop {
+  border: 1.5px dashed var(--border-warm); border-radius: 8px;
+  padding: 14px; text-align: center; cursor: pointer;
+  font-size: .8rem; color: var(--stone);
+  transition: border-color .2s, background .2s, color .2s;
+}
+.bg-drop:hover, .bg-drop.dragover {
+  border-color: var(--terracotta); background: color-mix(in srgb, var(--terracotta) 4%, transparent);
+  color: var(--terracotta);
+}
+.bg-preview {
+  width: 100%; aspect-ratio: 16/9; border-radius: 8px;
+  background-size: cover; background-position: center;
+  border: 1px solid var(--border-warm);
+  display: none;
+}
+.bg-preview.has-image { display: block; }
+
+/* Phase card running-pulse animation */
+@keyframes phasePulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--terracotta) 40%, transparent); }
+  50%      { box-shadow: 0 0 0 8px color-mix(in srgb, var(--terracotta) 0%, transparent); }
+}
+.phase-card.running {
+  animation: phasePulse 1.6s ease-in-out infinite;
+  border-color: var(--terracotta) !important;
+}
+
+/* Fade-in for freshly rendered data blocks */
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in-up { animation: fadeInUp .35s ease both; }
+
+/* Button ripple */
+.btn { position: relative; overflow: hidden; }
+.btn .ripple {
+  position: absolute; border-radius: 50%;
+  background: color-mix(in srgb, currentColor 35%, transparent);
+  transform: scale(0); animation: rippleFx .55s ease-out;
+  pointer-events: none;
+}
+@keyframes rippleFx {
+  to { transform: scale(2.5); opacity: 0; }
+}
+
+/* ── Toast notification system ─────────────────────────────────────── */
+.toast-stack {
+  position: fixed; bottom: 20px; right: 20px; z-index: 3000;
+  display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+  max-width: 360px;
+}
+.toast {
+  background: var(--ivory); color: var(--near-black);
+  border-left: 4px solid var(--terracotta);
+  padding: 12px 16px 12px 14px; border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  font-size: .86rem; line-height: 1.4;
+  pointer-events: auto; cursor: pointer;
+  animation: toastIn .3s cubic-bezier(.34,1.56,.64,1);
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.toast.closing { animation: toastOut .25s ease forwards; }
+.toast .toast-icon { flex-shrink: 0; font-size: 1.1rem; margin-top: 1px; }
+.toast .toast-body { flex: 1; }
+.toast .toast-title { font-weight: 600; margin-bottom: 2px; font-size: .88rem; }
+.toast.info    { border-left-color: #3d7fa8; }
+.toast.success { border-left-color: var(--success); }
+.toast.warn    { border-left-color: var(--warning); }
+.toast.error   { border-left-color: var(--error); }
+@keyframes toastIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes toastOut { to { opacity: 0; transform: translateX(24px); } }
+
+/* ── Command palette (Cmd+K) ──────────────────────────────────────── */
+.cmdp-backdrop {
+  position: fixed; inset: 0; z-index: 2500;
+  background: rgba(0,0,0,.45); backdrop-filter: blur(6px);
+  display: none; align-items: flex-start; justify-content: center;
+  padding-top: 14vh;
+}
+.cmdp-backdrop.visible { display: flex; animation: fadeInUp .18s; }
+.cmdp {
+  width: min(560px, 92vw);
+  background: var(--ivory); border-radius: 12px;
+  box-shadow: 0 24px 72px rgba(0,0,0,.35);
+  overflow: hidden; max-height: 70vh; display: flex; flex-direction: column;
+}
+.cmdp-input {
+  border: none; outline: none; background: transparent;
+  padding: 18px 22px; font-size: 1.05rem; color: var(--near-black);
+  border-bottom: 1px solid var(--border-cream);
+  font-family: var(--font-sans);
+}
+.cmdp-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+.cmdp-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 22px; cursor: pointer; font-size: .9rem;
+  color: var(--ink-light);
+}
+.cmdp-item:hover, .cmdp-item.sel {
+  background: color-mix(in srgb, var(--terracotta) 10%, transparent);
+  color: var(--near-black);
+}
+.cmdp-item .cmdp-ic { width: 22px; text-align: center; }
+.cmdp-item .cmdp-hint { margin-left: auto; font-size: .72rem; color: var(--stone); font-family: var(--font-mono); }
+.cmdp-empty { padding: 24px; text-align: center; color: var(--stone); font-size: .86rem; }
+
+/* ── Keyboard shortcuts cheatsheet ────────────────────────────────── */
+.kbd { display: inline-block; padding: 1px 6px; font-family: var(--font-mono);
+  font-size: .72rem; border: 1px solid var(--border-warm);
+  border-bottom-width: 2px; border-radius: 4px; background: var(--parchment); color: var(--ink); }
+.shortcut-grid { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: .84rem; }
+.shortcut-grid > div:nth-child(odd) { text-align: right; }
+
 </style>
 </head>
 <body>
@@ -1018,38 +1257,109 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
 
   <div class="sidebar-body" id="sidebarBody">
 
-    <!-- Model Config -->
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Model Configuration</div>
-      <div id="modelConfigPanel">
-        <p style="font-size:.8rem;color:var(--stone)">Loading...</p>
+    <!-- Appearance (theme + background) -->
+    <div class="sidebar-section collapsible" data-sbs-key="appearance">
+      <div class="sbs-head" onclick="toggleSbs(this)">
+        <span class="sbs-title"><span class="sbs-icon">🎨</span>Appearance</span>
+        <span class="sbs-chev">▶</span>
       </div>
+      <div class="sbs-body"><div class="sbs-inner">
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);margin-bottom:10px">主题色 Theme</div>
+        <div class="theme-swatches" id="themeSwatches">
+          <div class="theme-swatch" data-theme="parchment" onclick="setTheme('parchment')" title="Parchment"><div class="label">暖纸</div></div>
+          <div class="theme-swatch" data-theme="dark"      onclick="setTheme('dark')"      title="Dark"     ><div class="label">暗夜</div></div>
+          <div class="theme-swatch" data-theme="forest"    onclick="setTheme('forest')"    title="Forest"   ><div class="label">墨绿</div></div>
+          <div class="theme-swatch" data-theme="ocean"     onclick="setTheme('ocean')"     title="Ocean"    ><div class="label">海洋</div></div>
+          <div class="theme-swatch" data-theme="sunset"    onclick="setTheme('sunset')"    title="Sunset"   ><div class="label">夕阳</div></div>
+        </div>
+
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);margin:14px 0 8px">自定义背景 Background</div>
+        <div class="bg-controls">
+          <label class="bg-drop" id="bgDrop">
+            <input type="file" accept="image/*" style="display:none" id="bgFileInput">
+            <div id="bgDropLabel">点击或拖入图片</div>
+          </label>
+          <div class="bg-preview" id="bgPreview"></div>
+          <div class="row">
+            <span style="min-width:40px">模糊</span>
+            <input type="range" id="bgBlurRange" min="0" max="40" step="1" value="0">
+            <span id="bgBlurVal" style="min-width:32px;text-align:right">0px</span>
+          </div>
+          <div class="row">
+            <span style="min-width:40px">透明</span>
+            <input type="range" id="bgOpacityRange" min="0" max="100" step="5" value="35">
+            <span id="bgOpacityVal" style="min-width:32px;text-align:right">35%</span>
+          </div>
+          <button class="btn btn-sm btn-secondary" onclick="clearBackground()" style="width:100%">清除背景</button>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- Model Config -->
+    <div class="sidebar-section collapsible" data-sbs-key="model">
+      <div class="sbs-head" onclick="toggleSbs(this)">
+        <span class="sbs-title"><span class="sbs-icon">🤖</span>Model Configuration</span>
+        <span class="sbs-chev">▶</span>
+      </div>
+      <div class="sbs-body"><div class="sbs-inner">
+        <div id="modelConfigPanel">
+          <p style="font-size:.8rem;color:var(--stone)">Loading...</p>
+        </div>
+      </div></div>
     </div>
 
     <!-- Pipeline Settings -->
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Pipeline Settings</div>
-      <div class="cfg-row">
-        <label class="cfg-label">Max Rollbacks</label>
-        <input type="number" class="cfg-input" id="cfgMaxRollbacks" min="0" max="10" value="2">
+    <div class="sidebar-section collapsible" data-sbs-key="pipeline">
+      <div class="sbs-head" onclick="toggleSbs(this)">
+        <span class="sbs-title"><span class="sbs-icon">⚙</span>Pipeline Settings</span>
+        <span class="sbs-chev">▶</span>
       </div>
-      <div class="cfg-row">
-        <label class="cfg-label">Max Heal Iterations</label>
-        <input type="number" class="cfg-input" id="cfgMaxHeal" min="1" max="10" value="3">
+      <div class="sbs-body"><div class="sbs-inner">
+        <div class="cfg-row">
+          <label class="cfg-label">Max Rollbacks</label>
+          <input type="number" class="cfg-input" id="cfgMaxRollbacks" min="0" max="10" value="2">
+        </div>
+        <div class="cfg-row">
+          <label class="cfg-label">Max Heal Iterations</label>
+          <input type="number" class="cfg-input" id="cfgMaxHeal" min="1" max="10" value="3">
+        </div>
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--stone);margin-top:14px;margin-bottom:8px">Token Limits per Task</div>
+        <div id="tokenLimitsPanel">
+          <!-- injected by JS -->
+        </div>
+      </div></div>
+    </div>
+
+    <!-- Shortcuts -->
+    <div class="sidebar-section collapsible" data-sbs-key="shortcuts">
+      <div class="sbs-head" onclick="toggleSbs(this)">
+        <span class="sbs-title"><span class="sbs-icon">⌨</span>Shortcuts</span>
+        <span class="sbs-chev">▶</span>
       </div>
-      <div class="sidebar-section-title" style="margin-top:14px">Token Limits per Task</div>
-      <div id="tokenLimitsPanel">
-        <!-- injected by JS -->
-      </div>
+      <div class="sbs-body"><div class="sbs-inner">
+        <div class="shortcut-grid">
+          <div><span class="kbd">⌘</span>+<span class="kbd">K</span></div><div>命令面板</div>
+          <div><span class="kbd">?</span></div><div>显示/隐藏快捷键</div>
+          <div><span class="kbd">/</span></div><div>聚焦对话输入框</div>
+          <div><span class="kbd">1</span>–<span class="kbd">4</span></div><div>切换顶部 Tab</div>
+          <div><span class="kbd">R</span></div><div>刷新状态</div>
+          <div><span class="kbd">Esc</span></div><div>关闭弹窗 / 侧栏</div>
+        </div>
+      </div></div>
     </div>
 
     <!-- Live Logs -->
-    <div class="sidebar-section">
-      <div class="sidebar-section-title" style="display:flex;justify-content:space-between">
-        <span>Live Logs</span>
-        <button class="btn btn-sm btn-secondary" onclick="refreshSidebarLogs()" style="font-size:.7rem;padding:2px 8px">↻</button>
+    <div class="sidebar-section collapsible" data-sbs-key="logs">
+      <div class="sbs-head" onclick="toggleSbs(this)">
+        <span class="sbs-title"><span class="sbs-icon">📜</span>Live Logs</span>
+        <span style="display:flex;gap:6px;align-items:center">
+          <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();refreshSidebarLogs()" style="font-size:.7rem;padding:2px 8px">↻</button>
+          <span class="sbs-chev">▶</span>
+        </span>
       </div>
-      <div class="sidebar-logs" id="sidebarLogs">(loading...)</div>
+      <div class="sbs-body"><div class="sbs-inner">
+        <div class="sidebar-logs" id="sidebarLogs">(loading...)</div>
+      </div></div>
     </div>
 
   </div>
@@ -1061,6 +1371,41 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
 </aside>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ── Toast stack ── -->
+<div class="toast-stack" id="toastStack"></div>
+
+<!-- ── Command palette ── -->
+<div class="cmdp-backdrop" id="cmdpBackdrop" onclick="if(event.target===this)closeCmdPalette()">
+  <div class="cmdp" role="dialog" aria-label="Command palette">
+    <input class="cmdp-input" id="cmdpInput" placeholder="搜索页面、操作、主题… (↑↓ 选择, Enter 执行, Esc 关闭)" autocomplete="off">
+    <div class="cmdp-list" id="cmdpList"></div>
+  </div>
+</div>
+
+<!-- ── Keyboard cheatsheet ── -->
+<div class="modal-backdrop" id="kbHelpModal" onclick="if(event.target===this)closeKbHelp()">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title"><span>⌨</span>键盘快捷键</div>
+    <div class="modal-body">
+      <div class="shortcut-grid">
+        <div><span class="kbd">⌘</span>/<span class="kbd">Ctrl</span>+<span class="kbd">K</span></div><div>命令面板</div>
+        <div><span class="kbd">?</span></div><div>此帮助窗口</div>
+        <div><span class="kbd">/</span></div><div>聚焦对话输入框</div>
+        <div><span class="kbd">1</span></div><div>Dashboard</div>
+        <div><span class="kbd">2</span></div><div>Assistant</div>
+        <div><span class="kbd">3</span></div><div>Experience</div>
+        <div><span class="kbd">4</span></div><div>Extensions</div>
+        <div><span class="kbd">R</span></div><div>刷新状态</div>
+        <div><span class="kbd">S</span></div><div>打开 / 关闭设置侧栏</div>
+        <div><span class="kbd">Esc</span></div><div>关闭弹窗</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="closeKbHelp()">好的</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Clear Workspace Modal ── -->
 <div class="modal-backdrop" id="clearModal" onclick="if(event.target===this)closeClearModal()">
@@ -3557,6 +3902,303 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', startPipelineEvents);
 } else {
   startPipelineEvents();
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   ═══════════════  UI UPGRADE — PR-1 runtime  ═══════════════════════
+   ════════════════════════════════════════════════════════════════════ */
+
+// ── Theme ────────────────────────────────────────────────────────
+const THEME_KEY = 'mcm.theme';
+const VALID_THEMES = ['parchment','dark','forest','ocean','sunset'];
+function setTheme(name) {
+  if (!VALID_THEMES.includes(name)) name = 'parchment';
+  if (name === 'parchment') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', name);
+  }
+  try { localStorage.setItem(THEME_KEY, name); } catch(_){}
+  document.querySelectorAll('.theme-swatch').forEach(el => {
+    el.classList.toggle('active', el.dataset.theme === name);
+  });
+}
+function restoreTheme() {
+  let t = 'parchment';
+  try { t = localStorage.getItem(THEME_KEY) || 'parchment'; } catch(_){}
+  setTheme(t);
+}
+
+// ── Custom background ────────────────────────────────────────────
+const BG_KEY = 'mcm.bg';
+function applyBgState(state) {
+  const b = document.body;
+  if (state && state.image) {
+    b.style.setProperty('--bg-image', `url(${state.image})`);
+    b.classList.add('has-bg');
+    const prev = document.getElementById('bgPreview');
+    if (prev) { prev.style.backgroundImage = `url(${state.image})`; prev.classList.add('has-image'); }
+  } else {
+    b.style.setProperty('--bg-image', 'none');
+    b.classList.remove('has-bg');
+    const prev = document.getElementById('bgPreview');
+    if (prev) { prev.style.backgroundImage = ''; prev.classList.remove('has-image'); }
+  }
+  const blur = (state && state.blur != null) ? state.blur : 0;
+  const opacity = (state && state.opacity != null) ? state.opacity : 35;
+  b.style.setProperty('--bg-blur', blur + 'px');
+  b.style.setProperty('--bg-opacity', (opacity/100).toFixed(2));
+  const br = document.getElementById('bgBlurRange');
+  const brv = document.getElementById('bgBlurVal');
+  if (br) br.value = blur;
+  if (brv) brv.textContent = blur + 'px';
+  const or = document.getElementById('bgOpacityRange');
+  const orv = document.getElementById('bgOpacityVal');
+  if (or) or.value = opacity;
+  if (orv) orv.textContent = opacity + '%';
+}
+function getBgState() {
+  try { return JSON.parse(localStorage.getItem(BG_KEY) || '{}'); }
+  catch(_) { return {}; }
+}
+function saveBgState(patch) {
+  const cur = getBgState();
+  const next = Object.assign({}, cur, patch);
+  try { localStorage.setItem(BG_KEY, JSON.stringify(next)); } catch(e) {
+    toast('保存失败（图片可能过大，试试压缩一下）', 'error');
+  }
+  applyBgState(next);
+}
+function clearBackground() {
+  try { localStorage.removeItem(BG_KEY); } catch(_){}
+  applyBgState({});
+  toast('背景已清除', 'info');
+}
+function wireBgControls() {
+  const drop = document.getElementById('bgDrop');
+  const input = document.getElementById('bgFileInput');
+  if (drop && input) {
+    drop.addEventListener('click', () => input.click());
+    drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('dragover'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault(); drop.classList.remove('dragover');
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) readBgFile(f);
+    });
+    input.addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (f) readBgFile(f);
+    });
+  }
+  const blur = document.getElementById('bgBlurRange');
+  if (blur) blur.addEventListener('input', () => saveBgState({ blur: +blur.value }));
+  const op = document.getElementById('bgOpacityRange');
+  if (op) op.addEventListener('input', () => saveBgState({ opacity: +op.value }));
+}
+function readBgFile(f) {
+  if (!f.type.startsWith('image/')) { toast('请选择图片文件', 'warn'); return; }
+  if (f.size > 5 * 1024 * 1024) { toast('图片超过 5MB，localStorage 可能装不下', 'warn'); }
+  const reader = new FileReader();
+  reader.onload = () => saveBgState({ image: reader.result });
+  reader.onerror = () => toast('读取文件失败', 'error');
+  reader.readAsDataURL(f);
+}
+
+// ── Collapsible sidebar blocks ──────────────────────────────────
+const SBS_KEY = 'mcm.sidebar.open';
+function getSbsState() {
+  try { return JSON.parse(localStorage.getItem(SBS_KEY) || '{}'); } catch(_) { return {}; }
+}
+function saveSbsState(s) { try { localStorage.setItem(SBS_KEY, JSON.stringify(s)); } catch(_){} }
+function toggleSbs(headEl) {
+  const sec = headEl.closest('.sidebar-section');
+  if (!sec) return;
+  sec.classList.toggle('open');
+  const s = getSbsState();
+  s[sec.dataset.sbsKey] = sec.classList.contains('open');
+  saveSbsState(s);
+}
+function restoreSbs() {
+  const s = getSbsState();
+  const defaults = { appearance: true, model: true, pipeline: false, shortcuts: false, logs: false };
+  document.querySelectorAll('.sidebar-section.collapsible').forEach(sec => {
+    const key = sec.dataset.sbsKey;
+    const open = (key in s) ? !!s[key] : !!defaults[key];
+    sec.classList.toggle('open', open);
+  });
+}
+
+// ── Toast system ────────────────────────────────────────────────
+const TOAST_ICON = { info:'ℹ', success:'✓', warn:'!', error:'✕' };
+function toast(msg, level, opts) {
+  level = level || 'info'; opts = opts || {};
+  const stack = document.getElementById('toastStack');
+  if (!stack) { console.log('[toast]', level, msg); return; }
+  const el = document.createElement('div');
+  el.className = 'toast ' + level;
+  el.innerHTML = `<div class="toast-icon">${TOAST_ICON[level] || 'ℹ'}</div>
+    <div class="toast-body">${opts.title ? `<div class="toast-title">${opts.title}</div>` : ''}${msg}</div>`;
+  el.addEventListener('click', () => dismiss(el));
+  stack.appendChild(el);
+  const dur = opts.duration != null ? opts.duration : (level === 'error' ? 6000 : 3500);
+  const t = setTimeout(() => dismiss(el), dur);
+  function dismiss(x){ clearTimeout(t); x.classList.add('closing'); setTimeout(() => x.remove(), 250); }
+}
+window.toast = toast;
+
+// ── Button ripple ───────────────────────────────────────────────
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn');
+  if (!btn || btn.disabled) return;
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  const r = document.createElement('span');
+  r.className = 'ripple';
+  r.style.width = r.style.height = size + 'px';
+  r.style.left = (e.clientX - rect.left - size/2) + 'px';
+  r.style.top  = (e.clientY - rect.top  - size/2) + 'px';
+  btn.appendChild(r);
+  setTimeout(() => r.remove(), 600);
+});
+
+// ── Phase card running-pulse (hooks existing status updates) ────
+function applyPhasePulse() {
+  document.querySelectorAll('.phase-card').forEach(card => {
+    const status = card.dataset.status || '';
+    card.classList.toggle('running', status === 'running');
+  });
+}
+// Observe any phase-card status attr change and flip the pulse class
+const _phaseObs = new MutationObserver(() => applyPhasePulse());
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.phase-card').forEach(c =>
+    _phaseObs.observe(c, { attributes: true, attributeFilter: ['data-status','class'] }));
+  applyPhasePulse();
+});
+
+// ── Command palette ─────────────────────────────────────────────
+const CMDP_ACTIONS = [
+  { label: 'Dashboard', hint: '1',     ic: '📊', run: () => switchPage('dashboard') },
+  { label: 'Console',   hint: '',      ic: '🖥', run: () => switchPage('console') },
+  { label: 'Trace',     hint: '',      ic: '🧭', run: () => switchPage('trace') },
+  { label: 'Assistant', hint: '2',     ic: '💬', run: () => switchPage('assistant') },
+  { label: 'Experience', hint: '3',    ic: '📚', run: () => switchPage('experience') },
+  { label: 'Extensions', hint: '4',    ic: '🧩', run: () => switchPage('extensions') },
+  { label: '打开设置侧栏', hint: 'S',   ic: '⚙',  run: () => (typeof toggleSidebar==='function') && toggleSidebar() },
+  { label: '启动流水线', hint: '',      ic: '▶', run: () => (typeof startPipeline==='function') && startPipeline() },
+  { label: '停止流水线', hint: '',      ic: '■', run: () => (typeof stopPipeline==='function') && stopPipeline() },
+  { label: '刷新状态', hint: 'R',       ic: '↻', run: () => (typeof refreshAll==='function') && refreshAll() },
+  { label: '清除工作区…', hint: '',     ic: '🗑', run: () => (typeof openClearModal==='function') && openClearModal() },
+  { label: '切换主题 · Parchment', hint: '', ic: '🎨', run: () => setTheme('parchment') },
+  { label: '切换主题 · Dark',      hint: '', ic: '🌙', run: () => setTheme('dark') },
+  { label: '切换主题 · Forest',    hint: '', ic: '🌲', run: () => setTheme('forest') },
+  { label: '切换主题 · Ocean',     hint: '', ic: '🌊', run: () => setTheme('ocean') },
+  { label: '切换主题 · Sunset',    hint: '', ic: '🌇', run: () => setTheme('sunset') },
+  { label: '清除背景', hint: '',         ic: '🧽', run: () => clearBackground() },
+  { label: '键盘快捷键帮助', hint: '?',  ic: '⌨', run: () => openKbHelp() },
+];
+let _cmdpSel = 0;
+function openCmdPalette() {
+  const bd = document.getElementById('cmdpBackdrop');
+  if (!bd) return;
+  bd.classList.add('visible');
+  const i = document.getElementById('cmdpInput');
+  if (i) { i.value = ''; setTimeout(() => i.focus(), 20); }
+  _cmdpSel = 0;
+  renderCmdp('');
+}
+function closeCmdPalette() {
+  const bd = document.getElementById('cmdpBackdrop');
+  if (bd) bd.classList.remove('visible');
+}
+function renderCmdp(q) {
+  const list = document.getElementById('cmdpList');
+  if (!list) return;
+  const query = (q || '').toLowerCase();
+  const results = CMDP_ACTIONS.filter(a => !query || a.label.toLowerCase().includes(query));
+  if (!results.length) { list.innerHTML = '<div class="cmdp-empty">无匹配命令</div>'; return; }
+  _cmdpSel = Math.min(_cmdpSel, results.length - 1);
+  list.innerHTML = results.map((a, i) => `
+    <div class="cmdp-item ${i===_cmdpSel?'sel':''}" data-idx="${i}">
+      <span class="cmdp-ic">${a.ic}</span>
+      <span>${a.label}</span>
+      ${a.hint ? `<span class="cmdp-hint">${a.hint}</span>` : ''}
+    </div>`).join('');
+  list.querySelectorAll('.cmdp-item').forEach(el => {
+    el.addEventListener('click', () => { results[+el.dataset.idx].run(); closeCmdPalette(); });
+    el.addEventListener('mouseenter', () => { _cmdpSel = +el.dataset.idx; renderCmdp(query); });
+  });
+}
+
+// ── Keyboard shortcuts ──────────────────────────────────────────
+function openKbHelp() {
+  const m = document.getElementById('kbHelpModal');
+  if (m) m.classList.add('visible');
+}
+function closeKbHelp() {
+  const m = document.getElementById('kbHelpModal');
+  if (m) m.classList.remove('visible');
+}
+// (page switching is handled by the existing switchPage(name) function)
+document.addEventListener('keydown', (e) => {
+  const tag = (e.target && e.target.tagName) || '';
+  const typing = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable);
+  const bd = document.getElementById('cmdpBackdrop');
+  const cmdpOpen = bd && bd.classList.contains('visible');
+
+  // Cmd/Ctrl + K — palette (always)
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault(); cmdpOpen ? closeCmdPalette() : openCmdPalette(); return;
+  }
+  // Esc closes overlays
+  if (e.key === 'Escape') {
+    if (cmdpOpen) { closeCmdPalette(); return; }
+    const kb = document.getElementById('kbHelpModal');
+    if (kb && kb.classList.contains('visible')) { closeKbHelp(); return; }
+    const sb = document.getElementById('sidebar');
+    if (sb && sb.classList.contains('open') && typeof closeSidebar === 'function') { closeSidebar(); return; }
+  }
+  // Palette nav
+  if (cmdpOpen) {
+    const items = document.querySelectorAll('#cmdpList .cmdp-item');
+    if (e.key === 'ArrowDown') { e.preventDefault(); _cmdpSel = Math.min(_cmdpSel+1, items.length-1); renderCmdp(document.getElementById('cmdpInput').value); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); _cmdpSel = Math.max(_cmdpSel-1, 0); renderCmdp(document.getElementById('cmdpInput').value); }
+    else if (e.key === 'Enter') { e.preventDefault(); const el = document.querySelector('#cmdpList .cmdp-item.sel'); if (el) el.click(); }
+    return;
+  }
+  if (typing) return;
+
+  if (e.key === '?') { e.preventDefault(); openKbHelp(); }
+  else if (e.key === '/') {
+    const chat = document.getElementById('chatInput') || document.querySelector('textarea[placeholder*="消息"], textarea[placeholder*="对话"]');
+    if (chat) { e.preventDefault(); chat.focus(); }
+  }
+  else if (e.key === '1') switchPage('dashboard');
+  else if (e.key === '2') switchPage('assistant');
+  else if (e.key === '3') switchPage('experience');
+  else if (e.key === '4') switchPage('extensions');
+  else if (e.key.toLowerCase() === 'r') { if (typeof refreshAll==='function') refreshAll(); toast('已刷新状态', 'info', {duration: 1400}); }
+  else if (e.key.toLowerCase() === 's') { if (typeof toggleSidebar==='function') toggleSidebar(); }
+});
+
+// Wire the palette input after DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('cmdpInput');
+  if (inp) inp.addEventListener('input', (e) => { _cmdpSel = 0; renderCmdp(e.target.value); });
+});
+
+// ── Bootstrap on load ──────────────────────────────────────────
+function _uiUpgradeBoot() {
+  restoreTheme();
+  restoreSbs();
+  applyBgState(getBgState());
+  wireBgControls();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _uiUpgradeBoot);
+} else {
+  _uiUpgradeBoot();
 }
 </script>
 </body>
