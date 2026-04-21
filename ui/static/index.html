@@ -1373,16 +1373,35 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
       <button class="exp-filter-btn" data-phase="P4" onclick="filterExperience('P4')">P4 论文撰写</button>
       <button class="exp-filter-btn" data-phase="P5" onclick="filterExperience('P5')">P5 审校评分</button>
       <button class="exp-filter-btn" data-phase="P5.5" onclick="filterExperience('P5.5')">P5.5 数据审计</button>
-      <button class="btn btn-sm" style="margin-left:auto" onclick="loadExperience()">↻ 刷新</button>
+      <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+        <button class="exp-filter-btn active" id="expViewCardsBtn" onclick="setExpView('cards')">📇 卡片</button>
+        <button class="exp-filter-btn" id="expViewGraphBtn" onclick="setExpView('graph')">🕸 图谱</button>
+        <button class="btn btn-sm" onclick="loadExperience(); if(expView==='graph') loadExperienceGraph()">↻ 刷新</button>
+      </div>
     </div>
 
-    <!-- Experience cards -->
-    <div id="exp-cards" style="display:grid;gap:16px"></div>
-    <div id="exp-empty" style="display:none;text-align:center;padding:48px;color:var(--ink-light)">
-      <div style="font-size:2rem;margin-bottom:8px">📚</div>
-      <div>暂无经验记录。完成一次流水线运行后，经验将自动提炼保存到此处。</div>
+    <!-- Experience cards view -->
+    <div id="exp-view-cards">
+      <div id="exp-cards" style="display:grid;gap:16px"></div>
+      <div id="exp-empty" style="display:none;text-align:center;padding:48px;color:var(--ink-light)">
+        <div style="font-size:2rem;margin-bottom:8px">📚</div>
+        <div>暂无经验记录。完成一次流水线运行后，经验将自动提炼保存到此处。</div>
+      </div>
+      <div id="exp-total" style="margin-top:12px;font-size:.8rem;color:var(--ink-light)"></div>
     </div>
-    <div id="exp-total" style="margin-top:12px;font-size:.8rem;color:var(--ink-light)"></div>
+
+    <!-- Experience graph view (Obsidian-style) -->
+    <div id="exp-view-graph" style="display:none">
+      <div id="exp-graph-legend" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;font-size:.78rem;color:var(--ink-light)">
+        <span><span style="display:inline-block;width:10px;height:10px;background:#c77b5c;border-radius:50%;vertical-align:middle"></span> 经验条目</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#5f7f9b;border-radius:50%;vertical-align:middle"></span> 阶段</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#8a7b4f;border-radius:50%;vertical-align:middle"></span> 题目</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#6b8e5a;border-radius:50%;vertical-align:middle"></span> 模型类型</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#9c6b8a;border-radius:50%;vertical-align:middle"></span> 问题类型</span>
+        <span id="exp-graph-stats" style="margin-left:auto"></span>
+      </div>
+      <div id="exp-graph-canvas" style="width:100%;height:640px;background:var(--cream);border:1px solid var(--border);border-radius:10px"></div>
+    </div>
 
   </div>
   </div><!-- /page-experience -->
@@ -2403,9 +2422,117 @@ async function loadExperience(phase) {
 function filterExperience(phase) {
   _expCurrentPhase = phase;
   document.querySelectorAll('.exp-filter-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.phase === phase);
+    if (b.dataset.phase !== undefined) {
+      b.classList.toggle('active', b.dataset.phase === phase);
+    }
   });
   loadExperience(phase);
+  if (expView === 'graph') loadExperienceGraph();
+}
+
+// ─── Experience graph (Obsidian-style) ───────────────────────────────
+let expView = 'cards';
+let _expNetwork = null;
+let _visLoaded = null;
+
+function setExpView(view) {
+  expView = view;
+  document.getElementById('exp-view-cards').style.display = view === 'cards' ? '' : 'none';
+  document.getElementById('exp-view-graph').style.display = view === 'graph' ? '' : 'none';
+  document.getElementById('expViewCardsBtn').classList.toggle('active', view === 'cards');
+  document.getElementById('expViewGraphBtn').classList.toggle('active', view === 'graph');
+  if (view === 'graph') loadExperienceGraph();
+}
+
+function ensureVisNetwork() {
+  if (window.vis && window.vis.Network) return Promise.resolve();
+  if (_visLoaded) return _visLoaded;
+  _visLoaded = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('vis-network load failed'));
+    document.head.appendChild(s);
+  });
+  return _visLoaded;
+}
+
+const EXP_GRAPH_COLORS = {
+  entry: '#c77b5c',
+  phase: '#5f7f9b',
+  problem: '#8a7b4f',
+  model_type: '#6b8e5a',
+  problem_type: '#9c6b8a',
+};
+
+async function loadExperienceGraph() {
+  const canvas = document.getElementById('exp-graph-canvas');
+  const stats = document.getElementById('exp-graph-stats');
+  try {
+    await ensureVisNetwork();
+  } catch(e) {
+    canvas.innerHTML = `<div style="padding:24px;color:var(--error)">vis-network 加载失败（请检查网络）：${e.message}</div>`;
+    return;
+  }
+  let data;
+  try {
+    data = await api('/api/experience/graph');
+  } catch(e) {
+    canvas.innerHTML = `<div style="padding:24px;color:var(--error)">加载失败: ${e.message}</div>`;
+    return;
+  }
+  if (!data.nodes || !data.nodes.length) {
+    canvas.innerHTML = '<div style="padding:48px;text-align:center;color:var(--ink-light)">暂无经验数据 · 运行一次完整流水线后再来查看</div>';
+    stats.textContent = '';
+    return;
+  }
+  stats.textContent = `条目 ${data.stats.entries} · 标签 ${data.stats.tags} · 关系 ${data.stats.edges}`;
+
+  const nodes = data.nodes.map(n => ({
+    id: n.id,
+    label: n.label,
+    title: n.title || n.label,
+    color: { background: EXP_GRAPH_COLORS[n.type] || '#999', border: '#333' },
+    size: n.size || 10,
+    font: { size: n.type === 'entry' ? 10 : 12, color: '#2a2a2a' },
+    shape: n.type === 'entry' ? 'dot' : 'diamond',
+    _type: n.type,
+    _meta: n,
+  }));
+  const edges = data.edges.map(e => ({
+    from: e.source,
+    to: e.target,
+    color: { color: '#cfc4b0', opacity: 0.6 },
+    width: 1,
+  }));
+
+  if (_expNetwork) { _expNetwork.destroy(); _expNetwork = null; }
+  _expNetwork = new vis.Network(
+    canvas,
+    { nodes, edges },
+    {
+      physics: {
+        enabled: true,
+        solver: 'forceAtlas2Based',
+        forceAtlas2Based: { gravitationalConstant: -40, springLength: 100, springConstant: 0.08 },
+        stabilization: { iterations: 180 },
+      },
+      interaction: { hover: true, tooltipDelay: 120 },
+      nodes: { shadow: false, borderWidth: 1 },
+      edges: { smooth: { type: 'continuous' } },
+    },
+  );
+  _expNetwork.on('click', (params) => {
+    if (!params.nodes.length) return;
+    const node = nodes.find(n => n.id === params.nodes[0]);
+    if (node && node._type === 'entry') {
+      setExpView('cards');
+      setTimeout(() => {
+        const el = document.querySelector(`.exp-card[data-entry-id="${node.id}"]`);
+        if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.outline = '2px solid var(--accent)'; setTimeout(() => el.style.outline = '', 1500); }
+      }, 100);
+    }
+  });
 }
 
 function renderExperienceCards(entries, total) {
@@ -2478,7 +2605,7 @@ function renderExperienceCards(entries, total) {
       </div>` : '';
 
     return `
-      <div class="exp-card" id="${id}">
+      <div class="exp-card" id="${id}" data-entry-id="${entryId}">
         <div class="exp-card-header">
           <span class="exp-phase-badge" style="background:${color}">${e.phase} ${e.phase_name||''}</span>
           <span class="exp-card-title" title="${e.problem||''}">${e.problem || '（未知题目）'}</span>
