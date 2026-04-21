@@ -1449,6 +1449,99 @@ async def rate_experience(request: Request):
             "rating": target.get("rating"), "starred": target.get("starred", False)}
 
 
+@app.get("/api/experience/graph")
+async def get_experience_graph():
+    """Build an Obsidian-style graph of experience entries + shared tag nodes.
+
+    Nodes:
+      - type="entry": one per experience entry (size grows with quality/rating)
+      - type="phase" | "problem" | "model_type" | "problem_type": tag nodes
+        aggregating entries that share that value.
+    Edges: entry ↔ tag membership (single undirected edge per pair).
+    Only tag nodes with >=2 members are emitted, to keep the graph readable.
+    """
+    if not EXPERIENCE_LOG.exists():
+        return {"nodes": [], "edges": [], "stats": {"entries": 0}}
+    try:
+        data = json.loads(EXPERIENCE_LOG.read_text(encoding="utf-8"))
+    except Exception:
+        return {"nodes": [], "edges": [], "stats": {"entries": 0}}
+
+    entries: list[dict] = data.get("entries", [])
+    TAG_FIELDS = ("phase", "problem", "model_type", "problem_type")
+    tag_members: dict[tuple[str, str], list[str]] = {}
+
+    entry_nodes: list[dict] = []
+    for e in entries:
+        eid = str(e.get("id") or "")
+        if not eid:
+            continue
+        phase = str(e.get("phase") or "")
+        problem = str(e.get("problem") or "")
+        model_type = str(e.get("model_type") or "")
+        problem_type = str(e.get("problem_type") or "")
+        try:
+            quality = float(e.get("quality_score") or 0.0)
+        except (TypeError, ValueError):
+            quality = 0.0
+        try:
+            rating = int(e.get("rating") or 0)
+        except (TypeError, ValueError):
+            rating = 0
+        starred = bool(e.get("starred"))
+
+        size = 8 + int(quality / 10) + rating * 2 + (4 if starred else 0)
+        label = f"{phase} · {problem or '?'}" if phase else eid[:12]
+
+        entry_nodes.append({
+            "id": eid,
+            "label": label,
+            "type": "entry",
+            "phase": phase,
+            "problem": problem,
+            "model_type": model_type,
+            "problem_type": problem_type,
+            "quality_score": quality,
+            "rating": rating,
+            "starred": starred,
+            "size": size,
+            "title": (e.get("phase_name") or phase) + (f" · Q{quality:.0f}" if quality else ""),
+        })
+
+        for field in TAG_FIELDS:
+            val = str(e.get(field) or "").strip()
+            if not val:
+                continue
+            tag_members.setdefault((field, val), []).append(eid)
+
+    tag_nodes: list[dict] = []
+    edges: list[dict] = []
+    for (field, val), members in tag_members.items():
+        if len(members) < 2:
+            continue
+        tag_id = f"tag::{field}::{val}"
+        tag_nodes.append({
+            "id": tag_id,
+            "label": f"{val}",
+            "type": field,
+            "size": 10 + min(len(members), 20),
+            "member_count": len(members),
+            "title": f"{field}: {val} ({len(members)} entries)",
+        })
+        for eid in members:
+            edges.append({"source": eid, "target": tag_id, "field": field})
+
+    return {
+        "nodes": entry_nodes + tag_nodes,
+        "edges": edges,
+        "stats": {
+            "entries": len(entry_nodes),
+            "tags": len(tag_nodes),
+            "edges": len(edges),
+        },
+    }
+
+
 # ─────────────────────────────────────────────────────── entry ──
 
 if __name__ == "__main__":
