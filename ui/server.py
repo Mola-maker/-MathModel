@@ -824,6 +824,27 @@ async def save_config(request: Request):
     return {"status": "saved"}
 
 
+@app.get("/api/paper-config")
+async def get_paper_config():
+    """Return current paper-wide settings (language, etc.)."""
+    from agents.paper_config import get_paper_language
+    return {"language": get_paper_language()}
+
+
+@app.post("/api/paper-config")
+async def set_paper_config(request: Request):
+    """Persist paper-wide settings. Currently: {"language": "zh"|"en"}."""
+    from agents.paper_config import set_paper_language
+    body = await request.json()
+    if "language" in body:
+        try:
+            lang = set_paper_language(str(body["language"]))
+        except ValueError as e:
+            return {"status": "error", "detail": str(e)}
+        return {"status": "saved", "language": lang}
+    return {"status": "noop"}
+
+
 # ─────────────────────────────────────────────── chat endpoint ──
 
 _MAX_TOOL_ROUNDS = 5

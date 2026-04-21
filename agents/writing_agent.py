@@ -15,6 +15,7 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 from agents.orchestrator import call_model, load_context, save_context
 from agents.prompts.writer import get_writer_section_prompts, MCM_LATEX_TEMPLATE
 from agents.experience_recorder import get_relevant_experience
+from agents.paper_config import get_paper_language, section_titles
 
 _BASE = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = Path(os.getenv("VOL_HOST", str(_BASE / "vol"))) / "outputs"
@@ -32,7 +33,15 @@ SECTIONS = [
     "references",
 ]
 
-SYSTEM_SECTION = get_writer_section_prompts()
+# CJK support block — loaded only when paper_language == "zh". Uses xeCJK so
+# the template stays compatible with XeLaTeX/LuaLaTeX without bloating English
+# builds.
+_CJK_PREAMBLE_ZH = (
+    r"\usepackage{xeCJK}" + "\n"
+    r"\setCJKmainfont{SimSun}" + "\n"
+    r"\setCJKsansfont{SimHei}" + "\n"
+    r"\setCJKmonofont{FangSong}"
+)
 
 
 class WritingAgent:
@@ -57,7 +66,10 @@ class WritingAgent:
         experience_hint: str = "",
     ) -> str:
         """生成单个章节内容。"""
-        system = SYSTEM_SECTION.get(section, "请写该章节内容，输出 LaTeX 格式。")
+        # Prefer the per-run, language-aware prompts populated in run();
+        # fall back to a generic instruction if called outside the pipeline.
+        system_map = getattr(self, "_system_section", None) or get_writer_section_prompts()
+        system = system_map.get(section, "请写该章节内容，输出 LaTeX 格式。")
 
         # Build richer context with per-step results
         per_step = ctx.get("results", {}).get("per_step_results", {})
@@ -105,6 +117,13 @@ class WritingAgent:
         ctx = load_context()
         PAPER_DIR.mkdir(parents=True, exist_ok=True)
 
+        # Resolve paper language once per run so every section (and the LaTeX
+        # template below) agrees. Prompts get the language baked into
+        # LANGUAGE_SELECTION_RULE; the template swaps section titles.
+        language = get_paper_language()
+        self._system_section = get_writer_section_prompts(language=language)
+        print(f"[P4] 论文语言: {language}")
+
         available_figures = self._discover_figures()
         if available_figures:
             print(f"[P4] 发现 {len(available_figures)} 张图片可引用")
@@ -138,9 +157,14 @@ class WritingAgent:
         problem_label = ctx["competition"].get("selected_problem", "X")
         title = f"MCM/ICM Problem {problem_label} — {model_name}"
 
-        # Assemble full document using improved template
+        # Assemble full document using improved template.
+        # Section titles are driven by paper_config.section_titles so switching
+        # language flips all headings without re-editing the template file.
+        titles = section_titles(language)
+        title_kwargs = {f"title_{k}": v for k, v in titles.items()}
         tex = Template(MCM_LATEX_TEMPLATE).safe_substitute(
             title=title,
+            cjk_preamble=_CJK_PREAMBLE_ZH if language == "zh" else "",
             abstract=sections_content.get("abstract", ""),
             introduction=sections_content.get("introduction", ""),
             assumptions=sections_content.get("assumptions", ""),
@@ -151,6 +175,7 @@ class WritingAgent:
             strengths=strengths,
             weaknesses=weaknesses,
             conclusion=sections_content.get("conclusion", ""),
+            **title_kwargs,
         )
 
         # Copy generated figures to paper/figures/

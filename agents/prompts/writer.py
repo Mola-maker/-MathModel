@@ -11,14 +11,21 @@ from agents.prompts.shared import (
 )
 
 
-def get_writer_section_prompts() -> dict[str, str]:
+def get_writer_section_prompts(language: str = "zh") -> dict[str, str]:
     """Return per-section system prompts for the WritingAgent.
 
     Each prompt is prefixed with _GLOBAL_RULES so every section
     inherits language selection, formula calculation, and anti-hallucination rules.
+
+    `language` ("zh" | "en") is substituted into the language-selection rule
+    and flips abstract-section hardcoded wording so the LLM actually emits
+    the requested language.
     """
+    lang = "en" if str(language).lower() == "en" else "zh"
+    abstract_prompt = ABSTRACT_PROMPT_EN if lang == "en" else ABSTRACT_PROMPT_ZH
+
     sections = {
-        "abstract": ABSTRACT_PROMPT,
+        "abstract": abstract_prompt,
         "introduction": INTRODUCTION_PROMPT,
         "assumptions": ASSUMPTIONS_PROMPT,
         "model_formulation": MODEL_FORMULATION_PROMPT,
@@ -28,21 +35,24 @@ def get_writer_section_prompts() -> dict[str, str]:
         "conclusion": CONCLUSION_PROMPT,
         "references": REFERENCES_PROMPT,
     }
-    return {k: _GLOBAL_RULES + v for k, v in sections.items()}
+    global_rules = _build_global_rules(lang)
+    return {k: global_rules + v for k, v in sections.items()}
 
 
-# ── Global quality rules (assembled separately, injected into each prompt) ──
-_GLOBAL_RULES = (
-    "# 全局规范（最高优先级）\n\n"
-    + LANGUAGE_SELECTION_RULE
-    + "\n---\n"
-    + FORMULA_CALCULATION_RULE
-    + "\n---\n"
-    + REFERENCE_RETRIEVAL_RULE
-    + "\n---\n"
-    + AWARD_PAPER_REFERENCE
-    + "\n---\n"
-)
+# ── Global quality rules (assembled per-language) ──
+def _build_global_rules(language: str) -> str:
+    """Assemble the global rule block with the selected paper language filled in."""
+    return (
+        "# 全局规范（最高优先级）\n\n"
+        + LANGUAGE_SELECTION_RULE.format(language=language)
+        + "\n---\n"
+        + FORMULA_CALCULATION_RULE
+        + "\n---\n"
+        + REFERENCE_RETRIEVAL_RULE
+        + "\n---\n"
+        + AWARD_PAPER_REFERENCE
+        + "\n---\n"
+    )
 
 # ── Shared writing rules ──
 
@@ -111,13 +121,24 @@ WRITING_STYLE_RULES = """
 
 # ── Per-section prompts ──
 
-ABSTRACT_PROMPT = f"""写 MCM 标准摘要（Summary Sheet），控制在 250 词以内。
+ABSTRACT_PROMPT_EN = f"""写 MCM 标准摘要（Summary Sheet），控制在 250 词以内。
 结构：问题重述(1-2句) → 每个问题的方法+结果(各2-3句) → 总结(1-2句)。
 关键词 4-5个。
 输出纯英文文本（无 LaTeX 命令）。
 
 {WRITING_STYLE_RULES}
 """
+
+ABSTRACT_PROMPT_ZH = f"""撰写论文摘要（控制在 400 字以内）。
+结构：问题重述(1-2句) → 每个子问题的方法+结果(各2-3句) → 总结(1-2句)。
+在摘要结尾列出 4-5 个关键词。
+输出纯中文文本（无 LaTeX 命令，无英文混排）。
+
+{WRITING_STYLE_RULES}
+"""
+
+# Backward-compat alias (older callers imported the English version).
+ABSTRACT_PROMPT = ABSTRACT_PROMPT_EN
 
 INTRODUCTION_PROMPT = f"""写竞赛论文引言（Introduction），约 300-400 词。
 涵盖：背景介绍、问题的重要性、本文方法概述、论文结构说明。
@@ -238,6 +259,9 @@ REFERENCES_PROMPT = f"""根据调研阶段的参考资料列表，生成 BibTeX 
 
 MCM_LATEX_TEMPLATE = r"""\documentclass[12pt,a4paper]{article}
 
+% ── CJK support (only loaded when paper_language=zh) ──
+$cjk_preamble
+
 % ── Geometry & Layout ──
 \usepackage[margin=1in]{geometry}
 \usepackage{fancyhdr}
@@ -301,7 +325,7 @@ MCM_LATEX_TEMPLATE = r"""\documentclass[12pt,a4paper]{article}
 %% ====================== Summary Sheet ======================
 \thispagestyle{empty}
 \begin{center}
-  \large\bfseries Summary Sheet
+  \large\bfseries $title_summary_sheet
 \end{center}
 \vspace{0.5em}
 \hrule\vspace{1em}
@@ -316,32 +340,32 @@ $abstract
 \tableofcontents
 \newpage
 
-\section{Introduction}
+\section{$title_introduction}
 $introduction
 
-\section{Assumptions and Justifications}
+\section{$title_assumptions}
 $assumptions
 
-\section{Model Formulation}
+\section{$title_model_formulation}
 $model_formulation
 
-\section{Solution and Implementation}
+\section{$title_solution}
 $solution
 
-\section{Results and Analysis}
+\section{$title_results_analysis}
 $results_analysis
 
-\section{Sensitivity Analysis}
+\section{$title_sensitivity}
 $sensitivity
 
-\section{Strengths and Weaknesses}
-\subsection{Strengths}
+\section{$title_strengths_weaknesses}
+\subsection{$title_strengths}
 $strengths
 
-\subsection{Weaknesses}
+\subsection{$title_weaknesses}
 $weaknesses
 
-\section{Conclusion}
+\section{$title_conclusion}
 $conclusion
 
 \newpage
@@ -350,21 +374,21 @@ $conclusion
 \newpage
 \appendix
 
-\section{Appendix A: Core Code Listings}
+\section{$title_appendix_code}
 
 % ── Data Preprocessing ──
-\subsection{Data Preprocessing and Cleaning}
+\subsection{$title_preproc}
 \lstinputlisting[language=Python,caption={Data Cleaning and EDA Script (eda.py)}]{../../vol/scripts/eda.py}
 
 % ── Main Solver ──
-\subsection{Model Implementation}
+\subsection{$title_model_impl}
 \lstinputlisting[language=Python,caption={Main Solver Script (solver.py)}]{../../vol/scripts/solver.py}
 
 % ── Sensitivity Analysis ──
-\subsection{Sensitivity Analysis}
+\subsection{$title_sens_code}
 \lstinputlisting[language=Python,caption={Sensitivity Analysis Script}]{../../vol/scripts/sensitivity_analysis.py}
 
-\section{Appendix B: Numerical Calculation Details}
+\section{$title_appendix_numeric}
 % 此节由 WritingAgent 根据代码输出自动填充公式三层结构
 % Each formula: (1) symbolic definition, (2) numerical substitution, (3) interpretation
 $numerical_calculations

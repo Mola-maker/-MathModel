@@ -1026,6 +1026,19 @@ body{font-family:var(--font-sans);background:var(--parchment);color:var(--near-b
       </div>
     </div>
 
+    <!-- Paper Settings -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Paper Settings</div>
+      <div class="cfg-row">
+        <label class="cfg-label">论文语言 Language</label>
+        <select class="cfg-select" id="cfgPaperLanguage" onchange="savePaperLanguage()">
+          <option value="zh">中文 (Chinese)</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <p style="font-size:.72rem;color:var(--stone);margin-top:4px">切换后影响下一次 P4 论文生成。English 符合 MCM 官方要求，中文适用于国赛。</p>
+    </div>
+
     <!-- Pipeline Settings -->
     <div class="sidebar-section">
       <div class="sidebar-section-title">Pipeline Settings</div>
@@ -2010,6 +2023,27 @@ async function loadConfig() {
     document.getElementById('cfgMaxRollbacks').value = cfg.pipeline.max_rollbacks ?? 2;
     document.getElementById('cfgMaxHeal').value = cfg.pipeline.max_heal_iterations ?? 3;
   } catch(e) { console.error('loadConfig:', e); }
+  try {
+    const pc = await api('/api/paper-config');
+    const sel = document.getElementById('cfgPaperLanguage');
+    if (sel && pc && pc.language) sel.value = pc.language;
+  } catch(e) { console.error('loadPaperConfig:', e); }
+}
+
+async function savePaperLanguage() {
+  const sel = document.getElementById('cfgPaperLanguage');
+  if (!sel) return;
+  try {
+    await api('/api/paper-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ language: sel.value }),
+    });
+    sel.classList.add('saved-flash');
+    setTimeout(() => sel.classList.remove('saved-flash'), 800);
+  } catch(e) {
+    alert('保存论文语言失败: ' + e.message);
+  }
 }
 
 function renderModelConfigPanel(routes) {
