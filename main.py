@@ -21,7 +21,7 @@ from agents.latex_check_agent import LatexCheckAgent
 from agents.review_agent import ReviewAgent
 from agents.data_validator import DataValidator
 from agents.data_recorder import get_recorder
-from agents.experience_recorder import record_experience
+from agents.experience_recorder import record_experience, back_annotate_run_quality
 from agents.llm_checker import run_startup_check
 from agents.pipeline import PhaseOutcome, PhaseSpec, PipelineRunner
 from agents import events
@@ -198,8 +198,16 @@ def run_pipeline(start_phase: str = "P0b", selected_problem: str | None = None) 
     run_startup_check()
     load_extensions()
     ctx = load_context()
+    # Tag every experience entry produced this run so P5 can back-annotate
+    # their ranking weight with the final review score.
+    import uuid
+    from datetime import datetime as _dt
+    from agents.orchestrator import save_context
+    run_id = f"{_dt.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+    ctx["run_id"] = run_id
+    save_context(ctx)
     events.reset()
-    events.emit("pipeline_start", start=start_phase, selected_problem=selected_problem)
+    events.emit("pipeline_start", start=start_phase, selected_problem=selected_problem, run_id=run_id)
 
     registry = _build_registry(selected_problem)
     runner = PipelineRunner(
@@ -215,6 +223,21 @@ def run_pipeline(start_phase: str = "P0b", selected_problem: str | None = None) 
         "rollback", from_phase=frm, to_phase=to, index=idx
     )
     result = runner.run(ctx, start=start_phase)
+
+    # Back-annotate entries from this run with the final P5 review score so
+    # better runs' experience surfaces first next time.
+    try:
+        final_ctx = result.ctx if isinstance(result.ctx, dict) else {}
+        review = final_ctx.get("review", {}) if isinstance(final_ctx, dict) else {}
+        total = review.get("total_score")
+        if total is None:
+            # Fallback: older runs may have the total only inside scores dict.
+            scores = review.get("scores", {})
+            total = scores.get("total") if isinstance(scores, dict) else None
+        if total is not None:
+            back_annotate_run_quality(run_id, float(total))
+    except Exception as e:
+        print(f"  [EXP] 回标失败（不影响主流程）: {e}")
 
     events.emit(
         "pipeline_end",

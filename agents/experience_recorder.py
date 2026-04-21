@@ -286,12 +286,15 @@ def record_experience(phase: str) -> dict | None:
             print(f"  [EXP] JSON 解析失败，跳过")
             return None
 
-    # Build entry
+    # Build entry. run_id lets P5 back-annotate this entry with the final
+    # review score once the whole pipeline finishes (see back_annotate_run_quality).
+    run_id = ctx.get("run_id") or ""
     entry = {
         "id": f"exp_{phase}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
         "phase": phase,
         "phase_name": _PHASE_NAME.get(phase, phase),
         "timestamp": datetime.now().isoformat(),
+        "run_id": run_id,
         "problem": problem,
         "model_type": model_name,
         **extracted,
@@ -308,6 +311,30 @@ def record_experience(phase: str) -> dict | None:
     _save_log(log)
     print(f"  [EXP] 经验已保存: {entry['id']} ({EXPERIENCE_LOG.name}, 共 {len(log['entries'])} 条)")
     return entry
+
+
+def back_annotate_run_quality(run_id: str, quality_score: float) -> int:
+    """Stamp `quality_score` on every entry tagged with `run_id`.
+
+    Called from main.py after P5 completes successfully. Returns the number
+    of entries updated. A run that produced a high-scoring paper will have
+    its entries ranked higher in future get_relevant_experience() calls.
+    """
+    if not run_id or not EXPERIENCE_LOG.exists():
+        return 0
+    try:
+        log = json.loads(EXPERIENCE_LOG.read_text(encoding="utf-8"))
+    except Exception:
+        return 0
+    updated = 0
+    for e in log.get("entries", []):
+        if e.get("run_id") == run_id:
+            e["quality_score"] = float(quality_score)
+            updated += 1
+    if updated:
+        _save_log(log)
+        print(f"  [EXP] 回标 run={run_id[:8]}... quality={quality_score:.1f} → {updated} 条")
+    return updated
 
 
 _PHASE_NAME = {
@@ -372,6 +399,16 @@ def _score_entry(entry: dict, query_tokens: list[str]) -> int:
         pass
     if entry.get("starred"):
         score += 3
+
+    # Auto-quality boost: P5 total_score (0-100) back-annotated after pipeline end.
+    # Normalize to 0-5 so it ranks comparably to the rating boost above, and so a
+    # bad run's entries (score < 40) don't meaningfully outrank direct keyword hits.
+    try:
+        q = float(entry.get("quality_score") or 0.0)
+        if q > 0:
+            score += int(q / 20)
+    except (TypeError, ValueError):
+        pass
     return score
 
 

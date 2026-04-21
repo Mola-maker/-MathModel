@@ -168,6 +168,8 @@ class ReviewAgent:
         ctx["phase"] = "P5_complete"
         review = ctx.setdefault("review", {})
         review["scores"] = scores.get("scores", {})
+        review["total_score"] = scores.get("total")
+        review["tier"] = scores.get("tier")
         review["suggestions"] = (
             scores.get("critical_fixes", []) + scores.get("suggestions", [])
         )
