@@ -13,6 +13,16 @@ from sandbox.archiver import archive_artifacts
 from sandbox.healer import heal
 
 CONTEXT_PATH = Path(os.getenv("CONTEXT_STORE", "context_store/context.json"))
+_PIPELINE_CFG_PATH = Path(os.getenv("PIPELINE_CFG_PATH", Path(__file__).parent.parent / "config" / "pipeline.json"))
+
+
+def _load_max_iter() -> int:
+    """Read max_heal_iterations from pipeline.json, fall back to env var."""
+    try:
+        cfg = json.loads(_PIPELINE_CFG_PATH.read_text(encoding="utf-8"))
+        return int(cfg.get("max_heal_iterations", os.getenv("MAX_HEAL_ITERATIONS", "5")))
+    except Exception:
+        return int(os.getenv("MAX_HEAL_ITERATIONS", "5"))
 
 
 def _run_script(script_host_path: str) -> tuple[int, str, str]:
@@ -41,7 +51,7 @@ def _update_ctx(updates: dict) -> None:
 def execute_with_healing(script_name: str) -> dict:
     """Run script with auto-healing loop."""
     script_host_path = str(vol_host() / "scripts" / script_name)
-    max_iter = int(os.getenv("MAX_HEAL_ITERATIONS", "5"))
+    max_iter = _load_max_iter()
 
     _update_ctx({"status": "running", "current_script": script_host_path, "iterations": 0})
 

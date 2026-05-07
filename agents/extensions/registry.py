@@ -79,6 +79,7 @@ class ExtensionRegistry:
     skills: list[SkillEntry] = field(default_factory=list)
     event_handlers: list[EventEntry] = field(default_factory=list)
     mcp: MCPClient | None = None
+    _loaded: bool = field(default=False, repr=False)
 
     def emit_event(self, kind: str, payload: dict) -> None:
         """Dispatch an event to all subscribed handlers. Never raises."""
@@ -191,6 +192,9 @@ def _load_plugin_module(name: str) -> list[Plugin]:
 def load_all() -> ExtensionRegistry:
     """Load plugins + MCP + local skills. Idempotent — safe to call twice."""
     registry = get_registry()
+    if registry._loaded:
+        return registry
+    registry._loaded = True
     # 1. Plugins
     plugins_cfg = _load_toml(PLUGINS_CONFIG)
     enabled = plugins_cfg.get("enabled")
