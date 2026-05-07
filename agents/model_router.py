@@ -38,8 +38,17 @@ Model Router 简单的介绍
 from __future__ import annotations
 
 import os
-import tomllib
 from pathlib import Path
+
+try:
+    import tomllib          # Python 3.11+
+except ModuleNotFoundError:
+    try:
+        import tomli as tomllib  # type: ignore[no-redef]  # pip install tomli
+    except ModuleNotFoundError as _e:
+        raise ModuleNotFoundError(
+            "需要 tomllib（Python ≥3.11）或 tomli（pip install tomli）"
+        ) from _e
 #采用相对路径
 CURRENT_DIR = Path(__file__).parent.parent   # project root (E:\mathmodel)
 DEFAULT_PATH = CURRENT_DIR / "config" / "model_routes.toml"
