@@ -46,13 +46,13 @@ def heal(script_path: str, stderr: str, iteration: int) -> tuple[str, bool]:
     """
     修复脚本。
     返回 (fixed_code_or_empty, is_logic_err)。
-    如果是逻辑错误或超过最大迭代次数，返回 ("", True)。
+    如果是逻辑错误返回 ("", True)；超过最大迭代次数返回 ("", False)。
     """
-    if iteration >= MAX_ITER:
-        return "", True
-
     if is_logic_error(stderr):
         return "", True
+
+    if iteration >= MAX_ITER:
+        return "", False
 
     code = Path(script_path).read_text(encoding="utf-8")
     tb = extract_traceback(stderr)

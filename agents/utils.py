@@ -41,15 +41,18 @@ def docker_cp(host_path: str, container: str, container_path: str) -> None:
 
 def docker_exec(container: str, cmd: str, timeout: int = 300) -> tuple[int, str, str]:
     """Execute shell command in container and return (code, stdout, stderr)."""
-    result = subprocess.run(
-        ["docker", "exec", container, "sh", "-c", cmd],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=timeout,
-    )
-    return result.returncode, result.stdout, result.stderr
+    try:
+        result = subprocess.run(
+            ["docker", "exec", container, "sh", "-c", cmd],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+        )
+        return result.returncode, result.stdout, result.stderr
+    except subprocess.TimeoutExpired:
+        return -1, "", f"Command timed out after {timeout}s"
 
 
 def vol_host() -> Path:

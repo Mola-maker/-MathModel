@@ -50,8 +50,8 @@ def execute_with_healing(script_name: str) -> dict:
 
         if exit_code == 0:
             artifacts = archive_artifacts()
-            _update_ctx({"status": "success", "iterations": iteration, "last_error": None})
-            return {"status": "success", "artifacts": artifacts, "iterations": iteration}
+            _update_ctx({"status": "success", "iterations": iteration + 1, "last_error": None})
+            return {"status": "success", "artifacts": artifacts, "iterations": iteration + 1}
 
         fixed_code, is_logic = heal(script_host_path, stderr, iteration)
 
