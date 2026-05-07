@@ -121,7 +121,7 @@ def rename_session(session_id: str, title: str) -> bool:
         s = data.get("sessions", {}).get(session_id)
         if not s:
             return False
-        s["title"] = title[:60] or "新对话"
+        s["title"] = title[:60].strip() or "新对话"
         s["updated_at"] = _now()
         _save_all(data)
         return True
@@ -155,7 +155,7 @@ def append_messages(session_id: str, new_messages: list[dict]) -> dict | None:
         if s.get("title", "新对话") == "新对话":
             for m in msgs:
                 if m.get("role") == "user" and isinstance(m.get("content"), str):
-                    s["title"] = m["content"][:28] or "新对话"
+                    s["title"] = m["content"][:28].strip() or "新对话"
                     break
         # rolling trim
         if len(msgs) > _MAX_MESSAGES_PER_SESSION:

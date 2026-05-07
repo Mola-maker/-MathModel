@@ -30,6 +30,7 @@ import asyncio
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 import time
@@ -633,9 +634,16 @@ async def list_files():
 
 @app.get("/api/figures/{filename}")
 async def get_figure(filename: str):
+    safe_roots = [FIGURES_DIR.resolve(), (PAPER_DIR / "figures").resolve()]
     for p in [FIGURES_DIR / filename, PAPER_DIR / "figures" / filename]:
-        if p.exists() and p.is_file():
-            return FileResponse(str(p))
+        try:
+            resolved = p.resolve()
+        except Exception:
+            continue
+        if not any(str(resolved).startswith(str(root)) for root in safe_roots):
+            raise HTTPException(400, "Invalid filename")
+        if resolved.exists() and resolved.is_file():
+            return FileResponse(str(resolved))
     raise HTTPException(404, f"Figure not found: {filename}")
 
 
@@ -1351,7 +1359,7 @@ async def pip_install_endpoint(request: Request):
     """Install a Python package inside the sandbox container (or locally)."""
     body = await request.json()
     package: str = body.get("package", "").strip()
-    if not package or any(c in package for c in [";", "&", "|", "`", "$"]):
+    if not package or not re.match(r'^[A-Za-z0-9_.\-\[\]]+$', package):
         raise HTTPException(400, "Invalid package name")
 
     loop = asyncio.get_event_loop()
@@ -1361,7 +1369,7 @@ async def pip_install_endpoint(request: Request):
             from sandbox.runner import docker_exec, container_name
             exit_code, stdout, stderr = docker_exec(
                 container_name(),
-                f"pip install {package} --quiet",
+                f"pip install {shlex.quote(package)} --quiet",
                 timeout=120,
             )
             return {"success": exit_code == 0, "output": (stdout + stderr).strip()}
