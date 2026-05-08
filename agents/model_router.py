@@ -40,15 +40,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-try:
-    import tomllib          # Python 3.11+
-except ModuleNotFoundError:
-    try:
-        import tomli as tomllib  # type: ignore[no-redef]  # pip install tomli
-    except ModuleNotFoundError as _e:
-        raise ModuleNotFoundError(
-            "需要 tomllib（Python ≥3.11）或 tomli（pip install tomli）"
-        ) from _e
+from agents.utils import load_toml
 #采用相对路径
 CURRENT_DIR = Path(__file__).parent.parent   # project root (E:\mathmodel)
 DEFAULT_PATH = CURRENT_DIR / "config" / "model_routes.toml"
@@ -72,17 +64,8 @@ _FALLBACK = {
 # 这个模块负责根据任务类型（如不同阶段的建模任务）动态选择和配置使用的语言模型。
 # 通过读取一个 TOML 格式的配置文件（路径可通过环境变量 MODEL_ROUTES_FILE 指定），它定义了不同任务对应的模型列表、超时时间和
 def _load_routes() -> dict:
-    if _ROUTES_PATH.exists():
-        try:
-            # Use utf-8-sig to tolerate BOM written by some editors/shells.
-            text = _ROUTES_PATH.read_text(encoding="utf-8-sig")
-            #Byte Order mask是win系统保存文件时候细化在开头偷偷夹带私货的几个特殊字符，utf-8-sig编码可以自动识别并去除这些字符，避免解析错误。
-            data = tomllib.loads(text)
-            if isinstance(data, dict):# 确保解析结果是一个字典
-                return data
-        except Exception:
-            return _FALLBACK
-    return _FALLBACK
+    data = load_toml(_ROUTES_PATH)
+    return data if isinstance(data, dict) and data else _FALLBACK
 
 # 提供了三个主要函数：get_task_route 根据任务类型获取对应的路由配置；
 

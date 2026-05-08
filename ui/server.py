@@ -27,6 +27,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import collections
 import json
 import os
 import re
@@ -123,17 +124,36 @@ async def _shutdown_extensions() -> None:
 
 _pipeline_proc: subprocess.Popen | None = None
 _sandbox_proc: subprocess.Popen | None = None
-_sandbox_output_buf: list[str] = []   # rolling buffer of last 200 lines
+# deque caps memory at 200 lines without list copy on every append
+_sandbox_output_buf: collections.deque[str] = collections.deque(maxlen=200)
 
-# Locks guard every check-then-assign on the process globals.
-# Pattern mirrors the existing _compile_lock at the LaTeX endpoint.
-_pipeline_lock: asyncio.Lock = asyncio.Lock()
-_sandbox_lock: asyncio.Lock = asyncio.Lock()
 
-# /api/chat double-submit guard: reject a second request within this window.
+class _LazyLock:
+    """asyncio.Lock created on first acquire so it always binds to the running
+    event loop, regardless of when this module is imported (Python ≤ 3.9 compat).
+    """
+    __slots__ = ("_lock",)
+
+    def __init__(self) -> None:
+        self._lock: asyncio.Lock | None = None
+
+    async def __aenter__(self) -> "_LazyLock":
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        await self._lock.acquire()
+        return self
+
+    async def __aexit__(self, *args: object) -> None:
+        assert self._lock is not None
+        self._lock.release()
+
+
+_pipeline_lock = _LazyLock()
+_sandbox_lock = _LazyLock()
+
 _CHAT_COOLDOWN_SECONDS = 3.0
 _last_chat_time: float = 0.0
-_chat_lock: asyncio.Lock = asyncio.Lock()
+_chat_lock = _LazyLock()
 
 # SSE heartbeat interval — prevents idle connections from being closed by
 # intermediate proxies/browsers. Format `: comment\n\n` is a no-op for the
@@ -426,7 +446,7 @@ async def _dispatch_tool(name: str, args: dict) -> str:
 
 async def _execute_chat_actions(actions: list[dict]) -> list[str]:
     """Execute parsed actions and return human-readable results."""
-    global _pipeline_proc, _sandbox_proc, _sandbox_output_buf
+    global _pipeline_proc, _sandbox_proc
     results: list[str] = []
 
     for act in actions:
@@ -650,15 +670,23 @@ async def list_files():
 @app.get("/api/figures/{filename}")
 async def get_figure(filename: str):
     safe_roots = [FIGURES_DIR.resolve(), (PAPER_DIR / "figures").resolve()]
-    for p in [FIGURES_DIR / filename, PAPER_DIR / "figures" / filename]:
+
+    def _under_safe_root(p: Path) -> bool:
         try:
             resolved = p.resolve()
         except Exception:
-            continue
-        if not any(str(resolved).startswith(str(root)) for root in safe_roots):
-            raise HTTPException(400, "Invalid filename")
-        if resolved.exists() and resolved.is_file():
-            return FileResponse(str(resolved))
+            return False
+        for root in safe_roots:
+            try:
+                resolved.relative_to(root)
+                return resolved.is_file()
+            except ValueError:
+                continue
+        return False
+
+    for p in [FIGURES_DIR / filename, PAPER_DIR / "figures" / filename]:
+        if _under_safe_root(p):
+            return FileResponse(str(p.resolve()))
     raise HTTPException(404, f"Figure not found: {filename}")
 
 
@@ -667,9 +695,9 @@ async def get_logs():
     log_path = LOGS_DIR / "run.log"
     if not log_path.exists():
         return {"log": "(暂无日志)", "size": 0}
-    size = log_path.stat().st_size
-    read_bytes = min(size, 10_000)
     with log_path.open("rb") as f:
+        size = os.fstat(f.fileno()).st_size
+        read_bytes = min(size, 10_000)
         f.seek(size - read_bytes)
         raw = f.read(read_bytes)
     content = raw.decode("utf-8", errors="replace")
@@ -775,7 +803,6 @@ async def pipeline_output():
 async def sandbox_output():
     """SSE: stream sandbox (docker exec) stdout with heartbeats."""
     async def generate():
-        global _sandbox_output_buf
         if not _sandbox_proc or _sandbox_proc.poll() is not None:
             yield 'data: {"done": true}\n\n'
             return
@@ -794,8 +821,6 @@ async def sandbox_output():
                 continue
             stripped = line.rstrip()
             _sandbox_output_buf.append(stripped)
-            if len(_sandbox_output_buf) > 200:
-                _sandbox_output_buf = _sandbox_output_buf[-200:]
             escaped = json.dumps(stripped)
             yield f'data: {{"line": {escaped}}}\n\n'
             last_beat = time.time()
@@ -1057,10 +1082,9 @@ async def chat_endpoint(request: Request):
     new_messages_to_persist: list[dict] = [user_msg]
     tool_call_log: list[dict] = []
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     def _call(msgs: list[dict]) -> dict:
-        sys.path.insert(0, str(BASE))
         from agents.orchestrator import call_with_tools
         return call_with_tools(msgs, tools=tools, task="default")
 
@@ -1244,7 +1268,7 @@ async def compile_stream(max_rounds: int = 5):
         return StreamingResponse(_busy(), media_type="text/event-stream")
 
     queue: asyncio.Queue = asyncio.Queue()
-    ev_loop = asyncio.get_event_loop()
+    ev_loop = asyncio.get_running_loop()
 
     def log_cb(msg: dict):
         ev_loop.call_soon_threadsafe(queue.put_nowait, msg)
@@ -1397,7 +1421,7 @@ async def pip_install_endpoint(request: Request):
     if not package or not re.match(r'^[A-Za-z0-9_.\-\[\]]+$', package):
         raise HTTPException(400, "Invalid package name")
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     def _run_pip():
         try:
