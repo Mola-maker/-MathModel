@@ -7,6 +7,24 @@ import subprocess
 from pathlib import Path
 
 
+def load_toml(path: Path) -> dict:
+    """Parse a TOML file; returns {} on missing file or parse error.
+
+    Uses tomllib (Python ≥3.11 stdlib) with tomli as fallback for older runtimes.
+    """
+    if not path.exists():
+        return {}
+    text = path.read_text(encoding="utf-8-sig")  # utf-8-sig strips Windows BOM
+    try:
+        try:
+            import tomllib  # type: ignore[import]  # Python 3.11+
+        except ModuleNotFoundError:
+            import tomli as tomllib  # type: ignore[import,no-redef]
+        return tomllib.loads(text)
+    except Exception:  # noqa: BLE001
+        return {}
+
+
 def parse_json(raw: str) -> dict:
     """Parse JSON content from raw LLM output."""
     text = raw.strip()

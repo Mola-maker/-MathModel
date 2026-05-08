@@ -27,6 +27,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import collections
 import json
 import os
 import re
@@ -123,7 +124,36 @@ async def _shutdown_extensions() -> None:
 
 _pipeline_proc: subprocess.Popen | None = None
 _sandbox_proc: subprocess.Popen | None = None
-_sandbox_output_buf: list[str] = []   # rolling buffer of last 200 lines
+# deque caps memory at 200 lines without list copy on every append
+_sandbox_output_buf: collections.deque[str] = collections.deque(maxlen=200)
+
+
+class _LazyLock:
+    """asyncio.Lock created on first acquire so it always binds to the running
+    event loop, regardless of when this module is imported (Python ≤ 3.9 compat).
+    """
+    __slots__ = ("_lock",)
+
+    def __init__(self) -> None:
+        self._lock: asyncio.Lock | None = None
+
+    async def __aenter__(self) -> "_LazyLock":
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        await self._lock.acquire()
+        return self
+
+    async def __aexit__(self, *args: object) -> None:
+        assert self._lock is not None
+        self._lock.release()
+
+
+_pipeline_lock = _LazyLock()
+_sandbox_lock = _LazyLock()
+
+_CHAT_COOLDOWN_SECONDS = 3.0
+_last_chat_time: float = 0.0
+_chat_lock = _LazyLock()
 
 # SSE heartbeat interval — prevents idle connections from being closed by
 # intermediate proxies/browsers. Format `: comment\n\n` is a no-op for the
@@ -341,7 +371,7 @@ def _start_sandbox_proc(script_host_path: str) -> None:
 
 # ─────────────────────────────────────────── tool dispatcher ──
 
-def _dispatch_tool(name: str, args: dict) -> str:
+async def _dispatch_tool(name: str, args: dict) -> str:
     """Dispatch a single tool call (OpenAI function-calling) to its handler.
 
     Reuses _execute_chat_actions by converting to the legacy action-dict shape
@@ -410,42 +440,44 @@ def _dispatch_tool(name: str, args: dict) -> str:
         return f"✗ 未知工具: {name}"
     action_type, extra = legacy_map[name]
     action: dict = {"type": action_type, **extra}
-    results = _execute_chat_actions([action])
+    results = await _execute_chat_actions([action])
     return results[0] if results else ""
 
 
-def _execute_chat_actions(actions: list[dict]) -> list[str]:
+async def _execute_chat_actions(actions: list[dict]) -> list[str]:
     """Execute parsed actions and return human-readable results."""
-    global _pipeline_proc, _sandbox_proc, _sandbox_output_buf
+    global _pipeline_proc, _sandbox_proc
     results: list[str] = []
 
     for act in actions:
         t = act.get("type")
         try:
             if t == "pause":
-                if _pipeline_proc and _pipeline_proc.poll() is None:
-                    _pipeline_proc.terminate()
-                    _pipeline_proc = None
-                    results.append("✓ 流水线已暂停")
-                else:
-                    results.append("ℹ 流水线当前未在运行")
+                async with _pipeline_lock:
+                    if _pipeline_proc and _pipeline_proc.poll() is None:
+                        _pipeline_proc.terminate()
+                        _pipeline_proc = None
+                        results.append("✓ 流水线已暂停")
+                    else:
+                        results.append("ℹ 流水线当前未在运行")
 
             elif t == "restart":
                 phase = act.get("phase", "P0b")
                 if phase not in PHASE_ORDER:
                     results.append(f"✗ 无效阶段: {phase}")
                     continue
-                if _pipeline_proc and _pipeline_proc.poll() is None:
-                    _pipeline_proc.terminate()
-                _pipeline_proc = subprocess.Popen(
-                    [sys.executable, "main.py", "--start", phase],
-                    cwd=str(BASE),
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    encoding="utf-8",
-                    errors="replace",
-                )
+                async with _pipeline_lock:
+                    if _pipeline_proc and _pipeline_proc.poll() is None:
+                        _pipeline_proc.terminate()
+                    _pipeline_proc = subprocess.Popen(
+                        [sys.executable, "main.py", "--start", phase],
+                        cwd=str(BASE),
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                    )
                 results.append(f"✓ 已从 {phase} 重新启动 (pid={_pipeline_proc.pid})")
 
             elif t == "set_model":
@@ -515,9 +547,10 @@ def _execute_chat_actions(actions: list[dict]) -> list[str]:
                 if not script_path.exists():
                     results.append(f"✗ 脚本不存在: vol/scripts/{script}")
                     continue
-                if _sandbox_proc and _sandbox_proc.poll() is None:
-                    _sandbox_proc.terminate()
-                _start_sandbox_proc(str(script_path))
+                async with _sandbox_lock:
+                    if _sandbox_proc and _sandbox_proc.poll() is None:
+                        _sandbox_proc.terminate()
+                    _start_sandbox_proc(str(script_path))
                 results.append(f"✓ 沙箱已启动: {script} (pid={_sandbox_proc.pid}), 输出见 /api/sandbox-output")
 
             elif t == "sandbox_exec":
@@ -528,18 +561,20 @@ def _execute_chat_actions(actions: list[dict]) -> list[str]:
                 exec_path = VOL_DIR / "scripts" / "_assistant_exec.py"
                 exec_path.parent.mkdir(parents=True, exist_ok=True)
                 exec_path.write_text(code, encoding="utf-8")
-                if _sandbox_proc and _sandbox_proc.poll() is None:
-                    _sandbox_proc.terminate()
-                _start_sandbox_proc(str(exec_path))
+                async with _sandbox_lock:
+                    if _sandbox_proc and _sandbox_proc.poll() is None:
+                        _sandbox_proc.terminate()
+                    _start_sandbox_proc(str(exec_path))
                 results.append(f"✓ 沙箱已执行代码片段 (pid={_sandbox_proc.pid}), 输出见 /api/sandbox-output")
 
             elif t == "sandbox_kill":
-                if _sandbox_proc and _sandbox_proc.poll() is None:
-                    _sandbox_proc.terminate()
-                    _sandbox_proc = None
-                    results.append("✓ 沙箱进程已终止")
-                else:
-                    results.append("ℹ 沙箱当前没有运行中的进程")
+                async with _sandbox_lock:
+                    if _sandbox_proc and _sandbox_proc.poll() is None:
+                        _sandbox_proc.terminate()
+                        _sandbox_proc = None
+                        results.append("✓ 沙箱进程已终止")
+                    else:
+                        results.append("ℹ 沙箱当前没有运行中的进程")
 
             elif t == "sandbox_status":
                 if _sandbox_proc and _sandbox_proc.poll() is None:
@@ -635,15 +670,23 @@ async def list_files():
 @app.get("/api/figures/{filename}")
 async def get_figure(filename: str):
     safe_roots = [FIGURES_DIR.resolve(), (PAPER_DIR / "figures").resolve()]
-    for p in [FIGURES_DIR / filename, PAPER_DIR / "figures" / filename]:
+
+    def _under_safe_root(p: Path) -> bool:
         try:
             resolved = p.resolve()
         except Exception:
-            continue
-        if not any(str(resolved).startswith(str(root)) for root in safe_roots):
-            raise HTTPException(400, "Invalid filename")
-        if resolved.exists() and resolved.is_file():
-            return FileResponse(str(resolved))
+            return False
+        for root in safe_roots:
+            try:
+                resolved.relative_to(root)
+                return resolved.is_file()
+            except ValueError:
+                continue
+        return False
+
+    for p in [FIGURES_DIR / filename, PAPER_DIR / "figures" / filename]:
+        if _under_safe_root(p):
+            return FileResponse(str(p.resolve()))
     raise HTTPException(404, f"Figure not found: {filename}")
 
 
@@ -652,8 +695,17 @@ async def get_logs():
     log_path = LOGS_DIR / "run.log"
     if not log_path.exists():
         return {"log": "(暂无日志)", "size": 0}
-    content = log_path.read_text(encoding="utf-8", errors="replace")
-    return {"log": content[-10000:], "size": log_path.stat().st_size}
+    with log_path.open("rb") as f:
+        size = os.fstat(f.fileno()).st_size
+        read_bytes = min(size, 10_000)
+        f.seek(size - read_bytes)
+        raw = f.read(read_bytes)
+    content = raw.decode("utf-8", errors="replace")
+    if read_bytes < size:
+        # Drop potentially partial first line from mid-file seek
+        nl = content.find("\n")
+        content = content[nl + 1:] if nl != -1 else content
+    return {"log": content, "size": size}
 
 
 @app.get("/api/reports/{report_type}")
@@ -694,27 +746,30 @@ async def run_phase(phase: str):
     global _pipeline_proc
     if phase not in PHASE_ORDER:
         raise HTTPException(400, f"Invalid phase: {phase}")
-    if _pipeline_proc and _pipeline_proc.poll() is None:
-        raise HTTPException(409, "Pipeline is already running")
-    _pipeline_proc = subprocess.Popen(
-        [sys.executable, "main.py", "--start", phase],
-        cwd=str(BASE),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-    )
-    return {"status": "started", "phase": phase, "pid": _pipeline_proc.pid}
+    async with _pipeline_lock:
+        if _pipeline_proc and _pipeline_proc.poll() is None:
+            raise HTTPException(409, "Pipeline is already running")
+        _pipeline_proc = subprocess.Popen(
+            [sys.executable, "main.py", "--start", phase],
+            cwd=str(BASE),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        pid = _pipeline_proc.pid
+    return {"status": "started", "phase": phase, "pid": pid}
 
 
 @app.post("/api/stop")
 async def stop_pipeline():
     global _pipeline_proc
-    if _pipeline_proc and _pipeline_proc.poll() is None:
-        _pipeline_proc.terminate()
-        _pipeline_proc = None
-        return {"status": "stopped"}
+    async with _pipeline_lock:
+        if _pipeline_proc and _pipeline_proc.poll() is None:
+            _pipeline_proc.terminate()
+            _pipeline_proc = None
+            return {"status": "stopped"}
     return {"status": "not_running"}
 
 
@@ -748,7 +803,6 @@ async def pipeline_output():
 async def sandbox_output():
     """SSE: stream sandbox (docker exec) stdout with heartbeats."""
     async def generate():
-        global _sandbox_output_buf
         if not _sandbox_proc or _sandbox_proc.poll() is not None:
             yield 'data: {"done": true}\n\n'
             return
@@ -767,8 +821,6 @@ async def sandbox_output():
                 continue
             stripped = line.rstrip()
             _sandbox_output_buf.append(stripped)
-            if len(_sandbox_output_buf) > 200:
-                _sandbox_output_buf = _sandbox_output_buf[-200:]
             escaped = json.dumps(stripped)
             yield f'data: {{"line": {escaped}}}\n\n'
             last_beat = time.time()
@@ -980,6 +1032,13 @@ async def chat_endpoint(request: Request):
     If session_id is missing or unknown, a new session is created with the
     requested persona (or the default).
     """
+    global _last_chat_time
+    async with _chat_lock:
+        now = time.time()
+        if now - _last_chat_time < _CHAT_COOLDOWN_SECONDS:
+            raise HTTPException(429, "请求过快，请稍候再试")
+        _last_chat_time = now
+
     from agents.conversation_mgr import (
         append_messages, create_session, get_session, sanitize_for_display,
     )
@@ -1023,10 +1082,9 @@ async def chat_endpoint(request: Request):
     new_messages_to_persist: list[dict] = [user_msg]
     tool_call_log: list[dict] = []
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     def _call(msgs: list[dict]) -> dict:
-        sys.path.insert(0, str(BASE))
         from agents.orchestrator import call_with_tools
         return call_with_tools(msgs, tools=tools, task="default")
 
@@ -1051,7 +1109,7 @@ async def chat_endpoint(request: Request):
                     parsed_args = json.loads(raw_args) if isinstance(raw_args, str) else (raw_args or {})
                 except Exception:
                     parsed_args = {}
-                result = _dispatch_tool(name, parsed_args)
+                result = await _dispatch_tool(name, parsed_args)
                 tool_call_log.append({"name": name, "arguments": parsed_args, "result": result})
                 tool_msg = {
                     "role": "tool",
@@ -1109,9 +1167,10 @@ async def clear_workspace(request: Request):
     global _pipeline_proc
 
     # Stop any running pipeline first
-    if _pipeline_proc and _pipeline_proc.poll() is None:
-        _pipeline_proc.terminate()
-        _pipeline_proc = None
+    async with _pipeline_lock:
+        if _pipeline_proc and _pipeline_proc.poll() is None:
+            _pipeline_proc.terminate()
+            _pipeline_proc = None
 
     body = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
     keep_translations: bool = body.get("keep_translations", False)
@@ -1209,7 +1268,7 @@ async def compile_stream(max_rounds: int = 5):
         return StreamingResponse(_busy(), media_type="text/event-stream")
 
     queue: asyncio.Queue = asyncio.Queue()
-    ev_loop = asyncio.get_event_loop()
+    ev_loop = asyncio.get_running_loop()
 
     def log_cb(msg: dict):
         ev_loop.call_soon_threadsafe(queue.put_nowait, msg)
@@ -1362,7 +1421,7 @@ async def pip_install_endpoint(request: Request):
     if not package or not re.match(r'^[A-Za-z0-9_.\-\[\]]+$', package):
         raise HTTPException(400, "Invalid package name")
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     def _run_pip():
         try:

@@ -18,6 +18,11 @@ import time
 from pathlib import Path
 from typing import Any
 
+# On Linux a single write() on a file opened with O_APPEND is atomic up to
+# PIPE_BUF (4096 B) for regular files. All events are well under that limit,
+# so this gives us safe cross-process concurrent appends without a file lock.
+_APPEND_FLAGS = os.O_WRONLY | os.O_APPEND | os.O_CREAT
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 VOL_HOST = Path(os.getenv("VOL_HOST", BASE_DIR / "vol"))
 EVENTS_DIR = VOL_HOST / "logs"
@@ -41,8 +46,12 @@ def emit(kind: str, **payload: Any) -> None:
     event = {"seq": _next_seq(), "ts": time.time(), "kind": kind, **payload}
     try:
         EVENTS_DIR.mkdir(parents=True, exist_ok=True)
-        with EVENTS_FILE.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event, ensure_ascii=False) + "\n")
+        line = (json.dumps(event, ensure_ascii=False) + "\n").encode("utf-8")
+        fd = os.open(str(EVENTS_FILE), _APPEND_FLAGS, 0o644)
+        try:
+            os.write(fd, line)
+        finally:
+            os.close(fd)
     except Exception as exc:  # noqa: BLE001
         # Events must never break the pipeline. Swallow and print once.
         print(f"  [events] emit 失败 ({kind}): {exc}")
@@ -56,10 +65,14 @@ def emit(kind: str, **payload: Any) -> None:
 
 
 def reset() -> None:
-    """Truncate the events file — call at pipeline start for a fresh run."""
+    """Truncate the events file — call at pipeline start for a fresh run.
+
+    Only safe to call when the pipeline subprocess is not running.
+    """
     try:
         EVENTS_DIR.mkdir(parents=True, exist_ok=True)
-        EVENTS_FILE.write_text("", encoding="utf-8")
+        fd = os.open(str(EVENTS_FILE), os.O_WRONLY | os.O_TRUNC | os.O_CREAT, 0o644)
+        os.close(fd)
         global _seq
         with _lock:
             _seq = 0
